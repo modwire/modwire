@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from posixpath import normpath
 from pathlib import PurePosixPath
 
-from ..definitions import SourceImport
+from ..definitions import SourceExport, SourceImport
 from .base import SourceExtractor
 
 
@@ -52,6 +52,43 @@ class PythonExtractor(SourceExtractor):
             statement_id=source_import.statement_id,
             join_key=self._normalized_join_key(normalized_path, source_import),
             uses_joined_import=source_import.uses_joined_import,
+            imported_symbols=source_import.imported_symbols,
+        )
+
+    def normalize_export(
+        self,
+        source_id: str,
+        source_export: SourceExport,
+        known_source_ids: set[str],
+    ) -> SourceExport:
+        normalized_path = source_export.normalized_path
+        if source_export.is_relative:
+            level = len(source_export.path) - len(source_export.path.lstrip("."))
+            module_path = source_export.path[level:].replace(".", "/").strip("/")
+            package_path = PurePosixPath(source_id).parent
+            for _ in range(max(level - 1, 0)):
+                package_path = package_path.parent
+            normalized_path = normpath(
+                "/".join(
+                    part for part in (package_path.as_posix(), module_path) if part
+                )
+            )
+
+        if normalized_path:
+            normalized_path = self._known_source_id(normalized_path, known_source_ids)
+
+        return SourceExport(
+            name=source_export.name,
+            local_name=source_export.local_name,
+            kind=source_export.kind,
+            crossing_type=source_export.crossing_type,
+            path=source_export.path,
+            is_relative=source_export.is_relative,
+            normalized_path=normalized_path,
+            is_reexport=source_export.is_reexport,
+            is_default=source_export.is_default,
+            is_aliased=source_export.is_aliased,
+            statement_id=source_export.statement_id,
         )
 
     def _normalize_relative_import(

@@ -9,9 +9,11 @@ from pathlib import Path
 from modwire import (
     build_dependency_graph,
     extract_code,
+    find_unused_exports,
     normalize_source_id,
     supported_languages,
 )
+from modwire.definitions import SourceFile
 
 
 APPS_DIR = Path(__file__).parent / "apps"
@@ -76,6 +78,34 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
 
         self.assertGreaterEqual(len(graphs_by_language), 2)
         self.assertEqual(len(set(map(frozenset, graphs_by_language.values()))), 1)
+
+    def test_old_source_file_payloads_remain_valid(self) -> None:
+        source_file = SourceFile.model_validate(
+            {
+                "imports": [
+                    {
+                        "path": "sample",
+                        "is_relative": False,
+                        "normalized_path": "sample",
+                        "imported_name": "",
+                        "is_aliased": False,
+                        "crossing_type": "module",
+                        "file_barrier_crossed": True,
+                        "statement_id": 1,
+                        "join_key": "",
+                        "uses_joined_import": False,
+                    }
+                ],
+                "classes": [],
+                "functions": [],
+                "line_count": 1,
+                "code_line_count": 1,
+                "public_symbol_count": 0,
+            }
+        )
+
+        self.assertEqual(source_file.exports, [])
+        self.assertEqual(source_file.imports[0].imported_symbols, [])
 
     def test_bare_directory_exclusions_are_recursive(self) -> None:
         result = extract_code("python", APPS_DIR / "python", ("ignored",))
@@ -704,6 +734,145 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
                 for edge in result.graph.edges
             },
         )
+
+    def test_python_exports_and_unused_exports_follow_all_reexports(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            root.joinpath("user.py").write_text(
+                "class User:\n"
+                "    pass\n\n"
+                "class UnusedUser:\n"
+                "    pass\n",
+                encoding="utf-8",
+            )
+            root.joinpath("api.py").write_text(
+                "from .user import User\n\n"
+                "__all__ = ['User']\n",
+                encoding="utf-8",
+            )
+            root.joinpath("consumer.py").write_text(
+                "from api import User\n",
+                encoding="utf-8",
+            )
+
+            result = extract_code("python", root, ())
+
+        api_exports = result.extraction_result.files["api"].exports
+        self.assertIn(
+            ("api", "module", "module"),
+            {
+                (source_export.name, source_export.kind, source_export.crossing_type)
+                for source_export in api_exports
+            },
+        )
+        self.assertIn(
+            ("User", "unknown", True, "user"),
+            {
+                (
+                    source_export.name,
+                    source_export.kind,
+                    source_export.is_reexport,
+                    source_export.normalized_path,
+                )
+                for source_export in api_exports
+            },
+        )
+
+        unused = {
+            (source_export.source_id, source_export.name)
+            for source_export in find_unused_exports(result.extraction_result)
+        }
+        self.assertNotIn(("api", "User"), unused)
+        self.assertNotIn(("user", "User"), unused)
+        self.assertIn(("user", "UnusedUser"), unused)
+
+    def test_typescript_exports_reexports_and_import_symbols_are_additive(self) -> None:
+        if shutil.which("node") is None:
+            self.skipTest("node runtime is not available")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            root.joinpath("lib.ts").write_text(
+                "export class User {}\n"
+                "export function unusedUser(): void {}\n",
+                encoding="utf-8",
+            )
+            root.joinpath("extra.ts").write_text(
+                "export function helper(): void {}\n"
+                "export function unusedHelper(): void {}\n",
+                encoding="utf-8",
+            )
+            root.joinpath("barrel.ts").write_text(
+                "export { User } from './lib';\n"
+                "export * from './extra';\n",
+                encoding="utf-8",
+            )
+            root.joinpath("consumer.ts").write_text(
+                "import { User, helper } from './barrel';\n"
+                "new User();\n"
+                "helper();\n",
+                encoding="utf-8",
+            )
+
+            result = extract_code("typescript", root, ())
+
+        consumer_import = result.extraction_result.files["consumer"].imports[0]
+        self.assertEqual(consumer_import.imported_name, "")
+        self.assertEqual(
+            [symbol.name for symbol in consumer_import.imported_symbols],
+            ["User", "helper"],
+        )
+        unused = {
+            (source_export.source_id, source_export.name)
+            for source_export in find_unused_exports(result.extraction_result)
+        }
+        self.assertNotIn(("barrel", "User"), unused)
+        self.assertNotIn(("lib", "User"), unused)
+        self.assertNotIn(("extra", "helper"), unused)
+        self.assertIn(("lib", "unusedUser"), unused)
+        self.assertIn(("extra", "unusedHelper"), unused)
+
+    def test_php_exports_and_import_symbols_are_additive(self) -> None:
+        if shutil.which("php") is None:
+            self.skipTest("php runtime is not available")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            model_dir = root / "src" / "domain" / "model"
+            model_dir.mkdir(parents=True)
+            model_dir.joinpath("user.php").write_text(
+                "<?php\n"
+                "namespace App\\Domain\\Model;\n"
+                "class User {}\n"
+                "class UnusedUser {}\n",
+                encoding="utf-8",
+            )
+            controller_dir = root / "src" / "interfaces"
+            controller_dir.mkdir(parents=True)
+            controller_dir.joinpath("controller.php").write_text(
+                "<?php\n"
+                "namespace App\\Interfaces;\n"
+                "use App\\Domain\\Model\\User;\n"
+                "class Controller {}\n",
+                encoding="utf-8",
+            )
+
+            result = extract_code("php", root, ())
+
+        controller_import = result.extraction_result.files[
+            "src/interfaces/controller"
+        ].imports[0]
+        self.assertEqual(controller_import.imported_name, "")
+        self.assertEqual(
+            [symbol.name for symbol in controller_import.imported_symbols],
+            ["User"],
+        )
+        unused = {
+            (source_export.source_id, source_export.name)
+            for source_export in find_unused_exports(result.extraction_result)
+        }
+        self.assertNotIn(("src/domain/model/user", "User"), unused)
+        self.assertIn(("src/domain/model/user", "UnusedUser"), unused)
 
     def assert_has_nested_source_files(self, result) -> None:
         depths = {

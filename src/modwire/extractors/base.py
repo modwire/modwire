@@ -7,7 +7,7 @@ from pathlib import Path
 from subprocess import run
 from typing import Protocol
 
-from ..definitions import SourceFile, SourceImport
+from ..definitions import SourceExport, SourceFile, SourceImport
 
 
 @dataclass(frozen=True)
@@ -55,6 +55,27 @@ class SourceExtractor(Protocol):
             statement_id=source_import.statement_id,
             join_key=source_import.join_key,
             uses_joined_import=source_import.uses_joined_import,
+            imported_symbols=source_import.imported_symbols,
+        )
+
+    def normalize_export(
+        self,
+        source_id: str,
+        source_export: SourceExport,
+        known_source_ids: set[str],
+    ) -> SourceExport:
+        return SourceExport(
+            name=source_export.name,
+            local_name=source_export.local_name,
+            kind=source_export.kind,
+            crossing_type=source_export.crossing_type,
+            path=source_export.path,
+            is_relative=source_export.is_relative,
+            normalized_path=source_export.normalized_path.strip().strip("/"),
+            is_reexport=source_export.is_reexport,
+            is_default=source_export.is_default,
+            is_aliased=source_export.is_aliased,
+            statement_id=source_export.statement_id,
         )
 
     def extract_files(
@@ -104,11 +125,18 @@ class SourceExtractor(Protocol):
         source_file: SourceFile,
         known_source_ids: set[str],
     ) -> SourceFile:
+        exports = [
+            self.normalize_export(source_id, source_export, known_source_ids)
+            for source_export in source_file.exports
+        ]
+        exports = self._with_module_export(source_id, exports)
+
         return SourceFile(
             imports=[
                 self.normalize_import(source_id, source_import, known_source_ids)
                 for source_import in source_file.imports
             ],
+            exports=exports,
             classes=source_file.classes,
             interfaces=source_file.interfaces,
             types=source_file.types,
@@ -118,6 +146,43 @@ class SourceExtractor(Protocol):
             code_line_count=source_file.code_line_count,
             public_symbol_count=source_file.public_symbol_count,
         )
+
+    def _with_module_export(
+        self,
+        source_id: str,
+        exports: list[SourceExport],
+    ) -> list[SourceExport]:
+        module_export = SourceExport(
+            name=source_id,
+            local_name=source_id,
+            kind="module",
+            crossing_type="module",
+            path=source_id,
+            is_relative=False,
+            normalized_path=source_id,
+            is_reexport=False,
+            is_default=False,
+            is_aliased=False,
+            statement_id=0,
+        )
+        seen = {
+            (
+                source_export.name,
+                source_export.kind,
+                source_export.crossing_type,
+                source_export.normalized_path,
+            )
+            for source_export in exports
+        }
+        module_key = (
+            module_export.name,
+            module_export.kind,
+            module_export.crossing_type,
+            module_export.normalized_path,
+        )
+        if module_key in seen:
+            return exports
+        return [module_export, *exports]
 
 
 def _collect_extraction_targets(

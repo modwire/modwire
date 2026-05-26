@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
-from ..definitions import SourceFile, SourceImport
+from ..definitions import SourceExport, SourceFile, SourceImport
 from .base import (
     SourceExtraction,
     SourceExtractor,
@@ -92,6 +92,31 @@ class PhpExtractor(SourceExtractor):
             statement_id=source_import.statement_id,
             join_key=self._normalized_join_key(normalized_path, source_import),
             uses_joined_import=source_import.uses_joined_import,
+            imported_symbols=source_import.imported_symbols,
+        )
+
+    def normalize_export(
+        self,
+        source_id: str,
+        source_export: SourceExport,
+        known_source_ids: set[str],
+    ) -> SourceExport:
+        normalized_path = source_export.normalized_path
+        if normalized_path:
+            normalized_path = self._known_source_id(normalized_path, known_source_ids)
+
+        return SourceExport(
+            name=source_export.name,
+            local_name=source_export.local_name,
+            kind=source_export.kind,
+            crossing_type=source_export.crossing_type,
+            path=source_export.path,
+            is_relative=source_export.is_relative,
+            normalized_path=normalized_path,
+            is_reexport=source_export.is_reexport,
+            is_default=source_export.is_default,
+            is_aliased=source_export.is_aliased,
+            statement_id=source_export.statement_id,
         )
 
     def _normalized_join_key(

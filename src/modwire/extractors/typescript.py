@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from posixpath import normpath
 from pathlib import PurePosixPath
 
-from ..definitions import SourceImport
+from ..definitions import SourceExport, SourceImport
 from .base import SourceExtractor
 
 
@@ -42,6 +42,34 @@ class TypeScriptExtractor(SourceExtractor):
             statement_id=source_import.statement_id,
             join_key=normalized_path if source_import.join_key else "",
             uses_joined_import=source_import.uses_joined_import,
+            imported_symbols=source_import.imported_symbols,
+        )
+
+    def normalize_export(
+        self,
+        source_id: str,
+        source_export: SourceExport,
+        known_source_ids: set[str],
+    ) -> SourceExport:
+        normalized_path = source_export.normalized_path
+        if source_export.is_relative:
+            normalized_path = normpath(
+                PurePosixPath(source_id).parent.joinpath(source_export.path).as_posix()
+            )
+            normalized_path = self.normalize_source_id(normalized_path)
+
+        return SourceExport(
+            name=source_export.name,
+            local_name=source_export.local_name,
+            kind=source_export.kind,
+            crossing_type=source_export.crossing_type,
+            path=source_export.path,
+            is_relative=source_export.is_relative,
+            normalized_path=normalized_path,
+            is_reexport=source_export.is_reexport,
+            is_default=source_export.is_default,
+            is_aliased=source_export.is_aliased,
+            statement_id=source_export.statement_id,
         )
 
 

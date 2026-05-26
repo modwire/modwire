@@ -421,6 +421,72 @@ function normalizedImportPath(importPath, isRelative, filePath, sourcesRoot) {
     return withoutExtension(path.relative(sourcesRoot, absolutePath).split(path.sep).join('/'));
 }
 
+function importedSymbol(name, alias, options) {
+    return {
+        name,
+        alias,
+        is_aliased: Boolean(alias) && alias !== name,
+        is_default: options.isDefault,
+        is_namespace: options.isNamespace,
+        is_star: options.isStar,
+    };
+}
+
+function parseNamedSymbols(specifierText) {
+    return specifierText
+        .split(',')
+        .map(part => part.trim().replace(/^type\s+/, ''))
+        .filter(Boolean)
+        .map(part => {
+            const match = part.match(/^([A-Za-z_$][\w$]*|default)\s+as\s+([A-Za-z_$][\w$]*)$/);
+            if (match !== null) {
+            return importedSymbol(match[1], match[2], {
+                isDefault: false,
+                isNamespace: false,
+                isStar: false,
+            });
+        }
+        return importedSymbol(part, '', {
+            isDefault: false,
+            isNamespace: false,
+            isStar: false,
+        });
+    });
+}
+
+function importSymbols(importSpecifiers) {
+    const specifiers = importSpecifiers.trim().replace(/^type\s+/, '');
+    if (!specifiers) {
+        return [];
+    }
+
+    const namespaceMatch = specifiers.match(/^\*\s+as\s+([A-Za-z_$][\w$]*)$/);
+    if (namespaceMatch !== null) {
+        return [importedSymbol('*', namespaceMatch[1], {
+            isDefault: false,
+            isNamespace: true,
+            isStar: false,
+        })];
+    }
+
+    const symbols = [];
+    const namedMatch = specifiers.match(/\{([\s\S]*?)\}/);
+    const beforeNamed = namedMatch === null
+        ? specifiers
+        : specifiers.slice(0, namedMatch.index).replace(/,\s*$/, '').trim();
+    if (beforeNamed) {
+        symbols.push(importedSymbol('default', beforeNamed, {
+            isDefault: true,
+            isNamespace: false,
+            isStar: false,
+        }));
+    }
+    if (namedMatch !== null) {
+        symbols.push(...parseNamedSymbols(namedMatch[1]));
+    }
+    return symbols;
+}
+
 function collectImports(content, filePath, sourcesRoot) {
     const imports = [];
     let statementId = 0;
@@ -430,6 +496,7 @@ function collectImports(content, filePath, sourcesRoot) {
         crossingType = 'module',
         isAliased = false,
         joinable = false,
+        importedSymbols = [],
     ) {
         const isRelative = importPath.startsWith('.');
         const normalizedPath = normalizedImportPath(
@@ -450,6 +517,7 @@ function collectImports(content, filePath, sourcesRoot) {
             statement_id: statementId,
             join_key: joinable ? normalizedPath : '',
             uses_joined_import: joinable,
+            imported_symbols: importedSymbols,
         });
     }
 
@@ -478,6 +546,7 @@ function collectImports(content, filePath, sourcesRoot) {
                 : 'module',
             hasAliasedImport(importSpecifiers),
             !isNamespaceImport,
+            importSymbols(importSpecifiers),
         );
     }
 
@@ -965,6 +1034,201 @@ function visibilityIntent(name, visibility) {
     return visibility;
 }
 
+function sourceExport(
+    name,
+    kind,
+    options,
+) {
+    const exportPath = options.path;
+    const isRelative = exportPath.startsWith('.');
+    return {
+        name,
+        local_name: options.localName,
+        kind,
+        crossing_type: options.crossingType,
+        path: exportPath,
+        is_relative: isRelative,
+        normalized_path: options.normalizedPath,
+        is_reexport: options.isReexport,
+        is_default: options.isDefault,
+        is_aliased: options.isAliased,
+        statement_id: options.statementId,
+    };
+}
+
+function addExport(exports, seen, sourceExportValue) {
+    const key = [
+        sourceExportValue.name,
+        sourceExportValue.kind,
+        sourceExportValue.crossing_type,
+        sourceExportValue.normalized_path,
+    ].join('\0');
+    if (seen.has(key)) {
+        return;
+    }
+    seen.add(key);
+    exports.push(sourceExportValue);
+}
+
+function collectExports(content, filePath, sourcesRoot) {
+    const exports = [];
+    const seen = new Set();
+    let match;
+    let statementId = 0;
+
+    function normalizedPathForExport(exportPath) {
+        if (!exportPath) {
+            return '';
+        }
+        return normalizedImportPath(
+            exportPath,
+            exportPath.startsWith('.'),
+            filePath,
+            sourcesRoot,
+        );
+    }
+
+    function addDirect(name, kind, options) {
+        addExport(exports, seen, sourceExport(name, kind, options));
+    }
+
+    function directExportOptions(localName, isDefault) {
+        return {
+            localName,
+            path: '',
+            normalizedPath: '',
+            crossingType: 'symbol',
+            isReexport: false,
+            isDefault,
+            isAliased: false,
+            statementId: 0,
+        };
+    }
+
+    const defaultClassRegex = /\bexport\s+default\s+class(?:\s+([A-Za-z_$][\w$]*))?/g;
+    while ((match = defaultClassRegex.exec(content)) !== null) {
+        addDirect('default', 'class', {
+            ...directExportOptions(match[1] || 'default', true),
+        });
+    }
+
+    const defaultFunctionRegex = /\bexport\s+default\s+(?:async\s+)?function(?:\s+([A-Za-z_$][\w$]*))?/g;
+    while ((match = defaultFunctionRegex.exec(content)) !== null) {
+        addDirect('default', 'function', {
+            ...directExportOptions(match[1] || 'default', true),
+        });
+    }
+
+    const defaultValueRegex = /\bexport\s+default\s+(?!class\b|(?:async\s+)?function\b)/g;
+    while ((match = defaultValueRegex.exec(content)) !== null) {
+        addDirect('default', 'value', {
+            ...directExportOptions('default', true),
+        });
+    }
+
+    const abstractClassRegex = /\bexport\s+abstract\s+class\s+([A-Za-z_$][\w$]*)/g;
+    while ((match = abstractClassRegex.exec(content)) !== null) {
+        addDirect(match[1], 'abstract_class', {
+            ...directExportOptions(match[1], false),
+        });
+    }
+
+    const classRegex = /\bexport\s+class\s+([A-Za-z_$][\w$]*)/g;
+    while ((match = classRegex.exec(content)) !== null) {
+        addDirect(match[1], 'class', {
+            ...directExportOptions(match[1], false),
+        });
+    }
+
+    const interfaceRegex = /\bexport\s+interface\s+([A-Za-z_$][\w$]*)/g;
+    while ((match = interfaceRegex.exec(content)) !== null) {
+        addDirect(match[1], 'interface', {
+            ...directExportOptions(match[1], false),
+        });
+    }
+
+    const typeRegex = /\bexport\s+type\s+([A-Za-z_$][\w$]*)\s*=/g;
+    while ((match = typeRegex.exec(content)) !== null) {
+        addDirect(match[1], 'type', {
+            ...directExportOptions(match[1], false),
+        });
+    }
+
+    const functionRegex = /\bexport\s+(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/g;
+    while ((match = functionRegex.exec(content)) !== null) {
+        addDirect(match[1], 'function', {
+            ...directExportOptions(match[1], false),
+        });
+    }
+
+    const valueRegex = /\bexport\s+(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=/g;
+    while ((match = valueRegex.exec(content)) !== null) {
+        addDirect(match[1], 'value', {
+            ...directExportOptions(match[1], false),
+        });
+    }
+
+    const namedReexportRegex = /\bexport\s*\{([\s\S]*?)\}\s*from\s*['"](.*?)['"]/g;
+    while ((match = namedReexportRegex.exec(content)) !== null) {
+        statementId += 1;
+        const exportPath = match[2];
+        for (const symbol of parseNamedSymbols(match[1])) {
+            addExport(exports, seen, sourceExport(
+                symbol.alias || symbol.name,
+                'unknown',
+                {
+                    localName: symbol.name,
+                    path: exportPath,
+                    normalizedPath: normalizedPathForExport(exportPath),
+                    crossingType: 'symbol',
+                    isReexport: true,
+                    isDefault: false,
+                    isAliased: symbol.is_aliased,
+                    statementId,
+                },
+            ));
+        }
+    }
+
+    const starReexportRegex = /\bexport\s+\*\s+from\s*['"](.*?)['"]/g;
+    while ((match = starReexportRegex.exec(content)) !== null) {
+        statementId += 1;
+        addExport(exports, seen, sourceExport('*', 'unknown', {
+            localName: '*',
+            crossingType: 'module',
+            path: match[1],
+            normalizedPath: normalizedPathForExport(match[1]),
+            isReexport: true,
+            isDefault: false,
+            isAliased: false,
+            statementId,
+        }));
+    }
+
+    const localNamedExportRegex = /\bexport\s*\{([\s\S]*?)\}(?!\s*from\b)/g;
+    while ((match = localNamedExportRegex.exec(content)) !== null) {
+        statementId += 1;
+        for (const symbol of parseNamedSymbols(match[1])) {
+            addExport(exports, seen, sourceExport(
+                symbol.alias || symbol.name,
+                'unknown',
+                {
+                    localName: symbol.name,
+                    path: '',
+                    normalizedPath: '',
+                    crossingType: 'symbol',
+                    isReexport: false,
+                    isDefault: false,
+                    isAliased: symbol.is_aliased,
+                    statementId,
+                },
+            ));
+        }
+    }
+
+    return exports;
+}
+
 function extractFile(filePath, sourcesRoot) {
     const content = fs.readFileSync(filePath, 'utf8');
     const lineStarts = buildLineStarts(content);
@@ -976,6 +1240,7 @@ function extractFile(filePath, sourcesRoot) {
 
     return {
         imports: collectImports(content, filePath, sourcesRoot),
+        exports: collectExports(content, filePath, sourcesRoot),
         classes,
         interfaces,
         types,

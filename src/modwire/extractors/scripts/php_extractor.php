@@ -62,8 +62,14 @@ function is_name_token($token): bool {
     return in_array($tokenId, $valid, true);
 }
 
+function imported_symbol_name(string $path): string {
+    $parts = explode('/', normalize_import_path($path));
+    return end($parts) ?: '';
+}
+
 function use_import_entry(string $usePath, bool $isAliased, int $statementId, bool $usesJoinedImport): array {
     $normalizedUsePath = normalize_namespace_reference($usePath);
+    $symbolName = imported_symbol_name($normalizedUsePath);
     return [
         'path' => $normalizedUsePath,
         'is_relative' => false,
@@ -75,6 +81,16 @@ function use_import_entry(string $usePath, bool $isAliased, int $statementId, bo
         'statement_id' => $statementId,
         'join_key' => import_parent_path($normalizedUsePath),
         'uses_joined_import' => $usesJoinedImport,
+        'imported_symbols' => [
+            [
+                'name' => $symbolName,
+                'alias' => '',
+                'is_aliased' => $isAliased,
+                'is_default' => false,
+                'is_namespace' => false,
+                'is_star' => false,
+            ],
+        ],
     ];
 }
 
@@ -530,6 +546,39 @@ function member_is_abstract(array $tokens, int $functionIndex): bool {
     return false;
 }
 
+function source_export_entry(string $name, string $kind): array {
+    return [
+        'name' => $name,
+        'local_name' => $name,
+        'kind' => $kind,
+        'crossing_type' => 'symbol',
+        'path' => '',
+        'is_relative' => false,
+        'normalized_path' => '',
+        'is_reexport' => false,
+        'is_default' => false,
+        'is_aliased' => false,
+        'statement_id' => 0,
+    ];
+}
+
+function collect_exports(array $classes, array $interfaces, array $abstractClasses, array $functions): array {
+    $exports = [];
+    foreach ($classes as $classDefinition) {
+        $exports[] = source_export_entry($classDefinition['name'], 'class');
+    }
+    foreach ($interfaces as $interfaceDefinition) {
+        $exports[] = source_export_entry($interfaceDefinition['name'], 'interface');
+    }
+    foreach ($abstractClasses as $classDefinition) {
+        $exports[] = source_export_entry($classDefinition['name'], 'abstract_class');
+    }
+    foreach ($functions as $functionDefinition) {
+        $exports[] = source_export_entry($functionDefinition['name'], 'function');
+    }
+    return $exports;
+}
+
 function extract_file(string $path): array {
     $content = file_get_contents($path);
     $tokens = token_get_all($content);
@@ -779,6 +828,7 @@ function extract_file(string $path): array {
 
     return [
         'imports' => $imports,
+        'exports' => collect_exports($classes, $interfaces, $abstractClasses, $functions),
         'classes' => $classes,
         'interfaces' => $interfaces,
         'types' => $types,

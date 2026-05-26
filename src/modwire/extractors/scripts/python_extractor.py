@@ -295,6 +295,17 @@ def import_join_key(import_path_value: str) -> str:
     return normalize_module_path(import_path_value).rsplit("/", 1)[0]
 
 
+def imported_symbol(alias: ast.alias) -> dict[str, object]:
+    return {
+        "name": alias.name,
+        "alias": alias.asname or "",
+        "is_aliased": alias.asname is not None,
+        "is_default": False,
+        "is_namespace": False,
+        "is_star": alias.name == "*",
+    }
+
+
 def collect_imports(
     tree: ast.Module,
     path: Path,
@@ -321,6 +332,7 @@ def collect_imports(
                         "statement_id": statement_id,
                         "join_key": import_join_key(alias.name),
                         "uses_joined_import": False,
+                        "imported_symbols": [],
                     }
                 )
             continue
@@ -344,9 +356,177 @@ def collect_imports(
                         "statement_id": statement_id,
                         "join_key": node_path,
                         "uses_joined_import": True,
+                        "imported_symbols": [imported_symbol(alias)],
                     }
                 )
     return imports
+
+
+def static_all_names(tree: ast.Module) -> set[str] | None:
+    names: set[str] | None = None
+    for node in tree.body:
+        value = None
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "__all__"
+            for target in node.targets
+        ):
+            value = node.value
+        elif (
+            isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id == "__all__"
+        ):
+            value = node.value
+
+        if value is None:
+            continue
+        if not isinstance(value, (ast.List, ast.Tuple)):
+            return None
+        names = set()
+        for element in value.elts:
+            if not isinstance(element, ast.Constant) or not isinstance(
+                element.value,
+                str,
+            ):
+                return None
+            names.add(element.value)
+    return names
+
+
+def export_entry(
+    name: str,
+    kind: str,
+    *,
+    local_name: str,
+    path: str,
+    is_relative: bool,
+    normalized_path: str,
+    is_reexport: bool,
+    is_aliased: bool,
+    statement_id: int,
+) -> dict[str, object]:
+    return {
+        "name": name,
+        "local_name": local_name,
+        "kind": kind,
+        "crossing_type": "symbol",
+        "path": path,
+        "is_relative": is_relative,
+        "normalized_path": normalized_path,
+        "is_reexport": is_reexport,
+        "is_default": False,
+        "is_aliased": is_aliased,
+        "statement_id": statement_id,
+    }
+
+
+def direct_export_entry(name: str, kind: str) -> dict[str, object]:
+    return export_entry(
+        name,
+        kind,
+        local_name=name,
+        path="",
+        is_relative=False,
+        normalized_path="",
+        is_reexport=False,
+        is_aliased=False,
+        statement_id=0,
+    )
+
+
+def collect_exports(
+    tree: ast.Module,
+    path: Path,
+    sources_root: Path,
+    classes: list[dict[str, object]],
+    abstract_classes: list[dict[str, object]],
+    functions: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    declaration_exports = {
+        **{
+            str(class_definition["name"]): export_entry(
+                str(class_definition["name"]),
+                "class",
+                local_name=str(class_definition["name"]),
+                path="",
+                is_relative=False,
+                normalized_path="",
+                is_reexport=False,
+                is_aliased=False,
+                statement_id=0,
+            )
+            for class_definition in classes
+        },
+        **{
+            str(class_definition["name"]): export_entry(
+                str(class_definition["name"]),
+                "abstract_class",
+                local_name=str(class_definition["name"]),
+                path="",
+                is_relative=False,
+                normalized_path="",
+                is_reexport=False,
+                is_aliased=False,
+                statement_id=0,
+            )
+            for class_definition in abstract_classes
+        },
+        **{
+            str(function_definition["name"]): export_entry(
+                str(function_definition["name"]),
+                "function",
+                local_name=str(function_definition["name"]),
+                path="",
+                is_relative=False,
+                normalized_path="",
+                is_reexport=False,
+                is_aliased=False,
+                statement_id=0,
+            )
+            for function_definition in functions
+        },
+    }
+    import_exports: dict[str, dict[str, object]] = {}
+    for statement_id, node in enumerate(ast.walk(tree), start=1):
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        node_path = import_path(node)
+        for alias in node.names:
+            exported_name = alias.asname or alias.name
+            import_exports[exported_name] = export_entry(
+                exported_name,
+                "unknown",
+                local_name=alias.name,
+                path=node_path,
+                is_relative=node.level > 0,
+                normalized_path=normalized_import_path(
+                    node_path,
+                    node.level > 0,
+                    path,
+                    sources_root,
+                ),
+                is_reexport=True,
+                is_aliased=alias.asname is not None,
+                statement_id=statement_id,
+            )
+
+    explicit_names = static_all_names(tree)
+    if explicit_names is None:
+        return [
+            source_export
+            for name, source_export in declaration_exports.items()
+            if not name.startswith("_")
+        ]
+
+    exports = []
+    for name in sorted(explicit_names):
+        if name in import_exports:
+            exports.append(import_exports[name])
+            continue
+        exports.append(
+            declaration_exports.get(name, direct_export_entry(name, "unknown"))
+        )
+    return exports
 
 
 def extract_file(path: Path, sources_root: Path) -> dict[str, object]:
@@ -371,6 +551,14 @@ def extract_file(path: Path, sources_root: Path) -> dict[str, object]:
 
     return {
         "imports": collect_imports(tree, path, sources_root),
+        "exports": collect_exports(
+            tree,
+            path,
+            sources_root,
+            classes,
+            abstract_classes,
+            functions,
+        ),
         "classes": classes,
         "interfaces": [],
         "types": [],
