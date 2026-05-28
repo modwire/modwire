@@ -91,17 +91,23 @@ class SourceExtractor(Protocol):
             self.file_extensions,
             exclusions,
         )
-        result = {}
-        for target in targets:
-            cmd = [
-                self.command,
-                str(script),
-                str(target.path.resolve()),
-                str(sources_root.resolve()),
-            ]
-            result[self.normalize_source_id(target.source_id)] = (
-                SourceFile.model_validate(_json_from_output(cmd))
+        if not targets:
+            return SourceExtraction(
+                files={},
+                files_found=files_found,
+                files_excluded=files_excluded,
             )
+
+        input_data = {
+            self.normalize_source_id(target.source_id): str(target.path.resolve())
+            for target in targets
+        }
+        cmd = [self.command, str(script), "--batch", str(sources_root.resolve())]
+        raw_files = _json_from_output(cmd, json.dumps(input_data))
+        result = {
+            source_id: SourceFile.model_validate(source_file)
+            for source_id, source_file in raw_files.items()
+        }
 
         known_source_ids = set(result)
         result = {
@@ -190,20 +196,50 @@ def _collect_extraction_targets(
     file_extensions: tuple[str, ...],
     exclusions: tuple[str, ...],
 ) -> tuple[tuple[ExtractionTarget, ...], int, int]:
-    targets = []
+    directory_exclusions, file_exclusions = _partition_exclusions(
+        exclusions,
+        file_extensions,
+    )
+    targets: list[ExtractionTarget] = []
     files_found = 0
     files_excluded = 0
-    for path in sorted(sources_root.rglob("*")):
-        if path.suffix not in file_extensions:
-            continue
 
-        files_found += 1
-        source_id = path.relative_to(sources_root).as_posix()
-        if any(_matches_exclusion(source_id, exclusion) for exclusion in exclusions):
-            files_excluded += 1
-            continue
+    def walk(directory: Path, relative_dir: str = "") -> None:
+        nonlocal files_found, files_excluded
+        directories: list[tuple[str, Path]] = []
+        files: list[tuple[str, Path]] = []
 
-        targets.append(ExtractionTarget(source_id, path))
+        for entry in sorted(directory.iterdir(), key=lambda path: path.name):
+            source_id = (
+                f"{relative_dir}/{entry.name}" if relative_dir else entry.name
+            )
+            if entry.is_dir() and not entry.is_symlink():
+                if _matches_directory_exclusion(source_id, directory_exclusions):
+                    # Exact file counts would require descending into the pruned tree.
+                    files_found += 1
+                    files_excluded += 1
+                    continue
+                directories.append((source_id, entry))
+                continue
+
+            if entry.is_file() and entry.suffix in file_extensions:
+                files.append((source_id, entry))
+
+        for source_id, path in files:
+            files_found += 1
+            if any(
+                _matches_exclusion(source_id, exclusion)
+                for exclusion in file_exclusions
+            ):
+                files_excluded += 1
+                continue
+
+            targets.append(ExtractionTarget(source_id, path))
+
+        for source_id, path in directories:
+            walk(path, source_id)
+
+    walk(sources_root)
 
     return tuple(targets), files_found, files_excluded
 
@@ -224,15 +260,77 @@ def _json_from_output(cmd: list[str], input_json: str | None = None) -> dict:
 
 
 def _matches_exclusion(source_id: str, exclusion: str) -> bool:
-    if fnmatch(source_id, exclusion):
+    normalized = exclusion.replace("\\", "/").strip().strip("/")
+    if not normalized:
+        return False
+
+    if _matches_path_pattern(source_id, normalized):
         return True
 
-    normalized = exclusion.strip("/")
     has_glob = any(char in normalized for char in "*?[")
     if not normalized or has_glob:
         return False
 
     return source_id.startswith(f"{normalized}/")
+
+
+def _partition_exclusions(
+    exclusions: tuple[str, ...],
+    file_extensions: tuple[str, ...],
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    directory_exclusions = []
+    file_exclusions = []
+    for exclusion in exclusions:
+        normalized = exclusion.replace("\\", "/").strip()
+        if not normalized:
+            continue
+        if _is_recursive_directory_exclusion(normalized, file_extensions):
+            directory_exclusions.append(_directory_exclusion_pattern(normalized))
+        else:
+            file_exclusions.append(normalized.strip("/"))
+    return tuple(directory_exclusions), tuple(file_exclusions)
+
+
+def _is_recursive_directory_exclusion(
+    exclusion: str,
+    file_extensions: tuple[str, ...],
+) -> bool:
+    normalized = exclusion.strip("/")
+    if not normalized:
+        return False
+    if exclusion.endswith("/") or normalized.endswith("/**"):
+        return True
+    if any(char in normalized for char in "*?["):
+        return False
+    return not normalized.endswith(file_extensions)
+
+
+def _directory_exclusion_pattern(exclusion: str) -> str:
+    normalized = exclusion.strip("/")
+    if normalized.endswith("/**"):
+        return normalized[:-3].rstrip("/")
+    return normalized
+
+
+def _matches_directory_exclusion(
+    source_id: str,
+    directory_exclusions: tuple[str, ...],
+) -> bool:
+    for exclusion in directory_exclusions:
+        if _matches_path_pattern(source_id, exclusion):
+            return True
+        if "/" not in exclusion and not any(char in exclusion for char in "*?["):
+            if Path(source_id).name == exclusion:
+                return True
+    return False
+
+
+def _matches_path_pattern(source_id: str, pattern: str) -> bool:
+    if fnmatch(source_id, pattern):
+        return True
+    if pattern.startswith("**/") and fnmatch(source_id, pattern[3:]):
+        return True
+    return False
 
 
 __all__ = [

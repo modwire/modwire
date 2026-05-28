@@ -575,7 +575,30 @@ def extract_file(path: Path, sources_root: Path) -> dict[str, object]:
     }
 
 
+def extract_batch_from_stdin(sources_root: Path) -> dict[str, dict[str, object]]:
+    paths_by_source_id = json.load(sys.stdin)
+    if not isinstance(paths_by_source_id, dict):
+        print(
+            "Expected a JSON object mapping source ids to Python file paths.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+
+    result = {}
+    for source_id, path in paths_by_source_id.items():
+        if not isinstance(source_id, str) or not isinstance(path, str):
+            print("Expected source ids and paths to be strings.", file=sys.stderr)
+            raise SystemExit(1)
+        result[source_id] = extract_file(Path(path).resolve(), sources_root)
+    return result
+
+
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == "--batch":
+        sources_root = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else Path.cwd()
+        print(json.dumps(extract_batch_from_stdin(sources_root)))
+        return 0
+
     file_path = Path(sys.argv[1]).resolve()
     sources_root = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else Path.cwd()
     print(json.dumps(extract_file(file_path, sources_root)))

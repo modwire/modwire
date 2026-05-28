@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import json
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from modwire import (
     build_dependency_graph,
@@ -120,6 +125,124 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
                 for source_id in result.extraction_result.files
             )
         )
+
+    def test_excluded_directories_are_pruned_before_traversal(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            root.joinpath("app.py").write_text("def run():\n    pass\n", encoding="utf-8")
+            ignored = root / "ignored"
+            ignored.mkdir()
+            ignored.joinpath("generated.py").write_text(
+                "def generated():\n    pass\n",
+                encoding="utf-8",
+            )
+
+            real_iterdir = Path.iterdir
+
+            def guarded_iterdir(path: Path):
+                if path == ignored:
+                    raise AssertionError("ignored directory should be pruned")
+                return real_iterdir(path)
+
+            with patch.object(Path, "iterdir", guarded_iterdir):
+                result = extract_code("python", root, ("ignored/**",))
+
+        self.assertEqual(set(result.extraction_result.files), {"app"})
+        self.assertEqual(result.extraction_result.summary.files_excluded, 1)
+
+    def test_file_level_exclusion_summary_remains_sensible(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            root.joinpath("app.py").write_text("def run():\n    pass\n", encoding="utf-8")
+            root.joinpath("generated.py").write_text(
+                "def generated():\n    pass\n",
+                encoding="utf-8",
+            )
+
+            result = extract_code("python", root, ("generated.py",))
+
+        self.assertEqual(result.extraction_result.summary.files_found, 2)
+        self.assertEqual(result.extraction_result.summary.files_excluded, 1)
+        self.assertEqual(set(result.extraction_result.files), {"app"})
+
+    def test_python_batch_output_equals_single_file_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "sample.py"
+            source.write_text(
+                "class User:\n"
+                "    pass\n\n"
+                "def build_user():\n"
+                "    return User()\n",
+                encoding="utf-8",
+            )
+
+            script = extractor_script("python_extractor.py")
+            single = extractor_output(
+                [sys.executable, str(script), str(source), str(root)]
+            )
+            batch = extractor_output(
+                [sys.executable, str(script), "--batch", str(root)],
+                {"sample": str(source)},
+            )
+
+        self.assertEqual(batch["sample"], single)
+
+    def test_typescript_batch_output_equals_single_file_output(self) -> None:
+        if shutil.which("node") is None:
+            self.skipTest("node runtime is not available")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "sample.ts"
+            source.write_text(
+                "export class User {}\n"
+                "export function buildUser(): User { return new User(); }\n",
+                encoding="utf-8",
+            )
+
+            script = extractor_script("typescript_extractor.js")
+            single = extractor_output(["node", str(script), str(source), str(root)])
+            batch = extractor_output(
+                ["node", str(script), "--batch", str(root)],
+                {"sample": str(source)},
+            )
+
+        self.assertEqual(batch["sample"], single)
+
+    def test_python_extraction_invokes_one_subprocess(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            root.joinpath("one.py").write_text("def one():\n    pass\n", encoding="utf-8")
+            root.joinpath("two.py").write_text("def two():\n    pass\n", encoding="utf-8")
+
+            with patch("modwire.extractors.base.run") as run_mock:
+                run_mock.side_effect = fake_batch_run
+                result = extract_code("python", root, ())
+
+        self.assertEqual(run_mock.call_count, 1)
+        self.assertEqual(set(result.extraction_result.files), {"one", "two"})
+        self.assertIn("--batch", run_mock.call_args.args[0])
+
+    def test_typescript_extraction_invokes_one_subprocess(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            root.joinpath("one.ts").write_text(
+                "export function one(): void {}\n",
+                encoding="utf-8",
+            )
+            root.joinpath("two.ts").write_text(
+                "export function two(): void {}\n",
+                encoding="utf-8",
+            )
+
+            with patch("modwire.extractors.base.run") as run_mock:
+                run_mock.side_effect = fake_batch_run
+                result = extract_code("typescript", root, ())
+
+        self.assertEqual(run_mock.call_count, 1)
+        self.assertEqual(set(result.extraction_result.files), {"one", "two"})
+        self.assertIn("--batch", run_mock.call_args.args[0])
 
     def test_python_visibility_distinguishes_accessibility_from_intent(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1148,6 +1271,52 @@ def internal_edges(result) -> set[tuple[str, str]]:
 
 def count_source_files(root: Path) -> int:
     return sum(1 for path in root.rglob("*") if path.suffix in source_extensions())
+
+
+def extractor_script(name: str) -> Path:
+    return (
+        Path(__file__).parent.parent
+        / "src"
+        / "modwire"
+        / "extractors"
+        / "scripts"
+        / name
+    )
+
+
+def extractor_output(cmd: list[str], input_data: dict[str, str] | None = None) -> dict:
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        input=json.dumps(input_data) if input_data is not None else None,
+        check=True,
+    )
+    return json.loads(result.stdout)
+
+
+def fake_batch_run(cmd, *, input=None, **kwargs):
+    paths_by_source_id = json.loads(input or "{}")
+    return SimpleNamespace(
+        stdout=json.dumps(
+            {source_id: source_file_payload() for source_id in paths_by_source_id}
+        )
+    )
+
+
+def source_file_payload() -> dict[str, object]:
+    return {
+        "imports": [],
+        "exports": [],
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "abstract_classes": [],
+        "functions": [],
+        "line_count": 1,
+        "code_line_count": 1,
+        "public_symbol_count": 0,
+    }
 
 
 def source_extensions() -> set[str]:
