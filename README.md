@@ -19,13 +19,14 @@ requires Node.js at runtime, and PHP extraction requires PHP at runtime.
 ```python
 from pathlib import Path
 
-from modwire import extract_code
+from modwire import discover_sources, extract_code
 
-result = extract_code(
+manifest = discover_sources(
     "python",
     Path("src"),
     exclusions=("**/__pycache__/**",),
 )
+result = extract_code("python", Path("src"), exclusions=manifest.exclusions)
 
 print(result.extraction_result.summary.files_checked)
 print(result.graph.node_ids())
@@ -55,28 +56,152 @@ print(normalize_source_id("typescript", "src/view.tsx"))
 # "src/view"
 ```
 
+## Extraction Options
+
+Use `SourceRoots` when source IDs should be relative to a workspace root or to a
+logical package prefix:
+
+```python
+from pathlib import Path
+
+from modwire import SourceRoots, extract_code
+
+code_map = extract_code(
+    "python",
+    Path("packages/billing/src"),
+    source_roots=SourceRoots(
+        workspace_root=Path("."),
+        source_id_mode="relative_to_workspace_root",
+    ),
+)
+```
+
+Use `ExtractionCache` to reuse extraction output when files and extractor
+implementations have not changed:
+
+```python
+from pathlib import Path
+
+from modwire import ExtractionCache, extract_code
+
+code_map = extract_code(
+    "python",
+    Path("src"),
+    cache=ExtractionCache(Path(".modwire-cache")),
+)
+
+print(code_map.cache_status)
+```
+
 ## Architecture Policy API
 
 `modwire.architecture` exposes policy evaluation helpers for checking import
 boundaries and common dependency-flow rules.
 
 ```python
-from modwire.architecture import ArchitecturePolicyEvaluator, supported_analyzers
+from modwire import extract_code
+from modwire.architecture import (
+    ArchitectureBoundaryRule,
+    ArchitectureConfig,
+    ArchitectureFlowRules,
+    ArchitecturePolicyEvaluator,
+    ArchitectureRules,
+    ArchitectureTagRule,
+    render_violations,
+    supported_analyzers,
+)
 
 print(supported_analyzers())
 # ("backward-flow", "no-reentry", "no-cycles")
 
-evaluator = ArchitecturePolicyEvaluator()
+code_map = extract_code("python", "src")
+config = ArchitectureConfig(
+    language="python",
+    architecture_root="src",
+    rules=ArchitectureRules(
+        tags=(
+            ArchitectureTagRule(name="module", match="features/*"),
+            ArchitectureTagRule(name="ui", match="features/*/ui"),
+            ArchitectureTagRule(name="domain", match="features/*/domain"),
+        ),
+        boundaries=(
+            ArchitectureBoundaryRule(
+                source="features/*/ui",
+                disallow=("features/*/domain",),
+                allow_same_match=True,
+            ),
+        ),
+        flow=ArchitectureFlowRules(
+            layers=("domain", "ui"),
+            module_tag="module",
+            analyzers=("no-cycles",),
+        ),
+    ),
+)
+
+violations = ArchitecturePolicyEvaluator().evaluate(code_map.graph, config)
+print(render_violations(tuple(violations)))
+```
+
+Architecture insight helpers summarize ownership and graph pressure:
+
+```python
+from modwire.architecture import coherence_summary, find_hotspots, map_code
+
+architecture_map = map_code(code_map, config)
+hotspots = find_hotspots(code_map, limit=5)
+coherence = coherence_summary(code_map)
+
+print(architecture_map.cross_module_dependencies)
+print(hotspots)
+print(coherence.external_dependencies)
+```
+
+## Shape Policy API
+
+Shape policies evaluate file, symbol, callable, property, and import metadata:
+
+```python
+from modwire import ShapePolicyEvaluator, evaluate_shape
+
+violations = evaluate_shape(
+    code_map,
+    {
+        "max_functions_per_file": 5,
+        "max_methods_per_class": 10,
+        "allow_import_aliases": False,
+        "require_joined_imports": True,
+    },
+)
+
+same_result = ShapePolicyEvaluator().evaluate(code_map, {})
+print([violation.to_dict() for violation in violations])
+print(same_result)
+```
+
+## Serialization And Exports
+
+`CodeMap` results can be serialized for later analysis, and export metadata can
+be used to find currently unused public symbols:
+
+```python
+from modwire import (
+    deserialize_code_map,
+    find_unused_exports,
+    serialize_code_map,
+)
+
+payload = serialize_code_map(code_map)
+loaded = deserialize_code_map(payload)
+
+unused = find_unused_exports(loaded.extraction_result)
+print([(export.source_id, export.name) for export in unused])
 ```
 
 ## Development
 
-```bash
-uv run ruff check
-uv run pytest
-uv run python -m build --outdir dist
-uv run twine check dist/*
-```
+See [Development checks](docs/wiki/Development-checks.md) for the local command
+set used before pull requests and releases.
 
 ## Contributing
 

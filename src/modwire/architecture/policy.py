@@ -34,7 +34,7 @@ def _edge_violations(graph, config):
                     and source.is_wildcard
                     and target_match is not None
                     and target_match.is_wildcard
-                    and source.captured_path == target_match.captured_path
+                    and source.wildcard_values == target_match.wildcard_values
                 )
                 if target_match is not None and not same_owner:
                     denied = (rule.source, target)

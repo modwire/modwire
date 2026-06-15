@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from ..definitions import SourceFile, SourceImport
+from ..definitions import (
+    SourceAbstractClass,
+    SourceClass,
+    SourceClassMethod,
+    SourceClassProperty,
+    SourceFile,
+    SourceFunction,
+    SourceImport,
+)
 from ..extraction import CodeMap, ExtractionResult, ExtractionSummary
 from ..graph import DependencyGraph
 
@@ -35,6 +43,9 @@ def source_import(
 def source_file(
     *,
     imports: tuple[SourceImport, ...] = (),
+    classes: tuple[SourceClass, ...] = (),
+    abstract_classes: tuple[SourceAbstractClass, ...] = (),
+    functions: tuple[SourceFunction, ...] = (),
     line_count: int = 1,
     code_line_count: int = 1,
     public_symbol_count: int = 0,
@@ -42,14 +53,75 @@ def source_file(
     return SourceFile(
         imports=list(imports),
         exports=[],
-        classes=[],
+        classes=list(classes),
         interfaces=[],
         types=[],
-        abstract_classes=[],
-        functions=[],
+        abstract_classes=list(abstract_classes),
+        functions=list(functions),
         line_count=line_count,
         code_line_count=code_line_count,
         public_symbol_count=public_symbol_count,
+    )
+
+
+def source_function(
+    name: str,
+    *,
+    line_count: int = 1,
+    declared_args: int = 0,
+    optional_args: int = 0,
+    visibility: str = "public",
+    visibility_intent: str = "public",
+) -> SourceFunction:
+    return SourceFunction(
+        name=name,
+        visibility=visibility,
+        visibility_intent=visibility_intent,
+        line_count=line_count,
+        declared_args=declared_args,
+        optional_args=optional_args,
+    )
+
+
+def source_method(
+    name: str,
+    *,
+    line_count: int = 1,
+    declared_args: int = 0,
+    optional_args: int = 0,
+    visibility: str = "public",
+    visibility_intent: str = "public",
+) -> SourceClassMethod:
+    return SourceClassMethod(
+        name=name,
+        visibility=visibility,
+        visibility_intent=visibility_intent,
+        line_count=line_count,
+        declared_args=declared_args,
+        optional_args=optional_args,
+    )
+
+
+def source_property(name: str, *, is_optional: bool = False) -> SourceClassProperty:
+    return SourceClassProperty(name=name, is_optional=is_optional)
+
+
+def source_class(
+    name: str,
+    *,
+    methods: tuple[SourceClassMethod, ...] = (),
+    properties: tuple[SourceClassProperty, ...] = (),
+    line_count: int = 1,
+    visibility: str = "public",
+    visibility_intent: str = "public",
+) -> SourceClass:
+    return SourceClass(
+        name=name,
+        visibility=visibility,
+        visibility_intent=visibility_intent,
+        methods=list(methods),
+        properties=list(properties),
+        line_count=line_count,
     )
 
 

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
 from typing import Callable
 
 from .analyzers import analyzer_title
-from .violations import EDGE_RULE_TYPE, EdgeRuleViolation, FlowViolation
+from .violations import EDGE_RULE_TYPE, EdgeRuleViolation, FlowViolation, violation_to_dict
 
 GROUP_TITLES = {
     EDGE_RULE_TYPE: "Edge Rule Violations",
@@ -36,10 +35,7 @@ def render_violations(
 ) -> str:
     groups: dict[str, list[str]] = {}
     for violation in violations:
-        violation_type = _type(violation)
-        title = GROUP_TITLES.get(violation_type)
-        if title is None:
-            title = analyzer_title(violation_type)
+        title = _title(violation)
         groups.setdefault(title, []).append(compact(violation, path_display=path_display))
     return "\n".join(
         line
@@ -53,11 +49,8 @@ def structured_groups(
 ) -> tuple[dict[str, object], ...]:
     groups: dict[str, list[dict[str, object]]] = {}
     for violation in violations:
-        violation_type = _type(violation)
-        title = GROUP_TITLES.get(violation_type)
-        if title is None:
-            title = analyzer_title(violation_type)
-        groups.setdefault(title, []).append(violation_to_dict(violation))
+        title = _title(violation)
+        groups.setdefault(title, []).append(render_violation_payload(violation))
     return tuple(
         {
             "title": title,
@@ -79,7 +72,9 @@ def compact(
         )
     path = list(violation.path)
     path = [path_display(entry) for entry in path]
-    path[violation.violation_index] = f"[{path[violation.violation_index]}]"
+    if path:
+        index = min(max(violation.violation_index, 0), len(path) - 1)
+        path[index] = f"[{path[index]}]"
     return f"{' -> '.join(path)}  {violation.violation_type}"
 
 
@@ -94,7 +89,7 @@ def render_json(report) -> str:
             "files_found": report.files_found,
             "files_excluded": report.files_excluded,
             "files_checked": report.files_checked,
-            "violations": [_json_violation(v) for v in report.violations],
+            "violations": [render_violation_payload(v) for v in report.violations],
         },
         indent=2,
         sort_keys=True,
@@ -110,7 +105,9 @@ def render_dot(report) -> str:
     )
 
 
-def _json_violation(violation):
+def render_violation_payload(
+    violation: EdgeRuleViolation | FlowViolation,
+) -> dict[str, object]:
     payload = violation_to_dict(violation)
     payload["type"] = _type(violation)
     payload["path"] = (
@@ -133,14 +130,23 @@ def _type(violation):
     return EDGE_RULE_TYPE if isinstance(violation, EdgeRuleViolation) else violation.violation_type
 
 
-def violation_to_dict(violation: EdgeRuleViolation | FlowViolation) -> dict[str, object]:
-    payload = asdict(violation)
-    payload["type"] = _type(violation)
-    payload["path"] = (
-        [violation.source_id, violation.target_id]
-        if isinstance(violation, EdgeRuleViolation)
-        else list(violation.path)
-    )
-    if isinstance(violation, EdgeRuleViolation):
-        payload["violation_index"] = 1
-    return payload
+def _title(violation: EdgeRuleViolation | FlowViolation) -> str:
+    violation_type = _type(violation)
+    if violation_type in GROUP_TITLES:
+        return GROUP_TITLES[violation_type]
+    try:
+        return analyzer_title(violation_type)
+    except KeyError:
+        return f"{violation_type.replace('-', ' ').title()} Violations"
+
+
+__all__ = [
+    "compact",
+    "render_dot",
+    "render_json",
+    "render_violation_payload",
+    "render_violations",
+    "structured_groups",
+    "summary",
+    "violations",
+]

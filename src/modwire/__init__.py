@@ -32,7 +32,15 @@ from .metadata import (
     require_runtime,
     runtime_diagnostics,
 )
-from .shape import ShapeConfig, ShapePolicyEvaluator, ShapeViolation, evaluate_shape
+from .shape import (
+    ShapeConfig,
+    ShapeConfigError,
+    ShapeConfigIssue,
+    ShapePolicyEvaluator,
+    ShapeViolation,
+    evaluate_shape,
+    validate_shape_config,
+)
 
 
 __all__ = [
@@ -49,6 +57,8 @@ __all__ = [
     "PUBLIC_API_STABILITY",
     "RuntimeInfo",
     "ShapeConfig",
+    "ShapeConfigError",
+    "ShapeConfigIssue",
     "ShapePolicyEvaluator",
     "ShapeViolation",
     "SourceChangedDuringExtractionError",
@@ -72,4 +82,5 @@ __all__ = [
     "runtime_diagnostics",
     "serialize_code_map",
     "supported_languages",
+    "validate_shape_config",
 ]

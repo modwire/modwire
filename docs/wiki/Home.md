@@ -7,6 +7,9 @@ rules.
 
 ## Start Here
 
+- README examples cover extraction manifests, source roots, caching,
+  architecture policies, architecture insights, shape policies, serialization,
+  and unused export checks.
 - [Reporting bugs](Reporting-bugs.md)
 - [Requesting features](Requesting-features.md)
 - [Development checks](Development-checks.md)

@@ -32,14 +32,8 @@ actual output, and relevant versions for Python, Modwire, Node.js, or PHP.
 
 ## Pull Requests
 
-Before opening a pull request, run the local checks:
-
-```bash
-uv run ruff check
-uv run pytest
-uv run python -m build --outdir dist
-uv run twine check dist/*
-```
+Before opening a pull request, run the local checks documented in
+[Development checks](docs/wiki/Development-checks.md).
 
 Extractor changes should include focused tests under `tests/` and, when
 relevant, a small fixture under `tests/apps/`.

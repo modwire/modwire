@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from modwire.extraction import CodeMap
 
+from .config import validate_policy_config
 from .matching import TagMap, TagMatcher
 
 
@@ -51,6 +52,7 @@ class CoherenceSummary:
 
 
 def map_code(code_map: CodeMap, config) -> ArchitectureMap:
+    config = validate_policy_config(config)
     matcher = TagMatcher(config)
     tag_map = matcher.map_code_map(code_map)
     source_ids = set(code_map.extraction_result.files)

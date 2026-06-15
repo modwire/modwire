@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from .analyzers import supported_analyzers
 
@@ -40,6 +47,16 @@ class ArchitectureFlowRules(BaseModel):
         if unknown:
             raise ValueError(f"Unsupported flow analyzer: {', '.join(unknown)}")
         return analyzers
+
+    @model_validator(mode="after")
+    def analyzers_have_required_config(self) -> ArchitectureFlowRules:
+        if "backward-flow" in self.analyzers and not self.layers:
+            raise ValueError("backward-flow requires rules.flow.layers")
+        scoped_analyzers = {"no-reentry", "no-cycles"}.intersection(self.analyzers)
+        if scoped_analyzers and not self.module_tag:
+            names = ", ".join(sorted(scoped_analyzers))
+            raise ValueError(f"{names} require rules.flow.module_tag")
+        return self
 
 
 class ArchitectureRules(BaseModel):

@@ -14,6 +14,7 @@ class TagMatch:
     matched_path: str
     captured_path: str
     is_wildcard: bool
+    wildcard_values: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -75,6 +76,7 @@ class TagMatcher:
                     matched_path=match.group(0),
                     captured_path=match.group(1),
                     is_wildcard="*" in normalized or "?" in normalized,
+                    wildcard_values=tuple(match.groups()[1:]),
                 )
         return None
 

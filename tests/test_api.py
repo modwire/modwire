@@ -17,6 +17,7 @@ from modwire import (
     LanguageInfo,
     RuntimeInfo,
     ShapeConfig,
+    ShapeConfigError,
     ShapePolicyEvaluator,
     ShapeViolation,
     SourceRoots,
@@ -34,17 +35,21 @@ from modwire import (
     runtime_diagnostics,
     serialize_code_map,
     supported_languages,
+    validate_shape_config,
 )
 from modwire.definitions import (
-    SourceClass,
-    SourceClassMethod,
-    SourceClassProperty,
     SourceFile,
-    SourceFunction,
-    SourceImport,
 )
 from modwire.extraction import CodeMap, ExtractionResult, ExtractionSummary
 from modwire.graph import DependencyGraph
+from modwire.testing import (
+    source_class,
+    source_file as make_source_file,
+    source_function,
+    source_import as make_source_import,
+    source_method,
+    source_property,
+)
 
 
 APPS_DIR = Path(__file__).parent / "apps"
@@ -93,62 +98,41 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         with self.assertRaises(UnsupportedLanguageError):
             language("ruby")
 
-    def test_shape_policy_evaluator_reports_file_symbol_and_import_violations(
-        self,
-    ) -> None:
-        source_file = SourceFile(
-            imports=[
-                SourceImport(
-                    path="shared",
-                    is_relative=False,
-                    normalized_path="shared",
-                    imported_name="",
+    def test_shape_policy_evaluator_reports_file_symbol_and_import_violations(self) -> None:
+        file_under_test = make_source_file(
+            imports=(
+                make_source_import(
+                    "shared",
                     is_aliased=True,
                     crossing_type="symbol",
-                    file_barrier_crossed=True,
-                    statement_id=1,
                     join_key="shared",
                     uses_joined_import=False,
-                )
-            ],
-            exports=[],
-            classes=[
-                SourceClass(
-                    name="Service",
-                    visibility="public",
-                    visibility_intent="public",
-                    methods=[
-                        SourceClassMethod(
-                            name="run",
-                            visibility="public",
-                            visibility_intent="public",
+                ),
+            ),
+            classes=(
+                source_class(
+                    "Service",
+                    methods=(
+                        source_method(
+                            "run",
                             line_count=12,
                             declared_args=3,
                             optional_args=1,
                         ),
-                        SourceClassMethod(
-                            name="save",
-                            visibility="public",
-                            visibility_intent="public",
-                            line_count=1,
-                            declared_args=0,
-                            optional_args=0,
-                        ),
-                    ],
-                    properties=[SourceClassProperty(name="maybe", is_optional=True)],
+                        source_method("save"),
+                    ),
+                    properties=(source_property("maybe", is_optional=True),),
                     line_count=25,
-                )
-            ],
-            functions=[
-                SourceFunction(
-                    name="build",
-                    visibility="public",
-                    visibility_intent="public",
+                ),
+            ),
+            functions=(
+                source_function(
+                    "build",
                     line_count=8,
                     declared_args=2,
                     optional_args=1,
-                )
-            ],
+                ),
+            ),
             line_count=30,
             code_line_count=20,
             public_symbol_count=2,
@@ -156,7 +140,7 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         code_map = CodeMap(
             graph=DependencyGraph(),
             extraction_result=ExtractionResult(
-                files={"app": source_file},
+                files={"app": file_under_test},
                 summary=ExtractionSummary(1, 1, 0),
             ),
             runtime_command="python",
@@ -197,6 +181,32 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
             by_rule["max_declared_args"].to_dict()["source_id"],
             "app",
         )
+
+    def test_shape_config_validation_is_structured_and_accepts_dicts(self) -> None:
+        sample = CodeMap(
+            graph=DependencyGraph(),
+            extraction_result=ExtractionResult(
+                files={"app": make_source_file(functions=(source_function("run"),))},
+                summary=ExtractionSummary(1, 1, 0),
+            ),
+            runtime_command="python",
+        )
+
+        violations = ShapePolicyEvaluator().evaluate(
+            sample,
+            {
+                "max_functions_per_file": 0,
+            },
+        )
+
+        self.assertEqual(violations[0].rule_name, "max_functions_per_file")
+        self.assertEqual(validate_shape_config({}), ShapeConfig())
+        with self.assertRaises(ShapeConfigError) as context:
+            validate_shape_config({"max_functions_per_file": -2})
+
+        payload = context.exception.to_dict()
+        self.assertEqual(payload["error"], "invalid_shape_config")
+        self.assertEqual(payload["issues"][0]["field"], "max_functions_per_file")
 
     def test_supported_apps_produce_the_same_dependency_graph(self) -> None:
         graphs_by_language: dict[str, set[tuple[str, str]]] = {}
@@ -427,15 +437,34 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         self.assertEqual(dep_only.graph.edges, [])
 
     def test_testing_factories_build_minimal_code_maps(self) -> None:
-        from modwire.testing import code_map, dependency_graph, source_file, source_import
+        from modwire.testing import (
+            code_map,
+            dependency_graph,
+            source_class,
+            source_file as make_source_file,
+            source_function,
+            source_import as make_source_import,
+            source_method,
+            source_property,
+        )
 
         sample = code_map(
             files=("app", "dep"),
             edges=(("app", "dep"),),
         )
         graph = dependency_graph(edges=(("app", "dep"),))
-        imported = source_import("dep", is_aliased=True)
-        file = source_file(imports=(imported,))
+        imported = make_source_import("dep", is_aliased=True)
+        file = make_source_file(
+            imports=(imported,),
+            classes=(
+                source_class(
+                    "Service",
+                    methods=(source_method("run", declared_args=1),),
+                    properties=(source_property("maybe", is_optional=True),),
+                ),
+            ),
+            functions=(source_function("build", optional_args=1),),
+        )
 
         self.assertEqual(set(sample.extraction_result.files), {"app", "dep"})
         self.assertEqual(
@@ -447,6 +476,9 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
             [("app", "dep")],
         )
         self.assertTrue(file.imports[0].is_aliased)
+        self.assertEqual(file.classes[0].methods[0].declared_args, 1)
+        self.assertTrue(file.classes[0].properties[0].is_optional)
+        self.assertEqual(file.functions[0].optional_args, 1)
 
     def test_extraction_cache_reuses_serialized_code_map(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

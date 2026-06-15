@@ -25,7 +25,7 @@ from .insights import (
 )
 from .matching import TagMap, TagMatch, TagMatcher
 from .policy import ArchitecturePolicyEvaluator
-from .render import render_violations, structured_groups
+from .render import render_violation_payload, render_violations, structured_groups
 from .violations import EdgeRuleViolation, FlowViolation, violation_to_dict
 
 __all__ = [
@@ -53,6 +53,7 @@ __all__ = [
     "coherence_summary",
     "find_hotspots",
     "map_code",
+    "render_violation_payload",
     "render_violations",
     "structured_groups",
     "supported_analyzers",

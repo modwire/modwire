@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ..extraction import CodeMap
-from .config import ShapeConfig
+from .config import ShapeConfig, validate_shape_config
 from .rules import DEFAULT_SHAPE_RULES, ShapeRule
 from .violations import ShapeViolation
 
@@ -24,6 +24,7 @@ def evaluate_shape(
     *,
     rules: tuple[ShapeRule, ...] = DEFAULT_SHAPE_RULES,
 ) -> tuple[ShapeViolation, ...]:
+    config = validate_shape_config(config)
     violations: list[ShapeViolation] = []
     for source_id, source_file in code_map.extraction_result.files.items():
         for rule in rules:

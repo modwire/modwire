@@ -9,6 +9,9 @@ uv run python -m build --outdir dist
 uv run twine check dist/*
 ```
 
+This page is the canonical local-check list; README and contributor guidance
+link here to avoid release-process drift.
+
 Extractor changes should include focused tests under `tests/` and, when useful,
 small source fixtures under `tests/apps/`.
 
