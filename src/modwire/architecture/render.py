@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict
+from typing import Callable
 
 from .analyzers import analyzer_title
 from .violations import EDGE_RULE_TYPE, EdgeRuleViolation, FlowViolation
@@ -9,6 +10,8 @@ from .violations import EDGE_RULE_TYPE, EdgeRuleViolation, FlowViolation
 GROUP_TITLES = {
     EDGE_RULE_TYPE: "Edge Rule Violations",
 }
+
+PathDisplay = Callable[[str], str]
 
 
 def summary(report) -> str:
@@ -23,13 +26,21 @@ def summary(report) -> str:
 
 
 def violations(report) -> str:
+    return render_violations(report.violations)
+
+
+def render_violations(
+    violations: tuple[EdgeRuleViolation | FlowViolation, ...],
+    *,
+    path_display: PathDisplay = str,
+) -> str:
     groups: dict[str, list[str]] = {}
-    for violation in report.violations:
+    for violation in violations:
         violation_type = _type(violation)
         title = GROUP_TITLES.get(violation_type)
         if title is None:
             title = analyzer_title(violation_type)
-        groups.setdefault(title, []).append(compact(violation))
+        groups.setdefault(title, []).append(compact(violation, path_display=path_display))
     return "\n".join(
         line
         for title, entries in groups.items()
@@ -37,13 +48,37 @@ def violations(report) -> str:
     )
 
 
-def compact(violation: EdgeRuleViolation | FlowViolation) -> str:
+def structured_groups(
+    violations: tuple[EdgeRuleViolation | FlowViolation, ...],
+) -> tuple[dict[str, object], ...]:
+    groups: dict[str, list[dict[str, object]]] = {}
+    for violation in violations:
+        violation_type = _type(violation)
+        title = GROUP_TITLES.get(violation_type)
+        if title is None:
+            title = analyzer_title(violation_type)
+        groups.setdefault(title, []).append(violation_to_dict(violation))
+    return tuple(
+        {
+            "title": title,
+            "violations": entries,
+        }
+        for title, entries in groups.items()
+    )
+
+
+def compact(
+    violation: EdgeRuleViolation | FlowViolation,
+    *,
+    path_display: PathDisplay = str,
+) -> str:
     if isinstance(violation, EdgeRuleViolation):
         return (
-            f"{violation.source_id} -> [{violation.target_id}] "
+            f"{path_display(violation.source_id)} -> [{path_display(violation.target_id)}] "
             f"blocked by {violation.source_pattern} -> {violation.target_pattern}"
         )
     path = list(violation.path)
+    path = [path_display(entry) for entry in path]
     path[violation.violation_index] = f"[{path[violation.violation_index]}]"
     return f"{' -> '.join(path)}  {violation.violation_type}"
 
@@ -76,7 +111,7 @@ def render_dot(report) -> str:
 
 
 def _json_violation(violation):
-    payload = asdict(violation)
+    payload = violation_to_dict(violation)
     payload["type"] = _type(violation)
     payload["path"] = (
         [violation.source_id, violation.target_id]
@@ -96,3 +131,16 @@ def _edges(violation):
 
 def _type(violation):
     return EDGE_RULE_TYPE if isinstance(violation, EdgeRuleViolation) else violation.violation_type
+
+
+def violation_to_dict(violation: EdgeRuleViolation | FlowViolation) -> dict[str, object]:
+    payload = asdict(violation)
+    payload["type"] = _type(violation)
+    payload["path"] = (
+        [violation.source_id, violation.target_id]
+        if isinstance(violation, EdgeRuleViolation)
+        else list(violation.path)
+    )
+    if isinstance(violation, EdgeRuleViolation):
+        payload["violation_index"] = 1
+    return payload

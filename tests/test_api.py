@@ -426,6 +426,28 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         self.assertEqual(set(dep_only.extraction_result.files), {"dep"})
         self.assertEqual(dep_only.graph.edges, [])
 
+    def test_testing_factories_build_minimal_code_maps(self) -> None:
+        from modwire.testing import code_map, dependency_graph, source_file, source_import
+
+        sample = code_map(
+            files=("app", "dep"),
+            edges=(("app", "dep"),),
+        )
+        graph = dependency_graph(edges=(("app", "dep"),))
+        imported = source_import("dep", is_aliased=True)
+        file = source_file(imports=(imported,))
+
+        self.assertEqual(set(sample.extraction_result.files), {"app", "dep"})
+        self.assertEqual(
+            [(edge.from_id, edge.to_id) for edge in sample.graph.edges],
+            [("app", "dep")],
+        )
+        self.assertEqual(
+            [(edge.from_id, edge.to_id) for edge in graph.edges],
+            [("app", "dep")],
+        )
+        self.assertTrue(file.imports[0].is_aliased)
+
     def test_extraction_cache_reuses_serialized_code_map(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

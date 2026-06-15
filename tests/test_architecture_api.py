@@ -28,6 +28,8 @@ from modwire.architecture import (
     coherence_summary,
     find_hotspots,
     map_code,
+    render_violations,
+    structured_groups,
     supported_analyzers,
     validate_policy_config,
     violation_to_dict,
@@ -257,6 +259,25 @@ class ArchitectureApiTest(unittest.TestCase):
         )
         self.assertEqual(coherence.leaves, ("src/features/billing/domain",))
         self.assertEqual(coherence.external_dependencies, ("json",))
+
+    def test_rendering_hooks_support_structured_groups_and_path_display(self) -> None:
+        violation = EdgeRuleViolation(
+            source_id="src/app/ui",
+            target_id="src/app/domain",
+            source_pattern="ui",
+            target_pattern="domain",
+            rule_name="boundary:ui->domain:deny",
+        )
+
+        rendered = render_violations(
+            (violation,),
+            path_display=lambda path: path.removeprefix("src/"),
+        )
+        groups = structured_groups((violation,))
+
+        self.assertIn("app/ui -> [app/domain]", rendered)
+        self.assertEqual(groups[0]["title"], "Edge Rule Violations")
+        self.assertEqual(groups[0]["violations"][0]["type"], "edge-rule")
 
 
 if __name__ == "__main__":
