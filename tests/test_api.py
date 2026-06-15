@@ -258,6 +258,56 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
             loaded.graph.outgoing("app"),
             result.graph.outgoing("app"),
         )
+        self.assertEqual(
+            loaded.graph.incoming("dep"),
+            result.graph.incoming("dep"),
+        )
+
+    def test_graph_exposes_common_transform_helpers(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            root.joinpath("dep.py").write_text("class Dep:\n    pass\n", encoding="utf-8")
+            root.joinpath("app.py").write_text(
+                "from dep import Dep\n"
+                "import json\n\n"
+                "def run():\n"
+                "    return Dep(), json.dumps({})\n",
+                encoding="utf-8",
+            )
+
+            result = extract_code("python", root, ())
+
+        graph = result.graph
+
+        self.assertTrue(graph.has_node("app"))
+        self.assertEqual([edge.from_id for edge in graph.incoming("dep")], ["app"])
+        self.assertEqual(
+            [(edge.from_id, edge.to_id) for edge in graph.edges_between("app", "dep")],
+            [("app", "dep")],
+        )
+        self.assertEqual(
+            [node.id for node in graph.sorted_nodes()],
+            ["app", "dep", "json"],
+        )
+        self.assertEqual(
+            [(edge.from_id, edge.to_id) for edge in result.tracked_edges()],
+            [("app", "dep")],
+        )
+        self.assertEqual(
+            [(edge.from_id, edge.to_id) for edge in result.external_edges()],
+            [("app", "json")],
+        )
+
+        tracked = result.tracked_only()
+        self.assertEqual(set(tracked.graph.nodes), {"app", "dep"})
+        self.assertEqual(
+            [(edge.from_id, edge.to_id) for edge in tracked.graph.edges],
+            [("app", "dep")],
+        )
+
+        dep_only = result.subgraph(("dep",))
+        self.assertEqual(set(dep_only.extraction_result.files), {"dep"})
+        self.assertEqual(dep_only.graph.edges, [])
 
     def test_extraction_cache_reuses_serialized_code_map(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

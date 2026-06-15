@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from ..definitions import SourceFile
-from ..graph import DependencyGraph
+from ..graph import DependencyGraph, Edge
 from .roots import SourceIdMode
 
 
@@ -48,6 +48,40 @@ class CodeMap:
     @classmethod
     def from_json(cls, payload: str) -> CodeMap:
         return cls.from_dict(json.loads(payload))
+
+    def source_ids(self) -> tuple[str, ...]:
+        return tuple(self.extraction_result.files)
+
+    def tracked_edges(self) -> tuple[Edge, ...]:
+        return self.graph.tracked_edges(self.source_ids())
+
+    def external_edges(self) -> tuple[Edge, ...]:
+        return self.graph.external_edges(self.source_ids())
+
+    def tracked_only(self) -> CodeMap:
+        return self.subgraph(self.source_ids())
+
+    def subgraph(self, node_ids: set[str] | tuple[str, ...]) -> CodeMap:
+        selected = set(node_ids)
+        files = {
+            source_id: source_file
+            for source_id, source_file in self.extraction_result.files.items()
+            if source_id in selected
+        }
+        return CodeMap(
+            graph=self.graph.subgraph(set(files)),
+            extraction_result=ExtractionResult(
+                files=files,
+                summary=ExtractionSummary(
+                    files_found=len(files),
+                    files_checked=len(files),
+                    files_excluded=0,
+                ),
+            ),
+            runtime_command=self.runtime_command,
+            cache_status=self.cache_status,
+            cache_key=self.cache_key,
+        )
 
 
 @dataclass(frozen=True)

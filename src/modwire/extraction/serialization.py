@@ -78,8 +78,10 @@ def deserialize_code_map(
             for edge_payload in graph_payload["edges"]
         ]
         graph._outgoing_by_node = {node_id: [] for node_id in graph.nodes}
+        graph._incoming_by_node = {node_id: [] for node_id in graph.nodes}
         for edge in graph.edges:
             graph._outgoing_by_node.setdefault(edge.from_id, []).append(edge)
+            graph._incoming_by_node.setdefault(edge.to_id, []).append(edge)
 
         return CodeMap(
             graph=graph,
