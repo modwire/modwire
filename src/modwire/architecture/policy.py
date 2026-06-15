@@ -3,7 +3,7 @@ from __future__ import annotations
 from modwire.graph import DependencyGraph
 
 from .analyzers import run_analyzer
-from .matching import match_node
+from .matching import TagMatcher
 from .violations import EdgeRuleViolation, FlowViolation
 
 
@@ -18,26 +18,30 @@ class ArchitecturePolicyEvaluator:
 
 def _edge_violations(graph, config):
     violations = []
-    exclusions = {rule.match: rule.excluded_patterns for rule in config.rules.tags}
+    matcher = TagMatcher(config)
     for edge in graph.edges:
         denied: tuple[str, str] = ("", "")
         for rule in config.rules.boundaries:
-            source = match_node(edge.from_id, rule.source, config, exclusions)
+            source = matcher.match_pattern(edge.from_id, rule.source)
             if source is None:
                 continue
             for target in rule.disallow:
-                target_match = match_node(edge.to_id, target, config, exclusions)
+                target_match = matcher.match_pattern(edge.to_id, target)
                 same_owner = (
                     rule.allow_same_match
-                    and source[1]
+                    and source.is_wildcard
                     and target_match is not None
-                    and target_match[1]
-                    and source[0] == target_match[0]
+                    and target_match.is_wildcard
+                    and source.captured_path == target_match.captured_path
                 )
                 if target_match is not None and not same_owner:
                     denied = (rule.source, target)
             for target in rule.allow:
-                if match_node(edge.to_id, target, config, exclusions, scope=target in exclusions):
+                if matcher.match_pattern(
+                    edge.to_id,
+                    target,
+                    scope=target in matcher.exclusions,
+                ):
                     denied = ("", "")
         if denied[0]:
             violations.append(
@@ -53,11 +57,11 @@ def _edge_violations(graph, config):
 
 
 def _tags(node_ids, config):
+    matcher = TagMatcher(config)
     return {
         node_id: {
-            rule.name
-            for rule in config.rules.tags
-            if match_node(node_id, rule.match, config, {}, exclude=rule.excluded_patterns)
+            match.name
+            for match in matcher.tags_for(node_id)
         }
         for node_id in node_ids
     }
