@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -73,6 +74,7 @@ class ExtractorBatchFixture:
     extension: str
     content: str
     batch_size_patch: str
+    batch_output_format_patch: str
 
 
 class BuildDependencyGraphFunctionalTest(unittest.TestCase):
@@ -719,25 +721,23 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
             root.joinpath("one.py").write_text("def one():\n    pass\n", encoding="utf-8")
             root.joinpath("two.py").write_text("def two():\n    pass\n", encoding="utf-8")
 
-            with patch("modwire.extractors.base.run") as run_mock:
-                run_mock.side_effect = fake_batch_run
-                first = extract_code(
-                    "python",
-                    root,
-                    (),
-                    cache=ExtractionCache(cache_root),
-                )
-                second = extract_code(
-                    "python",
-                    root,
-                    (),
-                    cache=ExtractionCache(cache_root),
-                )
+            first = extract_code(
+                "python",
+                root,
+                (),
+                cache=ExtractionCache(cache_root),
+            )
+            second = extract_code(
+                "python",
+                root,
+                (),
+                cache=ExtractionCache(cache_root),
+            )
 
         self.assertEqual(first.cache_status, "miss")
         self.assertEqual(second.cache_status, "hit")
         self.assertEqual(first.cache_key, second.cache_key)
-        self.assertEqual(run_mock.call_count, 1)
+        self.assertEqual(set(first.extraction_result.files), {"one", "two"})
         self.assertEqual(set(second.extraction_result.files), {"one", "two"})
 
     def test_extraction_can_return_workspace_relative_source_ids(self) -> None:
@@ -881,6 +881,49 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
 
         self.assertEqual(batch["sample"], single)
 
+    def test_typescript_jsonl_batch_output_equals_single_file_output(self) -> None:
+        if shutil.which("node") is None:
+            self.skipTest("node runtime is not available")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "sample.ts"
+            source.write_text(
+                "export class User {}\n"
+                "export function buildUser(): User { return new User(); }\n",
+                encoding="utf-8",
+            )
+
+            script = extractor_script("typescript_extractor.js")
+            single = extractor_output(["node", str(script), str(source), str(root)])
+            batch = extractor_jsonl_output(
+                ["node", str(script), "--batch", str(root), "--jsonl"],
+                {"sample": str(source)},
+            )
+
+        self.assertEqual(batch["sample"], single)
+
+    def test_php_jsonl_batch_output_equals_single_file_output(self) -> None:
+        if shutil.which("php") is None:
+            self.skipTest("php runtime is not available")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "sample.php"
+            source.write_text(
+                "<?php\nclass User {}\nfunction build_user(): User { return new User(); }\n",
+                encoding="utf-8",
+            )
+
+            script = extractor_script("php_extractor.php")
+            single = extractor_output(["php", str(script), str(source), str(root)])
+            batch = extractor_jsonl_output(
+                ["php", str(script), "--batch", str(root), "--jsonl"],
+                {"sample": str(source)},
+            )
+
+        self.assertEqual(batch["sample"], single)
+
     def test_extractor_failure_includes_subprocess_diagnostics(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -892,7 +935,10 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
                 stderr="before\nSyntaxError: broken fixture\n",
             )
 
-            with patch("modwire.extractors.base.run", side_effect=failure):
+            with (
+                patch.dict(os.environ, {"MODWIRE_PYTHON_EXTRACTOR_NATIVE": "0"}),
+                patch("modwire.extractors.base.run", side_effect=failure),
+            ):
                 with self.assertRaises(ExtractorProcessError) as context:
                     extract_code("python", root, ())
 
@@ -908,7 +954,7 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         self.assertIn("SyntaxError: broken fixture", message)
 
     def test_extractors_use_one_subprocess_for_inputs_within_batch_size(self) -> None:
-        for fixture in extractor_batch_fixtures():
+        for fixture in extractor_subprocess_batch_fixtures():
             with self.subTest(language=fixture.language):
                 with tempfile.TemporaryDirectory() as temp_dir:
                     root = Path(temp_dir)
@@ -918,7 +964,10 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
                             encoding="utf-8",
                         )
 
-                    with patch("modwire.extractors.base.run") as run_mock:
+                    with (
+                        patch(fixture.batch_output_format_patch, "json"),
+                        patch("modwire.extractors.base.run") as run_mock,
+                    ):
                         run_mock.side_effect = fake_batch_run
                         result = extract_code(fixture.language, root, ())
 
@@ -927,7 +976,7 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
                 self.assertIn("--batch", run_mock.call_args.args[0])
 
     def test_extractors_batch_subprocesses_to_limit_json_payload_size(self) -> None:
-        for fixture in extractor_batch_fixtures():
+        for fixture in extractor_subprocess_batch_fixtures():
             with self.subTest(language=fixture.language):
                 with tempfile.TemporaryDirectory() as temp_dir:
                     root = Path(temp_dir)
@@ -938,6 +987,7 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
                         )
 
                     with (
+                        patch(fixture.batch_output_format_patch, "json"),
                         patch(fixture.batch_size_patch, 2),
                         patch("modwire.extractors.base.run") as run_mock,
                     ):
@@ -953,6 +1003,18 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
                 self.assertTrue(
                     all("--batch" in call.args[0] for call in run_mock.call_args_list)
                 )
+
+    def test_python_extraction_uses_native_runtime_without_subprocess(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            root.joinpath("one.py").write_text("def one():\n    pass\n", encoding="utf-8")
+            root.joinpath("two.py").write_text("def two():\n    pass\n", encoding="utf-8")
+
+            with patch("modwire.extractors.base.run") as run_mock:
+                result = extract_code("python", root, ())
+
+        self.assertEqual(run_mock.call_count, 0)
+        self.assertEqual(set(result.extraction_result.files), {"one", "two"})
 
     def test_python_visibility_distinguishes_accessibility_from_intent(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1970,14 +2032,8 @@ def app_fixtures() -> tuple[AppFixture, ...]:
     )
 
 
-def extractor_batch_fixtures() -> tuple[ExtractorBatchFixture, ...]:
+def extractor_subprocess_batch_fixtures() -> tuple[ExtractorBatchFixture, ...]:
     return (
-        ExtractorBatchFixture(
-            language="python",
-            extension=".py",
-            content="def sample():\n    pass\n",
-            batch_size_patch="modwire.extractors.python.PythonExtractor.batch_size",
-        ),
         ExtractorBatchFixture(
             language="typescript",
             extension=".ts",
@@ -1985,12 +2041,18 @@ def extractor_batch_fixtures() -> tuple[ExtractorBatchFixture, ...]:
             batch_size_patch=(
                 "modwire.extractors.typescript.TypeScriptExtractor.batch_size"
             ),
+            batch_output_format_patch=(
+                "modwire.extractors.typescript.TypeScriptExtractor.batch_output_format"
+            ),
         ),
         ExtractorBatchFixture(
             language="php",
             extension=".php",
             content="<?php\nfunction sample(): void {}\n",
             batch_size_patch="modwire.extractors.php.PhpExtractor.batch_size",
+            batch_output_format_patch=(
+                "modwire.extractors.php.PhpExtractor.batch_output_format"
+            ),
         ),
     )
 
@@ -2028,6 +2090,24 @@ def extractor_output(cmd: list[str], input_data: dict[str, str] | None = None) -
         check=True,
     )
     return json.loads(result.stdout)
+
+
+def extractor_jsonl_output(
+    cmd: list[str],
+    input_data: dict[str, str],
+) -> dict[str, object]:
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        input=json.dumps(input_data),
+        check=True,
+    )
+    output = {}
+    for line in result.stdout.splitlines():
+        source_id, source_file = json.loads(line)
+        output[source_id] = source_file
+    return output
 
 
 def fake_batch_run(cmd, *, input=None, **kwargs):

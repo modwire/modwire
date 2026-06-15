@@ -1313,8 +1313,32 @@ function extract_batch_from_stdin(string $sourcesRoot): array {
     return $result;
 }
 
+function write_batch_jsonl_from_stdin(string $sourcesRoot): void {
+    $payload = stream_get_contents(STDIN);
+    $pathsBySourceId = json_decode($payload, true);
+    if (!is_array($pathsBySourceId)) {
+        fwrite(STDERR, "Expected a JSON object mapping source ids to PHP file paths.\n");
+        exit(1);
+    }
+
+    foreach ($pathsBySourceId as $sourceId => $path) {
+        if (!is_string($sourceId) || !is_string($path)) {
+            fwrite(STDERR, "Expected source ids and paths to be strings.\n");
+            exit(1);
+        }
+        echo json_encode([
+            $sourceId,
+            extract_file($path, $sourceId, $sourcesRoot),
+        ]) . "\n";
+    }
+}
+
 if (($argv[1] ?? null) === '--batch') {
-    echo json_encode(extract_batch_from_stdin($argv[2] ?? getcwd()));
+    if (in_array('--jsonl', $argv, true)) {
+        write_batch_jsonl_from_stdin($argv[2] ?? getcwd());
+    } else {
+        echo json_encode(extract_batch_from_stdin($argv[2] ?? getcwd()));
+    }
 } else {
     echo json_encode(extract_file($argv[1], null, $argv[2] ?? dirname($argv[1])));
 }

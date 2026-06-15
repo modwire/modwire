@@ -1,14 +1,37 @@
 from __future__ import annotations
 
 import json
+import os
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
-from subprocess import CalledProcessError, run
+from subprocess import PIPE, CalledProcessError, Popen, run
 from typing import Protocol
 
-from ..definitions import SourceExport, SourceFile, SourceImport
+from pydantic import TypeAdapter
+
+from ..definitions import (
+    SourceAbstractClass,
+    SourceCall,
+    SourceCallable,
+    SourceClass,
+    SourceClassMethod,
+    SourceClassProperty,
+    SourceExport,
+    SourceFile,
+    SourceFunction,
+    SourceImport,
+    SourceImportedSymbol,
+    SourceInterface,
+    SourceParameter,
+    SourceSignature,
+    SourceType,
+    SourceValue,
+)
 from .resources import extractor_script_path
+
+_SOURCE_FILES_ADAPTER = TypeAdapter(dict[str, SourceFile])
 
 
 @dataclass(frozen=True)
@@ -33,6 +56,10 @@ class SourceExtractor(Protocol):
     file_extensions: tuple[str, ...]
     command: str
     extractor_file: str
+    batch_output_format: str
+    batch_parallel_threshold: int
+    batch_parallel_size: int
+    max_batch_parallel_workers: int
 
     def normalize_source_id(self, value: str) -> str:
         source_id = value.strip().strip("/")
@@ -49,7 +76,7 @@ class SourceExtractor(Protocol):
     ) -> SourceImport:
         if source_import.normalized_path in known_source_ids:
             return source_import
-        return SourceImport(
+        return SourceImport.model_construct(
             path=source_import.path,
             is_relative=source_import.is_relative,
             normalized_path=source_import.normalized_path.strip().strip("/"),
@@ -69,7 +96,7 @@ class SourceExtractor(Protocol):
         source_export: SourceExport,
         known_source_ids: set[str],
     ) -> SourceExport:
-        return SourceExport(
+        return SourceExport.model_construct(
             name=source_export.name,
             local_name=source_export.local_name,
             kind=source_export.kind,
@@ -108,7 +135,7 @@ class SourceExtractor(Protocol):
         ]
         exports = self._with_module_export(source_id, exports)
 
-        return SourceFile(
+        return SourceFile.model_construct(
             imports=[
                 self.normalize_import(source_id, source_import, known_source_ids)
                 for source_import in source_file.imports
@@ -127,12 +154,26 @@ class SourceExtractor(Protocol):
             public_symbol_count=source_file.public_symbol_count,
         )
 
+    def normalize_source_files(
+        self,
+        files: dict[str, SourceFile],
+    ) -> dict[str, SourceFile]:
+        known_source_ids = set(files)
+        return {
+            source_id: self.normalize_source_file(
+                source_id,
+                source_file,
+                known_source_ids,
+            )
+            for source_id, source_file in files.items()
+        }
+
     def _with_module_export(
         self,
         source_id: str,
         exports: list[SourceExport],
     ) -> list[SourceExport]:
-        module_export = SourceExport(
+        module_export = SourceExport.model_construct(
             name=source_id,
             local_name=source_id,
             kind="module",
@@ -193,7 +234,21 @@ def _extract_files(
     }
     with extractor_script_path(extractor.extractor_file) as script:
         cmd = [extractor.command, str(script), "--batch", str(sources_root.resolve())]
-        if batch_size:
+        if getattr(extractor, "batch_output_format", "json") == "jsonl":
+            raw_files = _jsonl_from_output_in_parallel(
+                [*cmd, "--jsonl"],
+                input_data,
+                language=extractor.language,
+                sources_root=sources_root,
+                batch_size=getattr(extractor, "batch_parallel_size", batch_size),
+                parallel_threshold=getattr(
+                    extractor,
+                    "batch_parallel_threshold",
+                    0,
+                ),
+                max_workers=getattr(extractor, "max_batch_parallel_workers", 1),
+            )
+        elif batch_size:
             raw_files = _json_from_output_in_batches(
                 cmd,
                 input_data,
@@ -209,26 +264,152 @@ def _extract_files(
                 sources_root=sources_root,
                 file_count=len(input_data),
             )
-    result = {
-        source_id: SourceFile.model_validate(source_file)
-        for source_id, source_file in raw_files.items()
-    }
-
-    known_source_ids = set(result)
-    result = {
-        source_id: extractor.normalize_source_file(
-            source_id,
-            source_file,
-            known_source_ids,
-        )
-        for source_id, source_file in result.items()
-    }
+    result = _source_files_from_raw(extractor, raw_files)
 
     return SourceExtraction(
         files=result,
         files_found=files_found,
         files_excluded=files_excluded,
     )
+
+
+def _source_files_from_raw(
+    extractor: SourceExtractor,
+    raw_files: dict[str, object],
+) -> dict[str, SourceFile]:
+    files = _validate_source_files(raw_files)
+    return extractor.normalize_source_files(files)
+
+
+def _validate_source_files(raw_files: dict[str, object]) -> dict[str, SourceFile]:
+    if os.environ.get("MODWIRE_VALIDATE_EXTRACTOR_OUTPUT") == "1":
+        return _SOURCE_FILES_ADAPTER.validate_python(raw_files)
+    return {
+        source_id: _construct_source_file(source_file)
+        for source_id, source_file in raw_files.items()
+    }
+
+
+def _construct_source_file(source_file: object) -> SourceFile:
+    if isinstance(source_file, SourceFile):
+        return source_file
+    if not isinstance(source_file, dict):
+        return SourceFile.model_validate(source_file)
+    return SourceFile.model_construct(
+        imports=[
+            SourceImport.model_construct(
+                **{
+                    **source_import,
+                    "imported_symbols": _construct_models(
+                        SourceImportedSymbol,
+                        source_import.get("imported_symbols", []),
+                    ),
+                }
+            )
+            for source_import in source_file.get("imports", [])
+        ],
+        exports=_construct_models(SourceExport, source_file.get("exports", [])),
+        classes=[
+            SourceClass.model_construct(
+                **{
+                    **source_class,
+                    "methods": _construct_models(
+                        SourceClassMethod,
+                        source_class.get("methods", []),
+                    ),
+                    "properties": _construct_models(
+                        SourceClassProperty,
+                        source_class.get("properties", []),
+                    ),
+                }
+            )
+            for source_class in source_file.get("classes", [])
+        ],
+        interfaces=[
+            SourceInterface.model_construct(
+                **{
+                    **source_interface,
+                    "methods": _construct_models(
+                        SourceClassMethod,
+                        source_interface.get("methods", []),
+                    ),
+                    "properties": _construct_models(
+                        SourceClassProperty,
+                        source_interface.get("properties", []),
+                    ),
+                    "signatures": _construct_models(
+                        SourceSignature,
+                        source_interface.get("signatures", []),
+                    ),
+                }
+            )
+            for source_interface in source_file.get("interfaces", [])
+        ],
+        types=[
+            SourceType.model_construct(
+                **{
+                    **source_type,
+                    "properties": _construct_models(
+                        SourceClassProperty,
+                        source_type.get("properties", []),
+                    ),
+                    "signatures": _construct_models(
+                        SourceSignature,
+                        source_type.get("signatures", []),
+                    ),
+                }
+            )
+            for source_type in source_file.get("types", [])
+        ],
+        abstract_classes=[
+            SourceAbstractClass.model_construct(
+                **{
+                    **source_class,
+                    "abstract_methods": _construct_models(
+                        SourceClassMethod,
+                        source_class.get("abstract_methods", []),
+                    ),
+                    "concrete_methods": _construct_models(
+                        SourceClassMethod,
+                        source_class.get("concrete_methods", []),
+                    ),
+                    "properties": _construct_models(
+                        SourceClassProperty,
+                        source_class.get("properties", []),
+                    ),
+                }
+            )
+            for source_class in source_file.get("abstract_classes", [])
+        ],
+        functions=_construct_models(SourceFunction, source_file.get("functions", [])),
+        values=_construct_models(SourceValue, source_file.get("values", [])),
+        callables=[
+            SourceCallable.model_construct(
+                **{
+                    **source_callable,
+                    "parameters": _construct_models(
+                        SourceParameter,
+                        source_callable.get("parameters", []),
+                    ),
+                }
+            )
+            for source_callable in source_file.get("callables", [])
+        ],
+        calls=_construct_models(SourceCall, source_file.get("calls", [])),
+        line_count=source_file.get("line_count", 0),
+        code_line_count=source_file.get("code_line_count", 0),
+        public_symbol_count=source_file.get("public_symbol_count", 0),
+    )
+
+
+def _construct_models(model, values: object) -> list:
+    if not isinstance(values, list):
+        return []
+    return [
+        value if isinstance(value, model) else model.model_construct(**value)
+        for value in values
+        if isinstance(value, dict) or isinstance(value, model)
+    ]
 
 
 def _collect_extraction_targets(
@@ -331,6 +512,138 @@ def _json_from_output_in_batches(
             file_count=len(chunk),
         )
         result.update(raw_files)
+    return result
+
+
+def _jsonl_from_output_in_parallel(
+    cmd: list[str],
+    input_data: dict[str, str],
+    *,
+    language: str,
+    sources_root: Path,
+    batch_size: int,
+    parallel_threshold: int,
+    max_workers: int,
+) -> dict:
+    worker_count = _jsonl_worker_count(
+        len(input_data),
+        batch_size=batch_size,
+        parallel_threshold=parallel_threshold,
+        max_workers=max_workers,
+    )
+    if worker_count <= 1:
+        return _jsonl_from_output(
+            cmd,
+            json.dumps(input_data),
+            language=language,
+            sources_root=sources_root,
+            file_count=len(input_data),
+        )
+
+    result: dict[str, object] = {}
+    items = tuple(input_data.items())
+    chunks = tuple(
+        dict(items[start : start + batch_size])
+        for start in range(0, len(items), batch_size)
+    )
+    with ThreadPoolExecutor(max_workers=min(worker_count, len(chunks))) as pool:
+        for raw_files in pool.map(
+            lambda chunk: _jsonl_from_output(
+                cmd,
+                json.dumps(chunk),
+                language=language,
+                sources_root=sources_root,
+                file_count=len(chunk),
+            ),
+            chunks,
+        ):
+            result.update(raw_files)
+    return result
+
+
+def _jsonl_worker_count(
+    file_count: int,
+    *,
+    batch_size: int,
+    parallel_threshold: int,
+    max_workers: int,
+) -> int:
+    if file_count < parallel_threshold or batch_size <= 0 or max_workers <= 1:
+        return 1
+    configured = os.environ.get("MODWIRE_BATCH_EXTRACTOR_WORKERS")
+    if configured is not None:
+        try:
+            requested_workers = int(configured)
+        except ValueError as exc:
+            raise ValueError(
+                "MODWIRE_BATCH_EXTRACTOR_WORKERS must be an integer"
+            ) from exc
+        if requested_workers <= 0:
+            return 1
+        return min(requested_workers, file_count)
+    return min(max_workers, file_count)
+
+
+def _jsonl_from_output(
+    cmd: list[str],
+    input_json: str = "",
+    *,
+    language: str = "",
+    sources_root: Path | None = None,
+    file_count: int | None = None,
+) -> dict:
+    process = Popen(
+        cmd,
+        stdin=PIPE,
+        stdout=PIPE,
+        stderr=PIPE,
+        text=True,
+    )
+    assert process.stdin is not None
+    assert process.stdout is not None
+    process.stdin.write(input_json)
+    process.stdin.close()
+
+    result: dict[str, object] = {}
+    output_tail: list[str] = []
+    try:
+        for line in process.stdout:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            output_tail.append(stripped)
+            output_tail = output_tail[-20:]
+            try:
+                source_id, source_file = json.loads(stripped)
+            except json.JSONDecodeError as exc:
+                process.kill()
+                raise ValueError(f"Failed to parse JSONL from output: {stripped}") from exc
+            if not isinstance(source_id, str):
+                process.kill()
+                raise ValueError(f"Expected JSONL source id to be a string: {stripped}")
+            result[source_id] = source_file
+    finally:
+        process.stdout.close()
+
+    stderr = ""
+    if process.stderr is not None:
+        stderr = process.stderr.read()
+        process.stderr.close()
+    return_code = process.wait()
+    if return_code != 0:
+        raise ExtractorProcessError(
+            _format_process_error(
+                CalledProcessError(
+                    return_code,
+                    cmd,
+                    output="\n".join(output_tail),
+                    stderr=stderr,
+                ),
+                language,
+                sources_root,
+                file_count,
+            )
+        )
     return result
 
 

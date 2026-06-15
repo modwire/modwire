@@ -1652,6 +1652,29 @@ function extractBatchFromStdin(sourcesRoot) {
     return result;
 }
 
+function writeBatchJsonlFromStdin(sourcesRoot) {
+    const pathsBySourceId = JSON.parse(fs.readFileSync(0, 'utf8'));
+    if (
+        pathsBySourceId === null
+        || Array.isArray(pathsBySourceId)
+        || typeof pathsBySourceId !== 'object'
+    ) {
+        console.error('Expected a JSON object mapping source ids to TypeScript file paths.');
+        process.exit(1);
+    }
+
+    for (const [sourceId, filePath] of Object.entries(pathsBySourceId)) {
+        if (typeof sourceId !== 'string' || typeof filePath !== 'string') {
+            console.error('Expected source ids and paths to be strings.');
+            process.exit(1);
+        }
+        console.log(JSON.stringify([
+            sourceId,
+            extractFile(path.resolve(filePath), sourcesRoot, sourceId),
+        ]));
+    }
+}
+
 function publicSymbolCount(content) {
     const symbols = new Set();
     let match;
@@ -1690,9 +1713,12 @@ function publicSymbolCount(content) {
 }
 
 if (process.argv[2] === '--batch') {
-    console.log(JSON.stringify(extractBatchFromStdin(
-        process.argv[3] ? path.resolve(process.argv[3]) : process.cwd(),
-    )));
+    const sourcesRoot = process.argv[3] ? path.resolve(process.argv[3]) : process.cwd();
+    if (process.argv.includes('--jsonl')) {
+        writeBatchJsonlFromStdin(sourcesRoot);
+    } else {
+        console.log(JSON.stringify(extractBatchFromStdin(sourcesRoot)));
+    }
 } else {
     console.log(JSON.stringify(extractFile(
         path.resolve(process.argv[2]),

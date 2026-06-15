@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from posixpath import normpath
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 from ..definitions import SourceExport, SourceImport
 from .base import SourceExtraction, SourceExtractor, _extract_files
@@ -15,6 +15,10 @@ class TypeScriptExtractor(SourceExtractor):
     command = "node"
     extractor_file = "typescript_extractor.js"
     batch_size = 500
+    batch_output_format = "jsonl"
+    batch_parallel_threshold = 1000
+    batch_parallel_size = 500
+    max_batch_parallel_workers = 16
 
     def extract_files(
         self,
@@ -38,12 +42,13 @@ class TypeScriptExtractor(SourceExtractor):
     ) -> SourceImport:
         normalized_path = source_import.normalized_path
         if source_import.is_relative:
+            parent = source_id.rpartition("/")[0]
             normalized_path = normpath(
-                PurePosixPath(source_id).parent.joinpath(source_import.path).as_posix()
+                f"{parent}/{source_import.path}" if parent else source_import.path
             )
             normalized_path = self.normalize_source_id(normalized_path)
 
-        return SourceImport(
+        return SourceImport.model_construct(
             path=source_import.path,
             is_relative=source_import.is_relative,
             normalized_path=normalized_path,
@@ -68,12 +73,13 @@ class TypeScriptExtractor(SourceExtractor):
     ) -> SourceExport:
         normalized_path = source_export.normalized_path
         if source_export.is_relative:
+            parent = source_id.rpartition("/")[0]
             normalized_path = normpath(
-                PurePosixPath(source_id).parent.joinpath(source_export.path).as_posix()
+                f"{parent}/{source_export.path}" if parent else source_export.path
             )
             normalized_path = self.normalize_source_id(normalized_path)
 
-        return SourceExport(
+        return SourceExport.model_construct(
             name=source_export.name,
             local_name=source_export.local_name,
             kind=source_export.kind,
