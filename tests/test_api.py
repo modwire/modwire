@@ -12,10 +12,14 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from modwire import (
+    ExtractionCache,
     build_dependency_graph,
+    deserialize_code_map,
+    discover_sources,
     extract_code,
     find_unused_exports,
     normalize_source_id,
+    serialize_code_map,
     supported_languages,
 )
 from modwire.definitions import SourceFile
@@ -34,6 +38,13 @@ class AppFixture:
 class BuildDependencyGraphFunctionalTest(unittest.TestCase):
     def test_graph_builder_is_part_of_public_api(self) -> None:
         self.assertIsNotNone(build_dependency_graph)
+
+    def test_extraction_package_keeps_public_api_imports(self) -> None:
+        from modwire.extraction import CodeMap, ExtractionResult, extract_code
+
+        self.assertIsNotNone(CodeMap)
+        self.assertIsNotNone(ExtractionResult)
+        self.assertIsNotNone(extract_code)
 
     def test_source_id_helpers_are_language_aware(self) -> None:
         self.assertEqual(supported_languages(), ("python", "typescript", "php"))
@@ -164,6 +175,88 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         self.assertEqual(result.extraction_result.summary.files_found, 2)
         self.assertEqual(result.extraction_result.summary.files_excluded, 1)
         self.assertEqual(set(result.extraction_result.files), {"app"})
+
+    def test_discover_sources_exposes_manifest_with_extraction_semantics(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            root.joinpath("app.py").write_text("def run():\n    pass\n", encoding="utf-8")
+            ignored = root / "ignored"
+            ignored.mkdir()
+            ignored.joinpath("generated.py").write_text(
+                "def generated():\n    pass\n",
+                encoding="utf-8",
+            )
+
+            manifest = discover_sources("python", root, ("ignored/**",))
+
+        self.assertEqual(manifest.language, "python")
+        self.assertEqual(manifest.files_found, 2)
+        self.assertEqual(manifest.files_checked, 1)
+        self.assertEqual(manifest.files_excluded, 1)
+        self.assertEqual([entry.source_id for entry in manifest.entries], ["app"])
+        self.assertEqual(manifest.entries[0].size, len("def run():\n    pass\n"))
+        self.assertTrue(manifest.extractor_path.name.endswith("_extractor.py"))
+        self.assertTrue(manifest.fingerprint())
+
+    def test_code_map_serialization_round_trips_graph_and_extraction(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            root.joinpath("dep.py").write_text("class Dep:\n    pass\n", encoding="utf-8")
+            root.joinpath("app.py").write_text(
+                "from dep import Dep\n\n"
+                "def run():\n"
+                "    return Dep()\n",
+                encoding="utf-8",
+            )
+
+            result = extract_code("python", root, ())
+
+        loaded = deserialize_code_map(serialize_code_map(result))
+
+        self.assertEqual(
+            loaded.extraction_result.summary,
+            result.extraction_result.summary,
+        )
+        self.assertEqual(
+            set(loaded.extraction_result.files),
+            set(result.extraction_result.files),
+        )
+        self.assertEqual(
+            [(edge.from_id, edge.to_id) for edge in loaded.graph.edges],
+            [(edge.from_id, edge.to_id) for edge in result.graph.edges],
+        )
+        self.assertEqual(
+            loaded.graph.outgoing("app"),
+            result.graph.outgoing("app"),
+        )
+
+    def test_extraction_cache_reuses_serialized_code_map(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            cache_root = root / ".modwire-cache"
+            root.joinpath("one.py").write_text("def one():\n    pass\n", encoding="utf-8")
+            root.joinpath("two.py").write_text("def two():\n    pass\n", encoding="utf-8")
+
+            with patch("modwire.extractors.base.run") as run_mock:
+                run_mock.side_effect = fake_batch_run
+                first = extract_code(
+                    "python",
+                    root,
+                    (),
+                    cache=ExtractionCache(cache_root),
+                )
+                second = extract_code(
+                    "python",
+                    root,
+                    (),
+                    cache=ExtractionCache(cache_root),
+                )
+
+        self.assertEqual(first.cache_status, "miss")
+        self.assertEqual(second.cache_status, "hit")
+        self.assertEqual(first.cache_key, second.cache_key)
+        self.assertEqual(run_mock.call_count, 1)
+        self.assertEqual(set(second.extraction_result.files), {"one", "two"})
 
     def test_python_batch_output_equals_single_file_output(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
