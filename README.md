@@ -77,3 +77,18 @@ uv run pytest
 uv run python -m build --outdir dist
 uv run twine check dist/*
 ```
+
+## Contributing
+
+Feature requests and bug reports are tracked through GitHub Issues:
+
+- Open a feature request for new language support, graph metadata, architecture
+  rules, export formats, or documentation examples.
+- Open a bug report for incorrect extraction results, graph edges, architecture
+  violations, packaging problems, or runtime failures.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the information to include and the
+checks to run before opening a pull request.
+
+Starter wiki pages are tracked under [docs/wiki](docs/wiki) so the GitHub Wiki
+can be initialized with the same guidance.

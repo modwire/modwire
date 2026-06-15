@@ -1,0 +1,106 @@
+name: Bug report
+description: Report incorrect extraction, graph output, architecture analysis, packaging, or runtime behavior.
+title: "Bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Clear reproduction details make it much easier to fix issues in extractors and graph analysis.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the bug and the behavior you expected instead.
+      placeholder: Modwire returned...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Python extractor
+        - TypeScript/JavaScript extractor
+        - PHP extractor
+        - Dependency graph
+        - Architecture policy API
+        - Packaging or installation
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How can we reproduce it?
+      description: Include the smallest source tree, snippet, command, or test case that shows the problem.
+      placeholder: |
+        1. Create this file...
+        2. Run this code...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual output
+      description: Paste the returned objects, graph edges, violation output, traceback, or command output.
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected output
+      description: Describe the graph, source IDs, symbols, imports, or violations you expected.
+    validations:
+      required: false
+
+  - type: input
+    id: modwire-version
+    attributes:
+      label: Modwire version
+      description: Run `python -m pip show modwire` or identify the commit SHA if installed from source.
+      placeholder: 0.0.0 or commit SHA
+    validations:
+      required: false
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: "3.11, 3.12, or 3.13"
+    validations:
+      required: true
+
+  - type: input
+    id: runtime-versions
+    attributes:
+      label: Node.js or PHP version, if relevant
+      description: TypeScript/JavaScript extraction requires Node.js. PHP extraction requires PHP.
+      placeholder: "Node.js 20.x, PHP 8.3, or not applicable"
+    validations:
+      required: false
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "macOS 15, Ubuntu 24.04, Windows 11, etc."
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add anything else that may help explain the problem.
+    validations:
+      required: false

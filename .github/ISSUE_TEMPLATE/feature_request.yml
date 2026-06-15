@@ -1,0 +1,70 @@
+name: Feature request
+description: Suggest a new capability, supported language, extractor improvement, graph API, or architecture rule.
+title: "Feature: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for new capabilities or behavior changes. For incorrect current behavior, please open a bug report instead.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem should this solve?
+      description: Describe the workflow, codebase shape, or analysis gap that motivates the request.
+      placeholder: I want to use Modwire to...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature area
+      options:
+        - New language support
+        - Python extractor
+        - TypeScript/JavaScript extractor
+        - PHP extractor
+        - Dependency graph
+        - Architecture policy API
+        - Exports or integrations
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Explain the API, CLI, output shape, analyzer, or documentation you would like to see.
+      placeholder: Modwire should...
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example usage or input
+      description: Include a short source snippet, desired graph shape, policy example, or Python API sketch if useful.
+      render: python
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Mention any workaround or different API shape you have considered.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be interested in working on this.
+          required: false
