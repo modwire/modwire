@@ -1,4 +1,10 @@
 from ._version import __version__
+from .callables import (
+    CallableReportEntry,
+    callable_report_entries,
+    render_callable_report,
+    structured_callable_report,
+)
 from .extraction import (
     CodeMap,
     CodeMapSerializationError,
@@ -46,6 +52,7 @@ from .shape import (
 __all__ = [
     "CodeMap",
     "CodeMapSerializationError",
+    "CallableReportEntry",
     "DependencyGraph",
     "Edge",
     "EXTRACTION_SCHEMA_VERSION",
@@ -69,6 +76,7 @@ __all__ = [
     "UnusedExport",
     "__version__",
     "build_dependency_graph",
+    "callable_report_entries",
     "deserialize_code_map",
     "discover_sources",
     "evaluate_shape",
@@ -79,8 +87,10 @@ __all__ = [
     "languages",
     "normalize_source_id",
     "require_runtime",
+    "render_callable_report",
     "runtime_diagnostics",
     "serialize_code_map",
+    "structured_callable_report",
     "supported_languages",
     "validate_shape_config",
 ]

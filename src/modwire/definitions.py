@@ -6,6 +6,19 @@ from pydantic import BaseModel, Field
 ImportCrossingType = Literal["module", "symbol"]
 SourceVisibility = Literal["public", "protected", "private"]
 SourceSignatureKind = Literal["call", "construct", "index"]
+SourceValueDeclarationKind = Literal["assignment", "constant", "property", "unknown"]
+SourceValueKind = Literal["callable", "class", "literal", "object", "unknown"]
+SourceParameterKind = Literal["positional", "vararg", "keyword_only", "kwarg"]
+SourceCallableKind = Literal[
+    "function",
+    "method",
+    "classmethod",
+    "staticmethod",
+    "constructor",
+    "callable_value",
+    "anonymous",
+]
+SourceCallResolution = Literal["resolved", "unresolved", "external", "dynamic"]
 SourceExportKind = Literal[
     "module",
     "class",
@@ -62,6 +75,54 @@ class SourceFunction(BaseModel):
     line_count: int
     declared_args: int
     optional_args: int
+
+
+class SourceValue(BaseModel):
+    name: str
+    visibility: SourceVisibility
+    visibility_intent: SourceVisibility
+    line_count: int
+    declaration_kind: SourceValueDeclarationKind
+    value_kind: SourceValueKind
+    declared_args: int = 0
+    optional_args: int = 0
+
+
+class SourceParameter(BaseModel):
+    name: str
+    annotation: str = ""
+    kind: SourceParameterKind
+    has_default: bool = False
+
+
+class SourceCallable(BaseModel):
+    id: str
+    source_id: str
+    name: str
+    qualified_name: str
+    owner_name: str = ""
+    kind: SourceCallableKind
+    visibility: SourceVisibility
+    visibility_intent: SourceVisibility
+    line_start: int
+    line_end: int
+    line_count: int
+    parameters: list[SourceParameter] = Field(default_factory=list)
+    declared_args: int = 0
+    optional_args: int = 0
+    return_annotation: str = ""
+    decorators: list[str] = Field(default_factory=list)
+    docstring: str = ""
+
+
+class SourceCall(BaseModel):
+    source_callable_id: str
+    target_callable_id: str = ""
+    source_id: str
+    line: int
+    expression: str
+    resolution: SourceCallResolution
+    target_name: str
 
 
 class SourceClassMethod(BaseModel):
@@ -131,6 +192,9 @@ class SourceFile(BaseModel):
     types: list[SourceType] = Field(default_factory=list)
     abstract_classes: list[SourceAbstractClass] = Field(default_factory=list)
     functions: list[SourceFunction]
+    values: list[SourceValue] = Field(default_factory=list)
+    callables: list[SourceCallable] = Field(default_factory=list)
+    calls: list[SourceCall] = Field(default_factory=list)
     line_count: int
     code_line_count: int
     public_symbol_count: int

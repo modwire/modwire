@@ -1229,14 +1229,389 @@ function collectExports(content, filePath, sourcesRoot) {
     return exports;
 }
 
-function extractFile(filePath, sourcesRoot) {
+function sourceIdForPath(filePath, sourcesRoot) {
+    return withoutExtension(path.relative(sourcesRoot, filePath).split(path.sep).join('/')).replace(/^\/+|\/+$/g, '');
+}
+
+function callableId(sourceId, qualifiedName) {
+    return `${sourceId}::${qualifiedName}`;
+}
+
+function parameterName(parameter) {
+    const cleaned = parameter
+        .replace(/^(?:(?:public|protected|private|readonly|override|static)\s+)*/g, '')
+        .replace(/^\.\.\.\s*/, '')
+        .trim();
+    const match = cleaned.match(/^([A-Za-z_$][\w$]*)/);
+    return match === null ? cleaned : match[1];
+}
+
+function parameterDefinitions(parameterText) {
+    return splitTopLevelParameters(parameterText).map(parameter => ({
+        name: parameterName(parameter),
+        annotation: '',
+        kind: parameter.trim().startsWith('...') ? 'vararg' : 'positional',
+        has_default: hasTopLevelCharacter(parameter, '=') || /\?(\s*[:=]|$)/.test(parameter),
+    }));
+}
+
+function sourceCallable(options) {
+    const parameters = options.parameters || [];
+    return {
+        id: callableId(options.sourceId, options.qualifiedName),
+        source_id: options.sourceId,
+        name: options.name,
+        qualified_name: options.qualifiedName,
+        owner_name: options.ownerName || '',
+        kind: options.kind,
+        visibility: options.visibility,
+        visibility_intent: options.visibilityIntent,
+        line_start: lineNumberAt(options.lineStarts, options.startIndex),
+        line_end: lineNumberAt(options.lineStarts, options.endIndex),
+        line_count: lineSpan(options.lineStarts, options.startIndex, options.endIndex),
+        parameters,
+        declared_args: parameters.length,
+        optional_args: parameters.filter(parameter => parameter.has_default).length,
+        return_annotation: '',
+        decorators: [],
+        docstring: '',
+    };
+}
+
+function sourceValue(options) {
+    const counts = options.counts || { declared_args: 0, optional_args: 0 };
+    return {
+        name: options.name,
+        visibility: options.visibility,
+        visibility_intent: options.visibilityIntent,
+        line_count: lineSpan(options.lineStarts, options.startIndex, options.endIndex),
+        declaration_kind: 'assignment',
+        value_kind: options.valueKind,
+        declared_args: counts.declared_args,
+        optional_args: counts.optional_args,
+    };
+}
+
+function initializerValueKind(content, startIndex) {
+    const rest = content.slice(startIndex).trimStart();
+    if (/^(?:async\s*)?(?:function\b|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)/.test(rest)) {
+        return 'callable';
+    }
+    if (/^['"`0-9]|^(?:true|false|null|undefined)\b/.test(rest)) {
+        return 'literal';
+    }
+    if (/^[{[]/.test(rest) || /^new\s+/.test(rest)) {
+        return 'object';
+    }
+    return 'unknown';
+}
+
+function collectTopLevelValuesAndCallables(content, lineStarts, classRanges, sourceId) {
+    const values = [];
+    const callables = [];
+    const callableRanges = [];
+    const valueRegex = /\b(export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*/g;
+    let match;
+
+    while ((match = valueRegex.exec(content)) !== null) {
+        if (isWithinRanges(match.index, classRanges)) {
+            continue;
+        }
+        const name = match[2];
+        const visibility = match[1] ? 'public' : 'private';
+        const valueStartIndex = valueRegex.lastIndex;
+        const endIndex = findTopLevelSemicolon(content, valueStartIndex);
+        const valueKind = initializerValueKind(content, valueStartIndex);
+        let counts = { declared_args: 0, optional_args: 0 };
+        let callableEndIndex = endIndex;
+        let parameters = [];
+        const afterEquals = content.slice(valueStartIndex, endIndex);
+        const arrowMatch = afterEquals.match(/^\s*(?:async\s*)?(\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*(\{)?/);
+        const functionMatch = afterEquals.match(/^\s*(?:async\s*)?function(?:\s+[A-Za-z_$][\w$]*)?\s*\(([^)]*)\)[^{]*\{/);
+        if (arrowMatch !== null) {
+            const parameterText = arrowMatch[1].replace(/^\(|\)$/g, '');
+            counts = parameterCounts(parameterText);
+            parameters = parameterDefinitions(parameterText);
+            const bodyOpenIndex = content.indexOf('{', valueStartIndex + arrowMatch.index);
+            callableEndIndex = arrowMatch[2] === '{' && bodyOpenIndex !== -1
+                ? findMatchingBrace(content, bodyOpenIndex)
+                : endIndex;
+        } else if (functionMatch !== null) {
+            counts = parameterCounts(functionMatch[1]);
+            parameters = parameterDefinitions(functionMatch[1]);
+            const bodyOpenIndex = content.indexOf('{', valueStartIndex + functionMatch.index);
+            callableEndIndex = bodyOpenIndex === -1 ? endIndex : findMatchingBrace(content, bodyOpenIndex);
+        }
+
+        values.push(sourceValue({
+            name,
+            visibility,
+            visibilityIntent: visibilityIntent(name, visibility),
+            startIndex: match.index,
+            endIndex,
+            lineStarts,
+            valueKind,
+            counts,
+        }));
+        if (valueKind === 'callable') {
+            const sourceCallableValue = sourceCallable({
+                sourceId,
+                name,
+                qualifiedName: name,
+                kind: 'callable_value',
+                visibility,
+                visibilityIntent: visibilityIntent(name, visibility),
+                startIndex: match.index,
+                endIndex: callableEndIndex,
+                lineStarts,
+                parameters,
+            });
+            callables.push(sourceCallableValue);
+            callableRanges.push({
+                id: sourceCallableValue.id,
+                ownerName: '',
+                bodyStart: valueStartIndex,
+                bodyEnd: callableEndIndex,
+            });
+        }
+    }
+
+    return { values, callables, callableRanges };
+}
+
+function collectDeclarationCallables(content, lineStarts, classRanges, sourceId) {
+    const callables = [];
+    const callableRanges = [];
+    let match;
+    const functionRegex = /\b(export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g;
+    while ((match = functionRegex.exec(content)) !== null) {
+        if (isWithinRanges(match.index, classRanges)) {
+            continue;
+        }
+        const openParenIndex = content.indexOf('(', match.index);
+        const closeParenIndex = findMatchingParen(content, openParenIndex);
+        const openBraceIndex = content.indexOf('{', closeParenIndex);
+        if (openBraceIndex === -1) {
+            continue;
+        }
+        const closeBraceIndex = findMatchingBrace(content, openBraceIndex);
+        const visibility = match[1] ? 'public' : 'private';
+        const sourceCallableValue = sourceCallable({
+            sourceId,
+            name: match[2],
+            qualifiedName: match[2],
+            kind: 'function',
+            visibility,
+            visibilityIntent: visibilityIntent(match[2], visibility),
+            startIndex: match.index,
+            endIndex: closeBraceIndex,
+            lineStarts,
+            parameters: parameterDefinitions(content.slice(openParenIndex + 1, closeParenIndex)),
+        });
+        callables.push(sourceCallableValue);
+        callableRanges.push({
+            id: sourceCallableValue.id,
+            ownerName: '',
+            bodyStart: openBraceIndex + 1,
+            bodyEnd: closeBraceIndex,
+        });
+    }
+
+    const classRegex = /\b(export\s+(?:default\s+)?)?(?:abstract\s+)?class\s+([A-Za-z_$][\w$]*)[^{]*\{/g;
+    while ((match = classRegex.exec(content)) !== null) {
+        const className = match[2];
+        const openBraceIndex = content.indexOf('{', match.index);
+        const closeBraceIndex = findMatchingBrace(content, openBraceIndex);
+        const body = content.slice(openBraceIndex + 1, closeBraceIndex);
+        const methodRegex = /(?:^|\n)\s*((?:public|protected|private|static|async|get|set|readonly|override|abstract)\s+)*([#A-Za-z_$][\w$]*)\s*\(/g;
+        let methodMatch;
+        const seenMethods = new Set();
+        while ((methodMatch = methodRegex.exec(body)) !== null) {
+            const methodName = methodMatch[2];
+            if (seenMethods.has(methodName)) {
+                continue;
+            }
+            seenMethods.add(methodName);
+            const methodStart = openBraceIndex + 1 + methodMatch.index;
+            const methodOpenParen = body.indexOf('(', methodMatch.index);
+            const methodCloseParen = findMatchingParen(body, methodOpenParen);
+            const methodOpenBrace = body.indexOf('{', methodCloseParen);
+            if (methodOpenBrace === -1) {
+                continue;
+            }
+            const methodBraceIndex = openBraceIndex + 1 + methodOpenBrace;
+            const methodCloseBraceIndex = findMatchingBrace(content, methodBraceIndex);
+            const visibility = methodVisibilityFromTokens(methodMatch[1] || '', methodName);
+            const kind = methodName === 'constructor'
+                ? 'constructor'
+                : (/\bstatic\b/.test(methodMatch[1] || '') ? 'staticmethod' : 'method');
+            const qualifiedName = `${className}.${methodName}`;
+            const sourceCallableValue = sourceCallable({
+                sourceId,
+                name: methodName,
+                qualifiedName,
+                ownerName: className,
+                kind,
+                visibility,
+                visibilityIntent: visibilityIntent(methodName, visibility),
+                startIndex: methodStart,
+                endIndex: methodCloseBraceIndex,
+                lineStarts,
+                parameters: parameterDefinitions(body.slice(methodOpenParen + 1, methodCloseParen)),
+            });
+            callables.push(sourceCallableValue);
+            callableRanges.push({
+                id: sourceCallableValue.id,
+                ownerName: className,
+                bodyStart: methodBraceIndex + 1,
+                bodyEnd: methodCloseBraceIndex,
+            });
+        }
+    }
+
+    return { callables, callableRanges };
+}
+
+function collectAnonymousCallables(content, lineStarts, sourceId, callableRanges) {
+    const callables = [];
+    const ranges = [];
+    for (const parentRange of callableRanges) {
+        const body = content.slice(parentRange.bodyStart, parentRange.bodyEnd);
+        const arrowRegex = /(?:\(|,|\[)\s*(?:async\s*)?(\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*(\{)?/g;
+        let match;
+        while ((match = arrowRegex.exec(body)) !== null) {
+            const startIndex = parentRange.bodyStart + match.index;
+            const bodyOpenIndex = match[2] === '{' ? content.indexOf('{', startIndex) : -1;
+            const endIndex = bodyOpenIndex === -1
+                ? findTopLevelSemicolon(content, startIndex)
+                : findMatchingBrace(content, bodyOpenIndex);
+            const callableBody = content.slice(bodyOpenIndex === -1 ? startIndex : bodyOpenIndex + 1, endIndex);
+            if (!/[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*\s*\(/.test(callableBody)) {
+                continue;
+            }
+            const line = lineNumberAt(lineStarts, startIndex);
+            const column = startIndex - lineStarts[line - 1];
+            const name = `<anonymous>@${line}:${column}`;
+            const parentQualifiedName = parentRange.id.split('::')[1] || '';
+            const sourceCallableValue = sourceCallable({
+                sourceId,
+                name,
+                qualifiedName: `${parentQualifiedName}.${name}`,
+                ownerName: parentRange.ownerName,
+                kind: 'anonymous',
+                visibility: 'public',
+                visibilityIntent: 'public',
+                startIndex,
+                endIndex,
+                lineStarts,
+                parameters: parameterDefinitions(match[1].replace(/^\(|\)$/g, '')),
+            });
+            callables.push(sourceCallableValue);
+            ranges.push({
+                id: sourceCallableValue.id,
+                ownerName: parentRange.ownerName,
+                bodyStart: bodyOpenIndex === -1 ? startIndex : bodyOpenIndex + 1,
+                bodyEnd: endIndex,
+            });
+        }
+    }
+    return { callables, callableRanges: ranges };
+}
+
+function collectCalls(content, lineStarts, sourceId, callableRanges, callables) {
+    const byName = new Map();
+    const byQualifiedName = new Map();
+    const constructorsByName = new Map();
+    for (const sourceCallableValue of callables) {
+        byQualifiedName.set(sourceCallableValue.qualified_name, sourceCallableValue.id);
+        if (['function', 'callable_value'].includes(sourceCallableValue.kind)) {
+            byName.set(sourceCallableValue.name, sourceCallableValue.id);
+        }
+        if (sourceCallableValue.kind === 'constructor') {
+            constructorsByName.set(sourceCallableValue.owner_name, sourceCallableValue.id);
+        }
+    }
+
+    const calls = [];
+    const callRegex = /\b(new\s+)?([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*\(/g;
+    const ignored = new Set(['if', 'for', 'while', 'switch', 'catch', 'function', 'return']);
+    for (const range of callableRanges) {
+        const body = content.slice(range.bodyStart, range.bodyEnd);
+        let match;
+        while ((match = callRegex.exec(body)) !== null) {
+            const expression = match[2];
+            const targetName = expression.split('.').pop();
+            if (ignored.has(expression) || ignored.has(targetName)) {
+                continue;
+            }
+            const absoluteIndex = range.bodyStart + match.index;
+            const previous = content.slice(Math.max(0, absoluteIndex - 16), absoluteIndex);
+            if (/\bfunction\s+$/.test(previous)) {
+                continue;
+            }
+            let targetCallableId = '';
+            let resolution = 'unresolved';
+            if (match[1] && constructorsByName.has(expression)) {
+                targetCallableId = constructorsByName.get(expression);
+                resolution = 'resolved';
+            } else if (byQualifiedName.has(expression)) {
+                targetCallableId = byQualifiedName.get(expression);
+                resolution = 'resolved';
+            } else if (expression.startsWith('this.') && range.ownerName) {
+                const qualifiedName = `${range.ownerName}.${expression.slice('this.'.length)}`;
+                if (byQualifiedName.has(qualifiedName)) {
+                    targetCallableId = byQualifiedName.get(qualifiedName);
+                    resolution = 'resolved';
+                }
+            } else if (byName.has(expression)) {
+                targetCallableId = byName.get(expression);
+                resolution = 'resolved';
+            }
+            calls.push({
+                source_callable_id: range.id,
+                target_callable_id: targetCallableId,
+                source_id: sourceId,
+                line: lineNumberAt(lineStarts, absoluteIndex),
+                expression,
+                resolution,
+                target_name: targetName,
+            });
+        }
+    }
+    return calls;
+}
+
+function collectCallableGraph(content, lineStarts, classRanges, sourceId) {
+    const valuesAndCallableValues = collectTopLevelValuesAndCallables(content, lineStarts, classRanges, sourceId);
+    const declarations = collectDeclarationCallables(content, lineStarts, classRanges, sourceId);
+    const callableRanges = [
+        ...valuesAndCallableValues.callableRanges,
+        ...declarations.callableRanges,
+    ];
+    const callables = [
+        ...valuesAndCallableValues.callables,
+        ...declarations.callables,
+    ];
+    const anonymous = collectAnonymousCallables(content, lineStarts, sourceId, callableRanges);
+    const allCallableRanges = [...callableRanges, ...anonymous.callableRanges];
+    const allCallables = [...callables, ...anonymous.callables];
+    return {
+        values: valuesAndCallableValues.values,
+        callables: allCallables,
+        calls: collectCalls(content, lineStarts, sourceId, allCallableRanges, allCallables),
+    };
+}
+
+function extractFile(filePath, sourcesRoot, sourceId = null) {
     const content = fs.readFileSync(filePath, 'utf8');
     const lineStarts = buildLineStarts(content);
+    const resolvedSourceId = sourceId || sourceIdForPath(filePath, sourcesRoot);
     const { classes, classRanges } = collectClasses(content, lineStarts);
     const interfaces = collectInterfaces(content, lineStarts);
     const types = collectTypes(content, lineStarts);
     const abstractClasses = collectAbstractClasses(content, lineStarts);
     const functions = collectFunctions(content, lineStarts, classRanges);
+    const callableGraph = collectCallableGraph(content, lineStarts, classRanges, resolvedSourceId);
 
     return {
         imports: collectImports(content, filePath, sourcesRoot),
@@ -1246,6 +1621,9 @@ function extractFile(filePath, sourcesRoot) {
         types,
         abstract_classes: abstractClasses,
         functions,
+        values: callableGraph.values,
+        callables: callableGraph.callables,
+        calls: callableGraph.calls,
         line_count: content.split('\n').length,
         code_line_count: codeLineCount(content),
         public_symbol_count: publicSymbolCount(content),
@@ -1269,7 +1647,7 @@ function extractBatchFromStdin(sourcesRoot) {
             console.error('Expected source ids and paths to be strings.');
             process.exit(1);
         }
-        result[sourceId] = extractFile(path.resolve(filePath), sourcesRoot);
+        result[sourceId] = extractFile(path.resolve(filePath), sourcesRoot, sourceId);
     }
     return result;
 }

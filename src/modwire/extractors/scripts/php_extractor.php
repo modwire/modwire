@@ -579,8 +579,457 @@ function collect_exports(array $classes, array $interfaces, array $abstractClass
     return $exports;
 }
 
-function extract_file(string $path): array {
+function source_id_for_path(string $path, string $sourcesRoot): string {
+    $normalizedPath = str_replace('\\', '/', realpath($path) ?: $path);
+    $normalizedRoot = rtrim(str_replace('\\', '/', realpath($sourcesRoot) ?: $sourcesRoot), '/');
+    if ($normalizedRoot !== '' && str_starts_with($normalizedPath, $normalizedRoot . '/')) {
+        $normalizedPath = substr($normalizedPath, strlen($normalizedRoot) + 1);
+    }
+    if (str_ends_with($normalizedPath, '.php')) {
+        $normalizedPath = substr($normalizedPath, 0, -4);
+    }
+    return trim($normalizedPath, '/');
+}
+
+function line_number_at_offset(string $content, int $offset): int {
+    return substr_count(substr($content, 0, max(0, $offset)), "\n") + 1;
+}
+
+function line_span_for_offsets(string $content, int $startOffset, int $endOffset): int {
+    return line_number_at_offset($content, $endOffset) - line_number_at_offset($content, $startOffset) + 1;
+}
+
+function find_matching_text(string $content, int $openOffset, string $open, string $close): int {
+    $depth = 0;
+    $length = strlen($content);
+    $inSingle = false;
+    $inDouble = false;
+    $inLineComment = false;
+    $inBlockComment = false;
+    for ($index = $openOffset; $index < $length; $index++) {
+        $current = $content[$index];
+        $next = $content[$index + 1] ?? '';
+        if ($inLineComment) {
+            if ($current === "\n") {
+                $inLineComment = false;
+            }
+            continue;
+        }
+        if ($inBlockComment) {
+            if ($current === '*' && $next === '/') {
+                $inBlockComment = false;
+                $index++;
+            }
+            continue;
+        }
+        if ($inSingle) {
+            if ($current === '\\') {
+                $index++;
+                continue;
+            }
+            if ($current === "'") {
+                $inSingle = false;
+            }
+            continue;
+        }
+        if ($inDouble) {
+            if ($current === '\\') {
+                $index++;
+                continue;
+            }
+            if ($current === '"') {
+                $inDouble = false;
+            }
+            continue;
+        }
+        if ($current === '/' && $next === '/') {
+            $inLineComment = true;
+            $index++;
+            continue;
+        }
+        if ($current === '/' && $next === '*') {
+            $inBlockComment = true;
+            $index++;
+            continue;
+        }
+        if ($current === "'") {
+            $inSingle = true;
+            continue;
+        }
+        if ($current === '"') {
+            $inDouble = true;
+            continue;
+        }
+        if ($current === $open) {
+            $depth++;
+            continue;
+        }
+        if ($current === $close) {
+            $depth--;
+            if ($depth === 0) {
+                return $index;
+            }
+        }
+    }
+    return $openOffset;
+}
+
+function find_semicolon_text(string $content, int $startOffset): int {
+    $length = strlen($content);
+    for ($index = $startOffset; $index < $length; $index++) {
+        if ($content[$index] === ';') {
+            return $index;
+        }
+    }
+    return max(0, $length - 1);
+}
+
+function callable_id_for_source(string $sourceId, string $qualifiedName): string {
+    return $sourceId . '::' . $qualifiedName;
+}
+
+function parameter_definitions_from_text(string $parameterText): array {
+    $parameters = [];
+    foreach (explode(',', trim($parameterText)) as $rawParameter) {
+        $parameter = trim($rawParameter);
+        if ($parameter === '') {
+            continue;
+        }
+        if (!preg_match('/\$([A-Za-z_][A-Za-z0-9_]*)/', $parameter, $match)) {
+            continue;
+        }
+        $parameters[] = [
+            'name' => $match[1],
+            'annotation' => '',
+            'kind' => str_contains($parameter, '...') ? 'vararg' : 'positional',
+            'has_default' => str_contains($parameter, '=') || str_contains($parameter, '...'),
+        ];
+    }
+    return $parameters;
+}
+
+function source_callable_entry(
+    string $sourceId,
+    string $name,
+    string $qualifiedName,
+    string $ownerName,
+    string $kind,
+    string $visibility,
+    string $content,
+    int $startOffset,
+    int $endOffset,
+    array $parameters
+): array {
+    return [
+        'id' => callable_id_for_source($sourceId, $qualifiedName),
+        'source_id' => $sourceId,
+        'name' => $name,
+        'qualified_name' => $qualifiedName,
+        'owner_name' => $ownerName,
+        'kind' => $kind,
+        'visibility' => $visibility,
+        'visibility_intent' => visibility_intent($name, $visibility),
+        'line_start' => line_number_at_offset($content, $startOffset),
+        'line_end' => line_number_at_offset($content, $endOffset),
+        'line_count' => line_span_for_offsets($content, $startOffset, $endOffset),
+        'parameters' => $parameters,
+        'declared_args' => count($parameters),
+        'optional_args' => count(array_filter($parameters, fn ($parameter) => $parameter['has_default'])),
+        'return_annotation' => '',
+        'decorators' => [],
+        'docstring' => '',
+    ];
+}
+
+function source_value_entry(
+    string $name,
+    string $visibility,
+    string $content,
+    int $startOffset,
+    int $endOffset,
+    string $valueKind,
+    array $parameters = []
+): array {
+    return [
+        'name' => $name,
+        'visibility' => $visibility,
+        'visibility_intent' => visibility_intent($name, $visibility),
+        'line_count' => line_span_for_offsets($content, $startOffset, $endOffset),
+        'declaration_kind' => 'assignment',
+        'value_kind' => $valueKind,
+        'declared_args' => count($parameters),
+        'optional_args' => count(array_filter($parameters, fn ($parameter) => $parameter['has_default'])),
+    ];
+}
+
+function offset_within_ranges(int $offset, array $ranges): bool {
+    foreach ($ranges as $range) {
+        if ($offset >= $range['start'] && $offset <= $range['end']) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function collect_callable_graph(string $content, string $sourceId): array {
+    $values = [];
+    $callables = [];
+    $callableRanges = [];
+    $classRanges = [];
+
+    if (preg_match_all('/\bclass\s+([A-Za-z_][A-Za-z0-9_]*)[^{]*\{/', $content, $classMatches, PREG_OFFSET_CAPTURE)) {
+        foreach ($classMatches[0] as $index => $fullMatch) {
+            $className = $classMatches[1][$index][0];
+            $classStart = $fullMatch[1];
+            $classOpen = strpos($content, '{', $classStart);
+            if ($classOpen === false) {
+                continue;
+            }
+            $classEnd = find_matching_text($content, $classOpen, '{', '}');
+            $classRanges[] = ['start' => $classStart, 'end' => $classEnd];
+            $body = substr($content, $classOpen + 1, $classEnd - $classOpen - 1);
+            if (!preg_match_all('/((?:public|protected|private|static|final|abstract|\s)+)?function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)[^{;]*(\{|;)/', $body, $methodMatches, PREG_OFFSET_CAPTURE)) {
+                continue;
+            }
+            foreach ($methodMatches[0] as $methodIndex => $methodFullMatch) {
+                if ($methodMatches[4][$methodIndex][0] !== '{') {
+                    continue;
+                }
+                $prefix = $methodMatches[1][$methodIndex][0] ?? '';
+                $methodName = $methodMatches[2][$methodIndex][0];
+                $parameters = parameter_definitions_from_text($methodMatches[3][$methodIndex][0]);
+                $methodStart = $classOpen + 1 + $methodFullMatch[1];
+                $methodOpen = strpos($content, '{', $methodStart);
+                if ($methodOpen === false) {
+                    continue;
+                }
+                $methodEnd = find_matching_text($content, $methodOpen, '{', '}');
+                $visibility = 'public';
+                if (str_contains($prefix, 'private')) {
+                    $visibility = 'private';
+                } elseif (str_contains($prefix, 'protected')) {
+                    $visibility = 'protected';
+                }
+                $kind = $methodName === '__construct' ? 'constructor' : (str_contains($prefix, 'static') ? 'staticmethod' : 'method');
+                $qualifiedName = $className . '.' . $methodName;
+                $callable = source_callable_entry(
+                    $sourceId,
+                    $methodName,
+                    $qualifiedName,
+                    $className,
+                    $kind,
+                    $visibility,
+                    $content,
+                    $methodStart,
+                    $methodEnd,
+                    $parameters
+                );
+                $callables[] = $callable;
+                $callableRanges[] = [
+                    'id' => $callable['id'],
+                    'owner_name' => $className,
+                    'body_start' => $methodOpen + 1,
+                    'body_end' => $methodEnd,
+                ];
+            }
+        }
+    }
+
+    if (preg_match_all('/\bfunction\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)[^{;]*\{/', $content, $functionMatches, PREG_OFFSET_CAPTURE)) {
+        foreach ($functionMatches[0] as $index => $fullMatch) {
+            $functionStart = $fullMatch[1];
+            if (offset_within_ranges($functionStart, $classRanges)) {
+                continue;
+            }
+            $functionName = $functionMatches[1][$index][0];
+            $parameters = parameter_definitions_from_text($functionMatches[2][$index][0]);
+            $functionOpen = strpos($content, '{', $functionStart);
+            if ($functionOpen === false) {
+                continue;
+            }
+            $functionEnd = find_matching_text($content, $functionOpen, '{', '}');
+            $callable = source_callable_entry(
+                $sourceId,
+                $functionName,
+                $functionName,
+                '',
+                'function',
+                'public',
+                $content,
+                $functionStart,
+                $functionEnd,
+                $parameters
+            );
+            $callables[] = $callable;
+            $callableRanges[] = [
+                'id' => $callable['id'],
+                'owner_name' => '',
+                'body_start' => $functionOpen + 1,
+                'body_end' => $functionEnd,
+            ];
+        }
+    }
+
+    if (preg_match_all('/\$([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(function|fn)\s*\(([^)]*)\)/', $content, $valueMatches, PREG_OFFSET_CAPTURE)) {
+        foreach ($valueMatches[0] as $index => $fullMatch) {
+            $name = $valueMatches[1][$index][0];
+            $callableType = $valueMatches[2][$index][0];
+            $parameters = parameter_definitions_from_text($valueMatches[3][$index][0]);
+            $start = $fullMatch[1];
+            $end = find_semicolon_text($content, $start);
+            if ($callableType === 'function') {
+                $open = strpos($content, '{', $start);
+                if ($open !== false && $open < $end) {
+                    $end = find_matching_text($content, $open, '{', '}');
+                }
+            }
+            $values[] = source_value_entry($name, 'public', $content, $start, $end, 'callable', $parameters);
+            $callable = source_callable_entry(
+                $sourceId,
+                $name,
+                $name,
+                '',
+                'callable_value',
+                'public',
+                $content,
+                $start,
+                $end,
+                $parameters
+            );
+            $callables[] = $callable;
+            $callableRanges[] = [
+                'id' => $callable['id'],
+                'owner_name' => '',
+                'body_start' => $callableType === 'function' && isset($open) && $open !== false ? $open + 1 : $start,
+                'body_end' => $end,
+            ];
+        }
+    }
+
+    if (preg_match_all('/\bconst\s+([A-Za-z_][A-Za-z0-9_]*)\s*=/', $content, $constMatches, PREG_OFFSET_CAPTURE)) {
+        foreach ($constMatches[0] as $index => $fullMatch) {
+            $start = $fullMatch[1];
+            $end = find_semicolon_text($content, $start);
+            $values[] = source_value_entry($constMatches[1][$index][0], 'public', $content, $start, $end, 'unknown');
+        }
+    }
+
+    $anonymousCallables = [];
+    $anonymousRanges = [];
+    foreach ($callableRanges as $parentRange) {
+        $body = substr($content, $parentRange['body_start'], $parentRange['body_end'] - $parentRange['body_start']);
+        if (!preg_match_all('/(?<![A-Za-z0-9_])(?:function|fn)\s*\(([^)]*)\)/', $body, $anonymousMatches, PREG_OFFSET_CAPTURE)) {
+            continue;
+        }
+        foreach ($anonymousMatches[0] as $index => $fullMatch) {
+            $start = $parentRange['body_start'] + $fullMatch[1];
+            if (preg_match('/\$[A-Za-z_][A-Za-z0-9_]*\s*=\s*$/', substr($content, max(0, $start - 64), 64))) {
+                continue;
+            }
+            $end = find_semicolon_text($content, $start);
+            $open = strpos($content, '{', $start);
+            if ($open !== false && $open < $end) {
+                $end = find_matching_text($content, $open, '{', '}');
+            }
+            $bodyText = substr($content, $open !== false && $open < $end ? $open + 1 : $start, $end - $start);
+            if (!preg_match('/[A-Za-z_][A-Za-z0-9_]*\s*\(/', $bodyText)) {
+                continue;
+            }
+            $line = line_number_at_offset($content, $start);
+            $column = $start - strrpos(substr($content, 0, $start), "\n");
+            $name = '<anonymous>@' . $line . ':' . $column;
+            $parentQualifiedName = explode('::', $parentRange['id'], 2)[1] ?? '';
+            $callable = source_callable_entry(
+                $sourceId,
+                $name,
+                $parentQualifiedName . '.' . $name,
+                $parentRange['owner_name'],
+                'anonymous',
+                'public',
+                $content,
+                $start,
+                $end,
+                parameter_definitions_from_text($anonymousMatches[1][$index][0])
+            );
+            $anonymousCallables[] = $callable;
+            $anonymousRanges[] = [
+                'id' => $callable['id'],
+                'owner_name' => $parentRange['owner_name'],
+                'body_start' => $open !== false && $open < $end ? $open + 1 : $start,
+                'body_end' => $end,
+            ];
+        }
+    }
+    $callables = array_merge($callables, $anonymousCallables);
+    $callableRanges = array_merge($callableRanges, $anonymousRanges);
+
+    return [
+        'values' => $values,
+        'callables' => $callables,
+        'calls' => collect_source_calls($content, $sourceId, $callables, $callableRanges),
+    ];
+}
+
+function collect_source_calls(string $content, string $sourceId, array $callables, array $callableRanges): array {
+    $byName = [];
+    $byQualifiedName = [];
+    $constructorsByName = [];
+    foreach ($callables as $callable) {
+        $byQualifiedName[$callable['qualified_name']] = $callable['id'];
+        if (in_array($callable['kind'], ['function', 'callable_value'], true)) {
+            $byName[$callable['name']] = $callable['id'];
+        }
+        if ($callable['kind'] === 'constructor') {
+            $constructorsByName[$callable['owner_name']] = $callable['id'];
+        }
+    }
+
+    $calls = [];
+    $ignored = ['if', 'for', 'foreach', 'while', 'switch', 'catch', 'function', 'fn', 'echo', 'return'];
+    foreach ($callableRanges as $range) {
+        $body = substr($content, $range['body_start'], $range['body_end'] - $range['body_start']);
+        if (!preg_match_all('/\b(new\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*\(|(?:\$this->|self::|static::)([A-Za-z_][A-Za-z0-9_]*)\s*\(/', $body, $matches, PREG_OFFSET_CAPTURE)) {
+            continue;
+        }
+        foreach ($matches[0] as $index => $fullMatch) {
+            $absoluteOffset = $range['body_start'] + $fullMatch[1];
+            $isConstructor = ($matches[1][$index][0] ?? '') !== '';
+            $name = $matches[2][$index][0] ?: $matches[3][$index][0];
+            if (in_array($name, $ignored, true)) {
+                continue;
+            }
+            $targetCallableId = '';
+            $resolution = 'unresolved';
+            if ($isConstructor && array_key_exists($name, $constructorsByName)) {
+                $targetCallableId = $constructorsByName[$name];
+                $resolution = 'resolved';
+            } elseif (($matches[3][$index][0] ?? '') !== '' && $range['owner_name'] !== '') {
+                $qualifiedName = $range['owner_name'] . '.' . $name;
+                if (array_key_exists($qualifiedName, $byQualifiedName)) {
+                    $targetCallableId = $byQualifiedName[$qualifiedName];
+                    $resolution = 'resolved';
+                }
+            } elseif (array_key_exists($name, $byName)) {
+                $targetCallableId = $byName[$name];
+                $resolution = 'resolved';
+            }
+            $calls[] = [
+                'source_callable_id' => $range['id'],
+                'target_callable_id' => $targetCallableId,
+                'source_id' => $sourceId,
+                'line' => line_number_at_offset($content, $absoluteOffset),
+                'expression' => $name,
+                'resolution' => $resolution,
+                'target_name' => $name,
+            ];
+        }
+    }
+    return $calls;
+}
+
+function extract_file(string $path, ?string $sourceId = null, string $sourcesRoot = ''): array {
     $content = file_get_contents($path);
+    $resolvedSourceId = $sourceId ?? source_id_for_path($path, $sourcesRoot !== '' ? $sourcesRoot : dirname($path));
     $tokens = token_get_all($content);
     $imports = [];
     $classes = [];
@@ -826,6 +1275,8 @@ function extract_file(string $path): array {
         $abstractClasses
     );
 
+    $callableGraph = collect_callable_graph($content, $resolvedSourceId);
+
     return [
         'imports' => $imports,
         'exports' => collect_exports($classes, $interfaces, $abstractClasses, $functions),
@@ -834,13 +1285,16 @@ function extract_file(string $path): array {
         'types' => $types,
         'abstract_classes' => $abstractClasses,
         'functions' => $functions,
+        'values' => $callableGraph['values'],
+        'callables' => $callableGraph['callables'],
+        'calls' => $callableGraph['calls'],
         'line_count' => line_count_for_content($content),
         'code_line_count' => code_line_count_for_content($content),
         'public_symbol_count' => count($classes) + count($interfaces) + count($abstractClasses) + count($functions) + array_sum($publicMethodCounts) + array_sum($publicAbstractClassMethodCounts),
     ];
 }
 
-function extract_batch_from_stdin(): array {
+function extract_batch_from_stdin(string $sourcesRoot): array {
     $payload = stream_get_contents(STDIN);
     $pathsBySourceId = json_decode($payload, true);
     if (!is_array($pathsBySourceId)) {
@@ -854,13 +1308,13 @@ function extract_batch_from_stdin(): array {
             fwrite(STDERR, "Expected source ids and paths to be strings.\n");
             exit(1);
         }
-        $result[$sourceId] = extract_file($path);
+        $result[$sourceId] = extract_file($path, $sourceId, $sourcesRoot);
     }
     return $result;
 }
 
 if (($argv[1] ?? null) === '--batch') {
-    echo json_encode(extract_batch_from_stdin());
+    echo json_encode(extract_batch_from_stdin($argv[2] ?? getcwd()));
 } else {
-    echo json_encode(extract_file($argv[1]));
+    echo json_encode(extract_file($argv[1], null, $argv[2] ?? dirname($argv[1])));
 }

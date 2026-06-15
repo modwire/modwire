@@ -7,7 +7,8 @@ from ..graph import DependencyGraph, Edge, Node
 from .models import CodeMap, ExtractionResult, ExtractionSummary
 
 
-CODE_MAP_SCHEMA_VERSION = 1
+CODE_MAP_SCHEMA_VERSION = 2
+SUPPORTED_CODE_MAP_SCHEMA_VERSIONS = {1, CODE_MAP_SCHEMA_VERSION}
 
 
 class CodeMapSerializationError(ValueError):
@@ -55,7 +56,7 @@ def deserialize_code_map(
     cache_key: str = "",
 ) -> CodeMap:
     try:
-        if payload["schema_version"] != CODE_MAP_SCHEMA_VERSION:
+        if payload["schema_version"] not in SUPPORTED_CODE_MAP_SCHEMA_VERSIONS:
             raise CodeMapSerializationError(
                 f"Unsupported CodeMap schema version: {payload['schema_version']}"
             )

@@ -24,6 +24,7 @@ from modwire import (
     UnsupportedLanguageError,
     __version__,
     build_dependency_graph,
+    callable_report_entries,
     deserialize_code_map,
     discover_sources,
     extract_code,
@@ -32,8 +33,10 @@ from modwire import (
     language,
     languages,
     normalize_source_id,
+    render_callable_report,
     runtime_diagnostics,
     serialize_code_map,
+    structured_callable_report,
     supported_languages,
     validate_shape_config,
 )
@@ -92,7 +95,7 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         self.assertTrue(runtime_diagnostics("python").available)
         self.assertTrue(runtime_diagnostics("python").command_path)
         self.assertIsInstance(__version__, str)
-        self.assertEqual(EXTRACTION_SCHEMA_VERSION, 1)
+        self.assertEqual(EXTRACTION_SCHEMA_VERSION, 2)
 
     def test_unsupported_languages_raise_explicit_error(self) -> None:
         with self.assertRaises(UnsupportedLanguageError):
@@ -278,6 +281,9 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
 
         self.assertEqual(source_file.exports, [])
         self.assertEqual(source_file.imports[0].imported_symbols, [])
+        self.assertEqual(source_file.values, [])
+        self.assertEqual(source_file.callables, [])
+        self.assertEqual(source_file.calls, [])
 
     def test_bare_directory_exclusions_are_recursive(self) -> None:
         result = extract_code("python", APPS_DIR / "python", ("ignored",))
@@ -390,6 +396,31 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
             result.graph.incoming("dep"),
         )
 
+    def test_code_map_deserializes_v1_payloads_without_callable_fields(self) -> None:
+        loaded = deserialize_code_map(
+            {
+                "schema_version": 1,
+                "runtime_command": "python",
+                "extraction_result": {
+                    "summary": {
+                        "files_found": 1,
+                        "files_checked": 1,
+                        "files_excluded": 0,
+                    },
+                    "files": {"app": source_file_payload()},
+                },
+                "graph": {
+                    "nodes": {"app": {"id": "app", "kind": "file"}},
+                    "edges": [],
+                },
+            }
+        )
+
+        source_file = loaded.extraction_result.files["app"]
+        self.assertEqual(source_file.values, [])
+        self.assertEqual(source_file.callables, [])
+        self.assertEqual(source_file.calls, [])
+
     def test_graph_exposes_common_transform_helpers(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -435,6 +466,185 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         dep_only = result.subgraph(("dep",))
         self.assertEqual(set(dep_only.extraction_result.files), {"dep"})
         self.assertEqual(dep_only.graph.edges, [])
+
+    def test_callable_graph_extracts_values_callables_and_calls_across_languages(self) -> None:
+        fixtures = [
+            (
+                "python",
+                "sample.py",
+                None,
+                "THRESHOLD = 1\n"
+                "handler = lambda value: helper(value)\n\n"
+                "def helper(value):\n"
+                "    return str(value)\n\n"
+                "class Service:\n"
+                "    def run(self, value):\n"
+                "        return helper(value)\n\n"
+                "def dispatch(items):\n"
+                "    return list(map(lambda item: helper(item), items))\n\n"
+                "def external_call():\n"
+                "    return missing()\n",
+            ),
+            (
+                "typescript",
+                "sample.ts",
+                "node",
+                "const threshold = 1;\n"
+                "const handler = (value) => helper(value);\n\n"
+                "function helper(value) { return String(value); }\n\n"
+                "class Service {\n"
+                "    run(value) { return helper(value); }\n"
+                "}\n\n"
+                "function dispatch(items) {\n"
+                "    return items.map(item => helper(item));\n"
+                "}\n\n"
+                "function externalCall() { return missing(); }\n",
+            ),
+            (
+                "php",
+                "sample.php",
+                "php",
+                "<?php\n"
+                "const THRESHOLD = 1;\n"
+                "$handler = function ($value) { return helper($value); };\n\n"
+                "function helper($value) { return (string) $value; }\n\n"
+                "class Service {\n"
+                "    public function run($value) { return helper($value); }\n"
+                "}\n\n"
+                "function dispatch($items) {\n"
+                "    return array_map(fn ($item) => helper($item), $items);\n"
+                "}\n\n"
+                "function externalCall() { return missing(); }\n",
+            ),
+        ]
+
+        for language_name, filename, runtime, source in fixtures:
+            with self.subTest(language=language_name):
+                if runtime is not None and shutil.which(runtime) is None:
+                    self.skipTest(f"{runtime} runtime is not available")
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    root = Path(temp_dir)
+                    root.joinpath(filename).write_text(source, encoding="utf-8")
+
+                    result = extract_code(language_name, root, ())
+
+                source_file = result.extraction_result.files["sample"]
+                values_by_name = {value.name: value for value in source_file.values}
+                callables_by_id = {
+                    source_callable.id: source_callable
+                    for source_callable in source_file.callables
+                }
+                helper_id = "sample::helper"
+                method_id = "sample::Service.run"
+                handler_id = "sample::handler"
+
+                self.assertIn(helper_id, callables_by_id)
+                self.assertEqual(callables_by_id[helper_id].kind, "function")
+                self.assertIn(method_id, callables_by_id)
+                self.assertEqual(callables_by_id[method_id].kind, "method")
+                self.assertIn(handler_id, callables_by_id)
+                self.assertEqual(callables_by_id[handler_id].kind, "callable_value")
+                self.assertTrue(
+                    any(
+                        source_callable.kind == "anonymous"
+                        for source_callable in source_file.callables
+                    )
+                )
+                self.assertTrue(
+                    any(value.value_kind != "callable" for value in source_file.values)
+                )
+                self.assertTrue(
+                    any(value.value_kind == "callable" for value in values_by_name.values())
+                )
+
+                helper_calls = [
+                    source_call
+                    for source_call in source_file.calls
+                    if source_call.target_name == "helper"
+                ]
+                self.assertTrue(
+                    any(
+                        source_call.source_callable_id == handler_id
+                        and source_call.target_callable_id == helper_id
+                        and source_call.resolution == "resolved"
+                        for source_call in helper_calls
+                    )
+                )
+                self.assertTrue(
+                    any(
+                        source_call.source_callable_id == method_id
+                        and source_call.target_callable_id == helper_id
+                        and source_call.resolution == "resolved"
+                        for source_call in helper_calls
+                    )
+                )
+                self.assertTrue(
+                    any(
+                        callables_by_id[source_call.source_callable_id].kind == "anonymous"
+                        and source_call.target_callable_id == helper_id
+                        for source_call in helper_calls
+                    )
+                )
+                self.assertTrue(
+                    any(
+                        source_call.target_name == "missing"
+                        and source_call.target_callable_id == ""
+                        and source_call.resolution == "unresolved"
+                        for source_call in source_file.calls
+                    )
+                )
+
+                graph = result.callable_graph()
+                self.assertEqual(result.callable(helper_id).name, "helper")
+                self.assertIn(handler_id, result.callable_ids())
+                self.assertTrue(
+                    any(
+                        source_call.target_callable_id == helper_id
+                        for source_call in result.calls_from(handler_id)
+                    )
+                )
+                self.assertTrue(
+                    any(
+                        source_call.source_callable_id == method_id
+                        for source_call in result.calls_to(helper_id)
+                    )
+                )
+                self.assertIn(
+                    (handler_id, helper_id),
+                    {(edge.from_id, edge.to_id) for edge in graph.edges},
+                )
+
+    def test_callable_report_lists_calls_and_callers(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            root.joinpath("app.py").write_text(
+                "handler = lambda value: helper(value)\n\n"
+                "def helper(value):\n"
+                "    return value\n\n"
+                "def run():\n"
+                "    handler(1)\n"
+                "    missing()\n",
+                encoding="utf-8",
+            )
+
+            result = extract_code("python", root, ())
+
+        entries = callable_report_entries(result)
+        structured = structured_callable_report(result)
+        rendered = render_callable_report(result, path_display=lambda path: f"<{path}>")
+
+        self.assertEqual(
+            [entry.source_callable.qualified_name for entry in entries],
+            ["handler", "helper", "run"],
+        )
+        self.assertEqual(structured[0]["callable"]["qualified_name"], "handler")
+        self.assertIn("Callable Report", rendered)
+        self.assertIn("## <app>", rendered)
+        self.assertIn("- handler [callable_value] lines 1-1", rendered)
+        self.assertIn("helper -> helper at <app>:1 (resolved)", rendered)
+        self.assertIn("handler -> handler at <app>:7 (resolved)", rendered)
+        self.assertIn("missing -> missing at <app>:8 (unresolved)", rendered)
+        self.assertIn("handler at <app>:1", rendered)
 
     def test_testing_factories_build_minimal_code_maps(self) -> None:
         from modwire.testing import (

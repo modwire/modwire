@@ -283,6 +283,392 @@ def function_definition(node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[st
     }
 
 
+def source_id_for_path(path: Path, sources_root: Path) -> str:
+    try:
+        relative_path = path.relative_to(sources_root)
+    except ValueError:
+        relative_path = path.name
+    return str(relative_path).replace("\\", "/").removesuffix(".py").strip("/")
+
+
+def callable_id(source_id: str, qualified_name: str) -> str:
+    return f"{source_id}::{qualified_name}"
+
+
+def unparse(node: ast.AST | None) -> str:
+    if node is None:
+        return ""
+    return ast.unparse(node)
+
+
+def parameter_details(
+    node: ast.FunctionDef | ast.AsyncFunctionDef | ast.Lambda,
+    *,
+    exclude_receiver: bool,
+) -> list[dict[str, object]]:
+    args = node.args
+    positional_args = [*args.posonlyargs, *args.args]
+    defaults = [None] * (len(positional_args) - len(args.defaults)) + list(args.defaults)
+    parameters = [
+        {
+            "name": arg.arg,
+            "annotation": unparse(arg.annotation),
+            "kind": "positional",
+            "has_default": default is not None,
+        }
+        for arg, default in zip(positional_args, defaults, strict=True)
+    ]
+    if args.vararg is not None:
+        parameters.append(
+            {
+                "name": args.vararg.arg,
+                "annotation": unparse(args.vararg.annotation),
+                "kind": "vararg",
+                "has_default": True,
+            }
+        )
+    parameters.extend(
+        {
+            "name": arg.arg,
+            "annotation": unparse(arg.annotation),
+            "kind": "keyword_only",
+            "has_default": default is not None,
+        }
+        for arg, default in zip(args.kwonlyargs, args.kw_defaults, strict=True)
+    )
+    if args.kwarg is not None:
+        parameters.append(
+            {
+                "name": args.kwarg.arg,
+                "annotation": unparse(args.kwarg.annotation),
+                "kind": "kwarg",
+                "has_default": True,
+            }
+        )
+    if exclude_receiver and parameters and parameters[0]["name"] in {"self", "cls"}:
+        return parameters[1:]
+    return parameters
+
+
+def callable_from_function(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+    source_id: str,
+    *,
+    qualified_name: str,
+    owner_name: str = "",
+) -> dict[str, object]:
+    is_method = owner_name != ""
+    if node.name == "__init__" and is_method:
+        kind = "constructor"
+    elif is_method and has_decorator(node, "classmethod"):
+        kind = "classmethod"
+    elif is_method and has_decorator(node, "staticmethod"):
+        kind = "staticmethod"
+    elif is_method:
+        kind = "method"
+    else:
+        kind = "function"
+    exclude_receiver = is_method and kind != "staticmethod"
+    declared_args, optional_args = argument_counts(node, exclude_receiver=exclude_receiver)
+    return {
+        "id": callable_id(source_id, qualified_name),
+        "source_id": source_id,
+        "name": node.name,
+        "qualified_name": qualified_name,
+        "owner_name": owner_name,
+        "kind": kind,
+        "visibility": "public",
+        "visibility_intent": visibility_intent(node.name),
+        "line_start": node.lineno,
+        "line_end": node.end_lineno,
+        "line_count": line_span(node),
+        "parameters": parameter_details(node, exclude_receiver=exclude_receiver),
+        "declared_args": declared_args,
+        "optional_args": optional_args,
+        "return_annotation": unparse(node.returns),
+        "decorators": [unparse(decorator) for decorator in node.decorator_list],
+        "docstring": ast.get_docstring(node) or "",
+    }
+
+
+def callable_from_lambda(
+    node: ast.Lambda,
+    source_id: str,
+    *,
+    qualified_name: str,
+    name: str,
+    owner_name: str = "",
+    kind: str = "anonymous",
+) -> dict[str, object]:
+    parameters = parameter_details(node, exclude_receiver=False)
+    return {
+        "id": callable_id(source_id, qualified_name),
+        "source_id": source_id,
+        "name": name,
+        "qualified_name": qualified_name,
+        "owner_name": owner_name,
+        "kind": kind,
+        "visibility": "public",
+        "visibility_intent": visibility_intent(name),
+        "line_start": node.lineno,
+        "line_end": node.end_lineno,
+        "line_count": line_span(node),
+        "parameters": parameters,
+        "declared_args": len(parameters),
+        "optional_args": sum(1 for parameter in parameters if parameter["has_default"]),
+        "return_annotation": "",
+        "decorators": [],
+        "docstring": "",
+    }
+
+
+def value_kind(node: ast.AST | None) -> str:
+    if isinstance(node, ast.Lambda):
+        return "callable"
+    if isinstance(node, ast.Constant):
+        return "literal"
+    if isinstance(node, (ast.List, ast.Tuple, ast.Set, ast.Dict)):
+        return "object"
+    if isinstance(node, ast.Call):
+        return "object"
+    return "unknown"
+
+
+def source_value(name: str, node: ast.AST, value: ast.AST | None) -> dict[str, object]:
+    declared_args = 0
+    optional_args = 0
+    if isinstance(value, ast.Lambda):
+        parameters = parameter_details(value, exclude_receiver=False)
+        declared_args = len(parameters)
+        optional_args = sum(1 for parameter in parameters if parameter["has_default"])
+    return {
+        "name": name,
+        "visibility": "public",
+        "visibility_intent": visibility_intent(name),
+        "line_count": line_span(node),
+        "declaration_kind": "assignment",
+        "value_kind": value_kind(value),
+        "declared_args": declared_args,
+        "optional_args": optional_args,
+    }
+
+
+class CallCollector(ast.NodeVisitor):
+    def __init__(
+        self,
+        *,
+        source_id: str,
+        source_callable_id: str,
+        owner_name: str,
+        by_name: dict[str, str],
+        by_qualified_name: dict[str, str],
+        constructors_by_name: dict[str, str],
+    ) -> None:
+        self.calls: list[dict[str, object]] = []
+        self.source_id = source_id
+        self.source_callable_id = source_callable_id
+        self.owner_name = owner_name
+        self.by_name = by_name
+        self.by_qualified_name = by_qualified_name
+        self.constructors_by_name = constructors_by_name
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        return
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        return
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        return
+
+    def visit_Lambda(self, node: ast.Lambda) -> None:
+        return
+
+    def visit_Call(self, node: ast.Call) -> None:
+        expression = unparse(node.func)
+        target_name = node_name(node.func) or expression
+        target_callable_id, resolution = self.resolve(node.func, expression, target_name)
+        self.calls.append(
+            {
+                "source_callable_id": self.source_callable_id,
+                "target_callable_id": target_callable_id,
+                "source_id": self.source_id,
+                "line": node.lineno,
+                "expression": expression,
+                "resolution": resolution,
+                "target_name": target_name,
+            }
+        )
+        self.generic_visit(node)
+
+    def resolve(self, func: ast.AST, expression: str, target_name: str) -> tuple[str, str]:
+        if expression in self.by_qualified_name:
+            return self.by_qualified_name[expression], "resolved"
+        if isinstance(func, ast.Name):
+            if func.id in self.by_name:
+                return self.by_name[func.id], "resolved"
+            if func.id in self.constructors_by_name:
+                return self.constructors_by_name[func.id], "resolved"
+            return "", "unresolved"
+        if isinstance(func, ast.Attribute):
+            if isinstance(func.value, ast.Name) and func.value.id in {"self", "cls"}:
+                qualified_name = ".".join(
+                    part for part in (self.owner_name, func.attr) if part
+                )
+                if qualified_name in self.by_qualified_name:
+                    return self.by_qualified_name[qualified_name], "resolved"
+            if func.attr in self.constructors_by_name:
+                return self.constructors_by_name[func.attr], "resolved"
+            return "", "unresolved"
+        return "", "dynamic"
+
+
+def lambda_has_call(node: ast.Lambda) -> bool:
+    return any(isinstance(descendant, ast.Call) for descendant in ast.walk(node))
+
+
+def collect_lambda_callables(
+    root: ast.AST,
+    source_id: str,
+    *,
+    parent_qualified_name: str,
+    owner_name: str = "",
+) -> list[tuple[str, ast.Lambda, dict[str, object]]]:
+    callables = []
+    for node in ast.walk(root):
+        if not isinstance(node, ast.Lambda) or node is root:
+            continue
+        if not lambda_has_call(node):
+            continue
+        name = f"<anonymous>@{node.lineno}:{node.col_offset}"
+        qualified_name = f"{parent_qualified_name}.{name}"
+        source_callable = callable_from_lambda(
+            node,
+            source_id,
+            qualified_name=qualified_name,
+            name=name,
+            owner_name=owner_name,
+        )
+        callables.append((source_callable["id"], node, source_callable))
+    return callables
+
+
+def collect_callable_graph(
+    tree: ast.Module,
+    source_id: str,
+) -> tuple[list[dict[str, object]], list[dict[str, object]], list[dict[str, object]]]:
+    values: list[dict[str, object]] = []
+    callables: list[dict[str, object]] = []
+    callable_nodes: list[tuple[str, ast.AST, str]] = []
+
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    values.append(source_value(target.id, node, node.value))
+                    if isinstance(node.value, ast.Lambda):
+                        qualified_name = target.id
+                        source_callable = callable_from_lambda(
+                            node.value,
+                            source_id,
+                            qualified_name=qualified_name,
+                            name=target.id,
+                            kind="callable_value",
+                        )
+                        callables.append(source_callable)
+                        callable_nodes.append((source_callable["id"], node.value, ""))
+            continue
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            values.append(source_value(node.target.id, node, node.value))
+            if isinstance(node.value, ast.Lambda):
+                qualified_name = node.target.id
+                source_callable = callable_from_lambda(
+                    node.value,
+                    source_id,
+                    qualified_name=qualified_name,
+                    name=node.target.id,
+                    kind="callable_value",
+                )
+                callables.append(source_callable)
+                callable_nodes.append((source_callable["id"], node.value, ""))
+            continue
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            source_callable = callable_from_function(
+                node,
+                source_id,
+                qualified_name=node.name,
+            )
+            callables.append(source_callable)
+            callable_nodes.append((source_callable["id"], node, ""))
+            for anonymous_id, anonymous_node, anonymous_callable in collect_lambda_callables(
+                node,
+                source_id,
+                parent_qualified_name=node.name,
+            ):
+                callables.append(anonymous_callable)
+                callable_nodes.append((anonymous_id, anonymous_node, ""))
+            continue
+        if isinstance(node, ast.ClassDef):
+            for child in node.body:
+                if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                qualified_name = f"{node.name}.{child.name}"
+                source_callable = callable_from_function(
+                    child,
+                    source_id,
+                    qualified_name=qualified_name,
+                    owner_name=node.name,
+                )
+                callables.append(source_callable)
+                callable_nodes.append((source_callable["id"], child, node.name))
+                for (
+                    anonymous_id,
+                    anonymous_node,
+                    anonymous_callable,
+                ) in collect_lambda_callables(
+                    child,
+                    source_id,
+                    parent_qualified_name=qualified_name,
+                    owner_name=node.name,
+                ):
+                    callables.append(anonymous_callable)
+                    callable_nodes.append((anonymous_id, anonymous_node, node.name))
+
+    by_qualified_name = {
+        str(source_callable["qualified_name"]): str(source_callable["id"])
+        for source_callable in callables
+    }
+    by_name = {
+        str(source_callable["name"]): str(source_callable["id"])
+        for source_callable in callables
+        if source_callable["kind"] in {"function", "callable_value"}
+    }
+    constructors_by_name = {
+        str(source_callable["owner_name"]): str(source_callable["id"])
+        for source_callable in callables
+        if source_callable["kind"] == "constructor"
+    }
+
+    calls: list[dict[str, object]] = []
+    for source_callable_id, node, owner_name in callable_nodes:
+        collector = CallCollector(
+            source_id=source_id,
+            source_callable_id=source_callable_id,
+            owner_name=owner_name,
+            by_name=by_name,
+            by_qualified_name=by_qualified_name,
+            constructors_by_name=constructors_by_name,
+        )
+        if isinstance(node, ast.Lambda):
+            collector.visit(node.body)
+        else:
+            for child in getattr(node, "body", []):
+                collector.visit(child)
+        calls.extend(collector.calls)
+
+    return values, callables, calls
+
+
 def code_line_count(content: str) -> int:
     return sum(
         1
@@ -529,9 +915,10 @@ def collect_exports(
     return exports
 
 
-def extract_file(path: Path, sources_root: Path) -> dict[str, object]:
+def extract_file(path: Path, sources_root: Path, source_id: str | None = None) -> dict[str, object]:
     content = path.read_text(encoding="utf-8")
     tree = ast.parse(content, filename=str(path))
+    resolved_source_id = source_id or source_id_for_path(path, sources_root)
     class_nodes = [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
     classes = [
         class_definition(node)
@@ -548,6 +935,7 @@ def extract_file(path: Path, sources_root: Path) -> dict[str, object]:
         for node in tree.body
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
     ]
+    values, callables, calls = collect_callable_graph(tree, resolved_source_id)
 
     return {
         "imports": collect_imports(tree, path, sources_root),
@@ -564,6 +952,9 @@ def extract_file(path: Path, sources_root: Path) -> dict[str, object]:
         "types": [],
         "abstract_classes": abstract_classes,
         "functions": functions,
+        "values": values,
+        "callables": callables,
+        "calls": calls,
         "line_count": len(content.splitlines()),
         "code_line_count": code_line_count(content),
         "public_symbol_count": sum(
@@ -589,7 +980,7 @@ def extract_batch_from_stdin(sources_root: Path) -> dict[str, dict[str, object]]
         if not isinstance(source_id, str) or not isinstance(path, str):
             print("Expected source ids and paths to be strings.", file=sys.stderr)
             raise SystemExit(1)
-        result[source_id] = extract_file(Path(path).resolve(), sources_root)
+        result[source_id] = extract_file(Path(path).resolve(), sources_root, source_id)
     return result
 
 

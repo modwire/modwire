@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ..definitions import SourceFile
+from ..definitions import SourceCall, SourceCallable, SourceFile
 from ..graph import DependencyGraph, Edge
 from .roots import SourceIdMode
 
@@ -57,6 +57,54 @@ class CodeMap:
 
     def external_edges(self) -> tuple[Edge, ...]:
         return self.graph.external_edges(self.source_ids())
+
+    def callable_ids(self) -> tuple[str, ...]:
+        return tuple(
+            source_callable.id
+            for source_file in self.extraction_result.files.values()
+            for source_callable in source_file.callables
+        )
+
+    def callable(self, callable_id: str) -> SourceCallable:
+        for source_file in self.extraction_result.files.values():
+            for source_callable in source_file.callables:
+                if source_callable.id == callable_id:
+                    return source_callable
+        raise KeyError(callable_id)
+
+    def calls_from(self, callable_id: str) -> tuple[SourceCall, ...]:
+        return tuple(
+            source_call
+            for source_file in self.extraction_result.files.values()
+            for source_call in source_file.calls
+            if source_call.source_callable_id == callable_id
+        )
+
+    def calls_to(self, callable_id: str) -> tuple[SourceCall, ...]:
+        return tuple(
+            source_call
+            for source_file in self.extraction_result.files.values()
+            for source_call in source_file.calls
+            if source_call.target_callable_id == callable_id
+        )
+
+    def callable_graph(self) -> DependencyGraph:
+        graph = DependencyGraph()
+        callable_ids = set(self.callable_ids())
+        for callable_id in sorted(callable_ids):
+            graph.add_node(callable_id, kind="callable")
+        for source_file in self.extraction_result.files.values():
+            for source_call in source_file.calls:
+                if (
+                    source_call.source_callable_id in callable_ids
+                    and source_call.target_callable_id in callable_ids
+                ):
+                    graph.add_edge(
+                        source_call.source_callable_id,
+                        source_call.target_callable_id,
+                        kind="call",
+                    )
+        return graph
 
     def tracked_only(self) -> CodeMap:
         return self.subgraph(self.source_ids())
