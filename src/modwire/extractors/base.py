@@ -8,6 +8,7 @@ from subprocess import CalledProcessError, run
 from typing import Protocol
 
 from ..definitions import SourceExport, SourceFile, SourceImport
+from .resources import extractor_script_path
 
 
 @dataclass(frozen=True)
@@ -172,9 +173,6 @@ def _extract_files(
     source_id_prefix: str = "",
     batch_size: int = 0,
 ) -> SourceExtraction:
-    script = Path(__file__).parent / "scripts" / extractor.extractor_file
-    assert script.is_file(), f"Extractor script {script} not found"
-
     targets, files_found, files_excluded = _collect_extraction_targets(
         sources_root,
         extractor.file_extensions,
@@ -193,23 +191,24 @@ def _extract_files(
         ): str(target.path.resolve())
         for target in targets
     }
-    cmd = [extractor.command, str(script), "--batch", str(sources_root.resolve())]
-    if batch_size:
-        raw_files = _json_from_output_in_batches(
-            cmd,
-            input_data,
-            language=extractor.language,
-            sources_root=sources_root,
-            batch_size=batch_size,
-        )
-    else:
-        raw_files = _json_from_output(
-            cmd,
-            json.dumps(input_data),
-            language=extractor.language,
-            sources_root=sources_root,
-            file_count=len(input_data),
-        )
+    with extractor_script_path(extractor.extractor_file) as script:
+        cmd = [extractor.command, str(script), "--batch", str(sources_root.resolve())]
+        if batch_size:
+            raw_files = _json_from_output_in_batches(
+                cmd,
+                input_data,
+                language=extractor.language,
+                sources_root=sources_root,
+                batch_size=batch_size,
+            )
+        else:
+            raw_files = _json_from_output(
+                cmd,
+                json.dumps(input_data),
+                language=extractor.language,
+                sources_root=sources_root,
+                file_count=len(input_data),
+            )
     result = {
         source_id: SourceFile.model_validate(source_file)
         for source_id, source_file in raw_files.items()

@@ -45,6 +45,7 @@ from modwire.definitions import (
 )
 from modwire.extraction import CodeMap, ExtractionResult, ExtractionSummary
 from modwire.extractors.base import ExtractorProcessError
+from modwire.extractors.resources import extractor_script_path, read_extractor_script
 from modwire.graph import DependencyGraph
 from modwire.testing import (
     source_class,
@@ -66,6 +67,14 @@ class AppFixture:
     runtime: str | None = None
 
 
+@dataclass(frozen=True)
+class ExtractorBatchFixture:
+    language: str
+    extension: str
+    content: str
+    batch_size_patch: str
+
+
 class BuildDependencyGraphFunctionalTest(unittest.TestCase):
     def test_graph_builder_is_part_of_public_api(self) -> None:
         self.assertIsNotNone(build_dependency_graph)
@@ -76,6 +85,18 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         self.assertIsNotNone(CodeMap)
         self.assertIsNotNone(ExtractionResult)
         self.assertIsNotNone(extract_code)
+
+    def test_extractor_scripts_are_package_resources(self) -> None:
+        for extractor_file in (
+            "python_extractor.py",
+            "typescript_extractor.js",
+            "php_extractor.php",
+        ):
+            with self.subTest(extractor_file=extractor_file):
+                with extractor_script_path(extractor_file) as script:
+                    self.assertTrue(script.is_file())
+                    self.assertEqual(script.name, extractor_file)
+                self.assertTrue(read_extractor_script(extractor_file))
 
     def test_source_id_helpers_are_language_aware(self) -> None:
         self.assertEqual(supported_languages(), ("python", "typescript", "php"))
@@ -860,49 +881,6 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
 
         self.assertEqual(batch["sample"], single)
 
-    def test_python_extraction_invokes_one_subprocess(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            root.joinpath("one.py").write_text("def one():\n    pass\n", encoding="utf-8")
-            root.joinpath("two.py").write_text("def two():\n    pass\n", encoding="utf-8")
-
-            with patch("modwire.extractors.base.run") as run_mock:
-                run_mock.side_effect = fake_batch_run
-                result = extract_code("python", root, ())
-
-        self.assertEqual(run_mock.call_count, 1)
-        self.assertEqual(set(result.extraction_result.files), {"one", "two"})
-        self.assertIn("--batch", run_mock.call_args.args[0])
-
-    def test_python_extraction_batches_subprocesses_to_limit_json_size(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            for index in range(5):
-                root.joinpath(f"file_{index}.py").write_text(
-                    "def sample():\n    pass\n",
-                    encoding="utf-8",
-                )
-
-            with (
-                patch("modwire.extractors.python.PythonExtractor.batch_size", 2),
-                patch("modwire.extractors.base.run") as run_mock,
-            ):
-                run_mock.side_effect = fake_batch_run
-                result = extract_code("python", root, ())
-
-        self.assertEqual(run_mock.call_count, 3)
-        self.assertEqual(
-            set(result.extraction_result.files),
-            {f"file_{index}" for index in range(5)},
-        )
-        batch_sizes = [
-            len(json.loads(call.kwargs["input"])) for call in run_mock.call_args_list
-        ]
-        self.assertEqual(batch_sizes, [2, 2, 1])
-        self.assertTrue(
-            all("--batch" in call.args[0] for call in run_mock.call_args_list)
-        )
-
     def test_extractor_failure_includes_subprocess_diagnostics(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -929,85 +907,52 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         self.assertIn("stderr tail:", message)
         self.assertIn("SyntaxError: broken fixture", message)
 
-    def test_typescript_extraction_invokes_one_subprocess(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            root.joinpath("one.ts").write_text(
-                "export function one(): void {}\n",
-                encoding="utf-8",
-            )
-            root.joinpath("two.ts").write_text(
-                "export function two(): void {}\n",
-                encoding="utf-8",
-            )
+    def test_extractors_use_one_subprocess_for_inputs_within_batch_size(self) -> None:
+        for fixture in extractor_batch_fixtures():
+            with self.subTest(language=fixture.language):
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    root = Path(temp_dir)
+                    for source_id in ("one", "two"):
+                        root.joinpath(f"{source_id}{fixture.extension}").write_text(
+                            fixture.content,
+                            encoding="utf-8",
+                        )
 
-            with patch("modwire.extractors.base.run") as run_mock:
-                run_mock.side_effect = fake_batch_run
-                result = extract_code("typescript", root, ())
+                    with patch("modwire.extractors.base.run") as run_mock:
+                        run_mock.side_effect = fake_batch_run
+                        result = extract_code(fixture.language, root, ())
 
-        self.assertEqual(run_mock.call_count, 1)
-        self.assertEqual(set(result.extraction_result.files), {"one", "two"})
-        self.assertIn("--batch", run_mock.call_args.args[0])
+                self.assertEqual(run_mock.call_count, 1)
+                self.assertEqual(set(result.extraction_result.files), {"one", "two"})
+                self.assertIn("--batch", run_mock.call_args.args[0])
 
-    def test_typescript_extraction_batches_subprocesses_to_limit_json_size(
-        self,
-    ) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            for index in range(5):
-                root.joinpath(f"file_{index}.ts").write_text(
-                    "export function sample(): void {}\n",
-                    encoding="utf-8",
+    def test_extractors_batch_subprocesses_to_limit_json_payload_size(self) -> None:
+        for fixture in extractor_batch_fixtures():
+            with self.subTest(language=fixture.language):
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    root = Path(temp_dir)
+                    for index in range(5):
+                        root.joinpath(f"file_{index}{fixture.extension}").write_text(
+                            fixture.content,
+                            encoding="utf-8",
+                        )
+
+                    with (
+                        patch(fixture.batch_size_patch, 2),
+                        patch("modwire.extractors.base.run") as run_mock,
+                    ):
+                        run_mock.side_effect = fake_batch_run
+                        result = extract_code(fixture.language, root, ())
+
+                self.assertEqual(run_mock.call_count, 3)
+                self.assertEqual(
+                    set(result.extraction_result.files),
+                    {f"file_{index}" for index in range(5)},
                 )
-
-            with (
-                patch("modwire.extractors.typescript.TypeScriptExtractor.batch_size", 2),
-                patch("modwire.extractors.base.run") as run_mock,
-            ):
-                run_mock.side_effect = fake_batch_run
-                result = extract_code("typescript", root, ())
-
-        self.assertEqual(run_mock.call_count, 3)
-        self.assertEqual(
-            set(result.extraction_result.files),
-            {f"file_{index}" for index in range(5)},
-        )
-        batch_sizes = [
-            len(json.loads(call.kwargs["input"])) for call in run_mock.call_args_list
-        ]
-        self.assertEqual(batch_sizes, [2, 2, 1])
-        self.assertTrue(
-            all("--batch" in call.args[0] for call in run_mock.call_args_list)
-        )
-
-    def test_php_extraction_batches_subprocesses_to_limit_peak_memory(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            for index in range(5):
-                root.joinpath(f"file_{index}.php").write_text(
-                    "<?php\nfunction sample(): void {}\n",
-                    encoding="utf-8",
+                self.assertEqual(batch_input_sizes(run_mock), [2, 2, 1])
+                self.assertTrue(
+                    all("--batch" in call.args[0] for call in run_mock.call_args_list)
                 )
-
-            with (
-                patch("modwire.extractors.php.PhpExtractor.batch_size", 2),
-                patch("modwire.extractors.base.run") as run_mock,
-            ):
-                run_mock.side_effect = fake_batch_run
-                result = extract_code("php", root, ())
-
-        self.assertEqual(run_mock.call_count, 3)
-        self.assertEqual(
-            set(result.extraction_result.files),
-            {f"file_{index}" for index in range(5)},
-        )
-        batch_sizes = [
-            len(json.loads(call.kwargs["input"])) for call in run_mock.call_args_list
-        ]
-        self.assertEqual(batch_sizes, [2, 2, 1])
-        self.assertTrue(
-            all("--batch" in call.args[0] for call in run_mock.call_args_list)
-        )
 
     def test_python_visibility_distinguishes_accessibility_from_intent(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -2025,6 +1970,31 @@ def app_fixtures() -> tuple[AppFixture, ...]:
     )
 
 
+def extractor_batch_fixtures() -> tuple[ExtractorBatchFixture, ...]:
+    return (
+        ExtractorBatchFixture(
+            language="python",
+            extension=".py",
+            content="def sample():\n    pass\n",
+            batch_size_patch="modwire.extractors.python.PythonExtractor.batch_size",
+        ),
+        ExtractorBatchFixture(
+            language="typescript",
+            extension=".ts",
+            content="export function sample(): void {}\n",
+            batch_size_patch=(
+                "modwire.extractors.typescript.TypeScriptExtractor.batch_size"
+            ),
+        ),
+        ExtractorBatchFixture(
+            language="php",
+            extension=".php",
+            content="<?php\nfunction sample(): void {}\n",
+            batch_size_patch="modwire.extractors.php.PhpExtractor.batch_size",
+        ),
+    )
+
+
 def internal_edges(result) -> set[tuple[str, str]]:
     source_files = set(result.extraction_result.files)
     return {
@@ -2067,6 +2037,10 @@ def fake_batch_run(cmd, *, input=None, **kwargs):
             {source_id: source_file_payload() for source_id in paths_by_source_id}
         )
     )
+
+
+def batch_input_sizes(run_mock) -> list[int]:
+    return [len(json.loads(call.kwargs["input"])) for call in run_mock.call_args_list]
 
 
 def source_file_payload() -> dict[str, object]:

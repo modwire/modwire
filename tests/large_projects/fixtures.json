@@ -1,0 +1,242 @@
+{
+  "version": 1,
+  "fixtures": [
+    {
+      "id": "django",
+      "language": "python",
+      "repository": "https://github.com/django/django.git",
+      "default_branch": "main",
+      "ref": "f1440a752ec034277ccdad914995c3f164308e41",
+      "source_root": ".",
+      "exclusions": [
+        ".git/**",
+        ".enclosure/**",
+        ".tox/**",
+        "**/__pycache__/**",
+        "build/**",
+        "dist/**",
+        "node_modules/**",
+        "tests/test_runner_apps/tagged/tests_syntax_error.py"
+      ],
+      "tags": [
+        {"name": "tests", "match": "tests/**"},
+        {"name": "contrib", "match": "django/contrib/**"},
+        {"name": "tooling", "match": "scripts/**"},
+        {"name": "framework", "match": "django/**"}
+      ],
+      "layers": ["tests", "tooling", "contrib", "framework"],
+      "module_tag": "framework"
+    },
+    {
+      "id": "ansible",
+      "language": "python",
+      "repository": "https://github.com/ansible/ansible.git",
+      "default_branch": "devel",
+      "ref": "d772fe65b73e3032f88a9915111b58e743af9d9f",
+      "source_root": ".",
+      "exclusions": [
+        ".git/**",
+        ".enclosure/**",
+        ".tox/**",
+        "**/__pycache__/**",
+        "build/**",
+        "dist/**",
+        "docs/**",
+        "packaging/**"
+      ],
+      "tags": [
+        {"name": "tests", "match": "test/**"},
+        {"name": "plugins", "match": "lib/ansible/plugins/**"},
+        {"name": "module_utils", "match": "lib/ansible/module_utils/**"},
+        {"name": "core", "match": "lib/ansible/**"}
+      ],
+      "layers": ["tests", "plugins", "module_utils", "core"],
+      "module_tag": "core"
+    },
+    {
+      "id": "salt",
+      "language": "python",
+      "repository": "https://github.com/saltstack/salt.git",
+      "default_branch": "master",
+      "ref": "b85e64c48f47085a3850d30322127719eaa26ae6",
+      "source_root": ".",
+      "exclusions": [
+        ".git/**",
+        ".enclosure/**",
+        ".nox/**",
+        ".tox/**",
+        "**/__pycache__/**",
+        "build/**",
+        "dist/**",
+        "doc/**",
+        "templates/**"
+      ],
+      "tags": [
+        {"name": "tests", "match": "tests/**"},
+        {"name": "modules", "match": "salt/modules/**"},
+        {"name": "states", "match": "salt/states/**"},
+        {"name": "utils", "match": "salt/utils/**"},
+        {"name": "core", "match": "salt/**"}
+      ],
+      "layers": ["tests", "modules", "states", "utils", "core"],
+      "module_tag": "core"
+    },
+    {
+      "id": "vscode",
+      "language": "typescript",
+      "repository": "https://github.com/microsoft/vscode.git",
+      "default_branch": "main",
+      "ref": "00ad2c6945dc8fcb460e373b8849b3c6c406a1af",
+      "source_root": ".",
+      "exclusions": [
+        ".git/**",
+        ".enclosure/**",
+        ".build/**",
+        ".vscode-test/**",
+        "build/**",
+        "extensions/**/node_modules/**",
+        "node_modules/**",
+        "out/**",
+        "test-results/**",
+        "**/node_modules/**"
+      ],
+      "tags": [
+        {"name": "tests", "match": "test/**"},
+        {"name": "extensions", "match": "extensions/**"},
+        {"name": "build", "match": "build/**"},
+        {"name": "src", "match": "src/**"}
+      ],
+      "layers": ["tests", "extensions", "build", "src"],
+      "module_tag": "src"
+    },
+    {
+      "id": "angular",
+      "language": "typescript",
+      "repository": "https://github.com/angular/angular.git",
+      "default_branch": "main",
+      "ref": "83622ee519183a935a213dc834b9621a9abc2b38",
+      "source_root": ".",
+      "exclusions": [
+        ".git/**",
+        ".enclosure/**",
+        "dist/**",
+        "node_modules/**",
+        "third_party/**",
+        "tmp/**",
+        "**/node_modules/**"
+      ],
+      "tags": [
+        {"name": "tests", "match": "integration/**"},
+        {"name": "devtools", "match": "devtools/**"},
+        {"name": "tools", "match": "tools/**"},
+        {"name": "packages", "match": "packages/**"}
+      ],
+      "layers": ["tests", "devtools", "tools", "packages"],
+      "module_tag": "packages"
+    },
+    {
+      "id": "typescript",
+      "language": "typescript",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "default_branch": "main",
+      "ref": "7964e22f2b85f16e520f0e902c7fd7b6f0c15416",
+      "source_root": ".",
+      "exclusions": [
+        ".git/**",
+        ".enclosure/**",
+        "built/**",
+        "node_modules/**",
+        "tests/baselines/**",
+        "tests/cases/**",
+        "**/node_modules/**"
+      ],
+      "tags": [
+        {"name": "tests", "match": "tests/**"},
+        {"name": "scripts", "match": "scripts/**"},
+        {"name": "services", "match": "src/services/**"},
+        {"name": "compiler", "match": "src/compiler/**"},
+        {"name": "src", "match": "src/**"}
+      ],
+      "layers": ["tests", "scripts", "services", "compiler", "src"],
+      "module_tag": "src"
+    },
+    {
+      "id": "wordpress",
+      "language": "php",
+      "repository": "https://github.com/WordPress/wordpress-develop.git",
+      "default_branch": "trunk",
+      "ref": "0a9838ddf5ba2d112eca514bf675587b357280b0",
+      "source_root": ".",
+      "exclusions": [
+        ".git/**",
+        ".enclosure/**",
+        "node_modules/**",
+        "vendor/**",
+        "tools/vendors/**",
+        "src/wp-content/plugins/akismet/**",
+        "tests/phpunit/data/**",
+        "tests/phpunit/includes/mock-mailer.php",
+        "**/node_modules/**"
+      ],
+      "tags": [
+        {"name": "tests", "match": "tests/**"},
+        {"name": "admin", "match": "src/wp-admin/**"},
+        {"name": "content", "match": "src/wp-content/**"},
+        {"name": "core", "match": "src/wp-includes/**"}
+      ],
+      "layers": ["tests", "admin", "content", "core"],
+      "module_tag": "core"
+    },
+    {
+      "id": "drupal",
+      "language": "php",
+      "repository": "https://github.com/drupal/drupal.git",
+      "default_branch": "main",
+      "ref": "24b03581c06d381f1148fd6d15954cca4d5d7024",
+      "source_root": ".",
+      "exclusions": [
+        ".git/**",
+        ".enclosure/**",
+        "vendor/**",
+        "node_modules/**",
+        "core/assets/vendor/**",
+        "core/node_modules/**",
+        "sites/**"
+      ],
+      "tags": [
+        {"name": "tests", "match": "core/tests/**"},
+        {"name": "modules", "match": "core/modules/**"},
+        {"name": "themes", "match": "core/themes/**"},
+        {"name": "core", "match": "core/lib/**"}
+      ],
+      "layers": ["tests", "modules", "themes", "core"],
+      "module_tag": "core"
+    },
+    {
+      "id": "moodle",
+      "language": "php",
+      "repository": "https://github.com/moodle/moodle.git",
+      "default_branch": "main",
+      "ref": "99f18504470cd3618d06820e7f5fe109a57d6636",
+      "source_root": ".",
+      "exclusions": [
+        ".git/**",
+        ".enclosure/**",
+        "node_modules/**",
+        "vendor/**",
+        "lib/amd/build/**",
+        "public/**",
+        "**/node_modules/**"
+      ],
+      "tags": [
+        {"name": "tests", "match": "*/tests/**"},
+        {"name": "admin", "match": "admin/**"},
+        {"name": "modules", "match": "mod/**"},
+        {"name": "plugins", "match": "blocks/**"},
+        {"name": "core", "match": "lib/**"}
+      ],
+      "layers": ["tests", "admin", "modules", "plugins", "core"],
+      "module_tag": "core"
+    }
+  ]
+}

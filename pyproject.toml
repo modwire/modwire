@@ -72,8 +72,9 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-modwire = [
-    "extractors/scripts/*",
+"modwire.extractors.scripts" = [
+    "*.js",
+    "*.php",
 ]
 
 [tool.setuptools_scm]

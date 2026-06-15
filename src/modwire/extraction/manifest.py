@@ -8,6 +8,7 @@ from pathlib import Path
 from .._version import __version__
 from ..extractors import load_extractor
 from ..extractors.base import _collect_extraction_targets
+from ..extractors.resources import extractor_script_path
 from .models import SourceManifest, SourceManifestEntry
 from .roots import (
     DEFAULT_SOURCE_ROOTS,
@@ -57,13 +58,13 @@ def discover_sources(
                 mtime_ns=stat.st_mtime_ns,
             )
         )
-    extractor_path = (
-        Path(__file__).parents[1] / "extractors" / "scripts" / extractor.extractor_file
-    ).resolve()
     runtime_path = shutil.which(extractor.command) or ""
     runtime_mtime_ns = 0
     if runtime_path != "":
         runtime_mtime_ns = Path(runtime_path).stat().st_mtime_ns
+
+    with extractor_script_path(extractor.extractor_file) as extractor_path:
+        extractor_mtime_ns = extractor_path.stat().st_mtime_ns
 
     return SourceManifest(
         language=language,
@@ -83,7 +84,7 @@ def discover_sources(
         runtime_mtime_ns=runtime_mtime_ns,
         extractor_file=extractor.extractor_file,
         extractor_path=extractor_path,
-        extractor_mtime_ns=extractor_path.stat().st_mtime_ns,
+        extractor_mtime_ns=extractor_mtime_ns,
         modwire_version=__version__,
         files_found=files_found,
         files_checked=len(entries),

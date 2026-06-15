@@ -9,6 +9,7 @@ from subprocess import run
 
 from .extraction.serialization import CODE_MAP_SCHEMA_VERSION
 from .extractors.loader import load_extractor, supported_languages
+from .extractors.resources import extractor_script_path, read_extractor_script
 
 
 PUBLIC_API_STABILITY = "alpha"
@@ -50,16 +51,16 @@ def languages() -> tuple[LanguageInfo, ...]:
 
 def language(name: str) -> LanguageInfo:
     extractor = load_extractor(name)
-    extractor_path = _extractor_script_path(extractor.extractor_file)
-    return LanguageInfo(
-        name=extractor.language,
-        file_extensions=extractor.file_extensions,
-        command=extractor.command,
-        extractor_file=extractor.extractor_file,
-        extractor_path=extractor_path,
-        implementation_stamp=extraction_implementation_stamp(name),
-        runtime=runtime_diagnostics(name),
-    )
+    with extractor_script_path(extractor.extractor_file) as extractor_path:
+        return LanguageInfo(
+            name=extractor.language,
+            file_extensions=extractor.file_extensions,
+            command=extractor.command,
+            extractor_file=extractor.extractor_file,
+            extractor_path=extractor_path,
+            implementation_stamp=extraction_implementation_stamp(name),
+            runtime=runtime_diagnostics(name),
+        )
 
 
 def runtime_diagnostics(name: str) -> RuntimeInfo:
@@ -93,12 +94,11 @@ def runtime_diagnostics(name: str) -> RuntimeInfo:
 def extraction_implementation_stamp(name: str) -> str:
     extractor = load_extractor(name)
     hasher = hashlib.sha256()
-    for path in (
-        Path(inspect.getfile(type(extractor))).resolve(),
-        _extractor_script_path(extractor.extractor_file),
-    ):
-        hasher.update(path.as_posix().encode("utf-8"))
-        hasher.update(path.read_bytes())
+    extractor_class_path = Path(inspect.getfile(type(extractor))).resolve()
+    hasher.update(extractor_class_path.as_posix().encode("utf-8"))
+    hasher.update(extractor_class_path.read_bytes())
+    hasher.update(extractor.extractor_file.encode("utf-8"))
+    hasher.update(read_extractor_script(extractor.extractor_file))
     return hasher.hexdigest()
 
 
@@ -107,10 +107,6 @@ def require_runtime(name: str) -> RuntimeInfo:
     if not diagnostics.available:
         raise MissingRuntimeError(diagnostics.stderr)
     return diagnostics
-
-
-def _extractor_script_path(extractor_file: str) -> Path:
-    return (Path(__file__).parent / "extractors" / "scripts" / extractor_file).resolve()
 
 
 __all__ = [
