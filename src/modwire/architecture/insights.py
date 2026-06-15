@@ -116,7 +116,6 @@ def cluster_code(code_map: CodeMap, group_depth: int = 2) -> tuple[ArchitectureC
 
 def find_hotspots(
     code_map: CodeMap,
-    config="",
     limit: int = 10,
 ) -> tuple[DependencyHotspot, ...]:
     source_ids = set(code_map.extraction_result.files)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from typing import Callable
 
 from .analyzers import analyzer_title
@@ -11,21 +10,6 @@ GROUP_TITLES = {
 }
 
 PathDisplay = Callable[[str], str]
-
-
-def summary(report) -> str:
-    return "\n".join(
-        (
-            "Boundaries Summary:",
-            f"- Paths found in scope: {report.files_found}",
-            f"- Paths excluded by rules: {report.files_excluded}",
-            f"- Files checked: {report.files_checked}",
-        )
-    )
-
-
-def violations(report) -> str:
-    return render_violations(report.violations)
 
 
 def render_violations(
@@ -78,33 +62,6 @@ def compact(
     return f"{' -> '.join(path)}  {violation.violation_type}"
 
 
-def render_json(report) -> str:
-    return json.dumps(
-        {
-            "project_root": str(report.project_root),
-            "config_path": str(report.config_path),
-            "config_format": report.config_format,
-            "language": report.language,
-            "runtime_command": report.runtime_command,
-            "files_found": report.files_found,
-            "files_excluded": report.files_excluded,
-            "files_checked": report.files_checked,
-            "violations": [render_violation_payload(v) for v in report.violations],
-        },
-        indent=2,
-        sort_keys=True,
-    )
-
-
-def render_dot(report) -> str:
-    edges = dict.fromkeys(edge for violation in report.violations for edge in _edges(violation))
-    return "\n".join(
-        ("digraph architecture_violations {", "  rankdir=LR;")
-        + tuple(f'  "{source}" -> "{target}";' for source, target in edges)
-        + ("}",)
-    )
-
-
 def render_violation_payload(
     violation: EdgeRuleViolation | FlowViolation,
 ) -> dict[str, object]:
@@ -118,12 +75,6 @@ def render_violation_payload(
     if isinstance(violation, EdgeRuleViolation):
         payload["violation_index"] = 1
     return payload
-
-
-def _edges(violation):
-    if isinstance(violation, EdgeRuleViolation):
-        return ((violation.source_id, violation.target_id),)
-    return tuple(zip(violation.path, violation.path[1:], strict=False))
 
 
 def _type(violation):
@@ -142,11 +93,7 @@ def _title(violation: EdgeRuleViolation | FlowViolation) -> str:
 
 __all__ = [
     "compact",
-    "render_dot",
-    "render_json",
     "render_violation_payload",
     "render_violations",
     "structured_groups",
-    "summary",
-    "violations",
 ]

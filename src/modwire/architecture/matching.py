@@ -115,20 +115,6 @@ class TagMatcher:
         return next((tag for tag in self.tags if tag.name == name), None)
 
 
-def match_node(node_id, pattern, config, exclusions, *, scope=True, exclude=()):
-    matcher = TagMatcher(config)
-    matcher.exclusions.update(exclusions)
-    match = matcher.match_pattern(
-        node_id,
-        pattern,
-        scope=scope,
-        exclude=tuple(exclude),
-    )
-    if match is None:
-        return None
-    return match.captured_path, match.is_wildcard
-
-
 def _normalized_patterns(language, pattern, config):
     normalized = normalize_source_id(language, pattern).strip("/")
     architecture_root = normalize_source_id(

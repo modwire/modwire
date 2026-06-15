@@ -114,18 +114,6 @@ def validate_policy_config(config) -> ArchitectureConfig:
         ) from error
 
 
-def validate_tags(config) -> tuple[ArchitectureTagRule, ...]:
-    return validate_policy_config(config).rules.tags
-
-
-def validate_edge_rules(config) -> tuple[ArchitectureBoundaryRule, ...]:
-    return validate_policy_config(config).rules.boundaries
-
-
-def validate_flow_rules(config) -> ArchitectureFlowRules:
-    return validate_policy_config(config).rules.flow
-
-
 __all__ = [
     "ArchitectureBoundaryRule",
     "ArchitectureConfig",
@@ -134,8 +122,5 @@ __all__ = [
     "ArchitectureFlowRules",
     "ArchitectureRules",
     "ArchitectureTagRule",
-    "validate_edge_rules",
-    "validate_flow_rules",
     "validate_policy_config",
-    "validate_tags",
 ]
