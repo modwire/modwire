@@ -6,19 +6,28 @@ from types import SimpleNamespace
 
 from modwire.architecture import (
     AnalyzerInfo,
+    ArchitectureCluster,
     ArchitectureBoundaryRule,
     ArchitectureConfig,
     ArchitectureConfigError,
     ArchitectureFlowRules,
+    ArchitectureMap,
     ArchitecturePolicyEvaluator,
     ArchitectureRules,
     ArchitectureTagRule,
+    CoherenceSummary,
+    CrossModuleDependency,
+    DependencyHotspot,
     EdgeRuleViolation,
     FlowViolation,
     TagMap,
     TagMatch,
     TagMatcher,
     analyzer_metadata,
+    cluster_code,
+    coherence_summary,
+    find_hotspots,
+    map_code,
     supported_analyzers,
     validate_policy_config,
     violation_to_dict,
@@ -186,6 +195,68 @@ class ArchitectureApiTest(unittest.TestCase):
                 "message": "layer order violated",
             },
         )
+
+    def test_architecture_insights_summarize_maps_clusters_and_hotspots(self) -> None:
+        graph = DependencyGraph()
+        graph.add_edge("src/features/billing/ui", "src/features/billing/domain")
+        graph.add_edge("src/features/orders/ui", "src/features/billing/domain")
+        graph.add_edge("src/features/orders/ui", "json")
+        code_map = CodeMap(
+            graph=graph,
+            extraction_result=ExtractionResult(
+                files={
+                    "src/features/billing/ui": object(),
+                    "src/features/billing/domain": object(),
+                    "src/features/orders/ui": object(),
+                },
+                summary=ExtractionSummary(3, 3, 0),
+            ),
+            runtime_command="python",
+        )
+        config = ArchitectureConfig(
+            language="python",
+            architecture_root="src",
+            rules=ArchitectureRules(
+                tags=(
+                    ArchitectureTagRule(name="module", match="features/*"),
+                    ArchitectureTagRule(name="layer", match="features/*/ui"),
+                    ArchitectureTagRule(name="layer", match="features/*/domain"),
+                ),
+            ),
+        )
+
+        mapped = map_code(code_map, config)
+        clusters = cluster_code(code_map, group_depth=3)
+        hotspots = find_hotspots(code_map)
+        coherence = coherence_summary(code_map)
+
+        self.assertIsInstance(mapped, ArchitectureMap)
+        self.assertEqual(
+            mapped.modules["src/features/billing"],
+            ("src/features/billing/domain", "src/features/billing/ui"),
+        )
+        self.assertEqual(mapped.unknown_files, ())
+        self.assertEqual(
+            mapped.cross_module_dependencies,
+            (
+                CrossModuleDependency(
+                    "src/features/orders",
+                    "src/features/billing",
+                    1,
+                ),
+            ),
+        )
+        self.assertTrue(all(isinstance(cluster, ArchitectureCluster) for cluster in clusters))
+        self.assertEqual(clusters[0].name, "src/features/billing")
+        self.assertTrue(all(isinstance(hotspot, DependencyHotspot) for hotspot in hotspots))
+        self.assertEqual(hotspots[0].source_id, "src/features/billing/domain")
+        self.assertIsInstance(coherence, CoherenceSummary)
+        self.assertEqual(
+            coherence.roots,
+            ("src/features/billing/ui", "src/features/orders/ui"),
+        )
+        self.assertEqual(coherence.leaves, ("src/features/billing/domain",))
+        self.assertEqual(coherence.external_dependencies, ("json",))
 
 
 if __name__ == "__main__":
