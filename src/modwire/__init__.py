@@ -32,6 +32,7 @@ from .metadata import (
     require_runtime,
     runtime_diagnostics,
 )
+from .shape import ShapeConfig, ShapePolicyEvaluator, ShapeViolation, evaluate_shape
 
 
 __all__ = [
@@ -47,6 +48,9 @@ __all__ = [
     "Node",
     "PUBLIC_API_STABILITY",
     "RuntimeInfo",
+    "ShapeConfig",
+    "ShapePolicyEvaluator",
+    "ShapeViolation",
     "SourceChangedDuringExtractionError",
     "SourceManifest",
     "SourceManifestEntry",
@@ -57,6 +61,7 @@ __all__ = [
     "build_dependency_graph",
     "deserialize_code_map",
     "discover_sources",
+    "evaluate_shape",
     "extraction_implementation_stamp",
     "extract_code",
     "find_unused_exports",

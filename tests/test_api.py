@@ -16,6 +16,9 @@ from modwire import (
     ExtractionCache,
     LanguageInfo,
     RuntimeInfo,
+    ShapeConfig,
+    ShapePolicyEvaluator,
+    ShapeViolation,
     SourceRoots,
     UnsupportedLanguageError,
     __version__,
@@ -32,7 +35,16 @@ from modwire import (
     serialize_code_map,
     supported_languages,
 )
-from modwire.definitions import SourceFile
+from modwire.definitions import (
+    SourceClass,
+    SourceClassMethod,
+    SourceClassProperty,
+    SourceFile,
+    SourceFunction,
+    SourceImport,
+)
+from modwire.extraction import CodeMap, ExtractionResult, ExtractionSummary
+from modwire.graph import DependencyGraph
 
 
 APPS_DIR = Path(__file__).parent / "apps"
@@ -80,6 +92,111 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
     def test_unsupported_languages_raise_explicit_error(self) -> None:
         with self.assertRaises(UnsupportedLanguageError):
             language("ruby")
+
+    def test_shape_policy_evaluator_reports_file_symbol_and_import_violations(
+        self,
+    ) -> None:
+        source_file = SourceFile(
+            imports=[
+                SourceImport(
+                    path="shared",
+                    is_relative=False,
+                    normalized_path="shared",
+                    imported_name="",
+                    is_aliased=True,
+                    crossing_type="symbol",
+                    file_barrier_crossed=True,
+                    statement_id=1,
+                    join_key="shared",
+                    uses_joined_import=False,
+                )
+            ],
+            exports=[],
+            classes=[
+                SourceClass(
+                    name="Service",
+                    visibility="public",
+                    visibility_intent="public",
+                    methods=[
+                        SourceClassMethod(
+                            name="run",
+                            visibility="public",
+                            visibility_intent="public",
+                            line_count=12,
+                            declared_args=3,
+                            optional_args=1,
+                        ),
+                        SourceClassMethod(
+                            name="save",
+                            visibility="public",
+                            visibility_intent="public",
+                            line_count=1,
+                            declared_args=0,
+                            optional_args=0,
+                        ),
+                    ],
+                    properties=[SourceClassProperty(name="maybe", is_optional=True)],
+                    line_count=25,
+                )
+            ],
+            functions=[
+                SourceFunction(
+                    name="build",
+                    visibility="public",
+                    visibility_intent="public",
+                    line_count=8,
+                    declared_args=2,
+                    optional_args=1,
+                )
+            ],
+            line_count=30,
+            code_line_count=20,
+            public_symbol_count=2,
+        )
+        code_map = CodeMap(
+            graph=DependencyGraph(),
+            extraction_result=ExtractionResult(
+                files={"app": source_file},
+                summary=ExtractionSummary(1, 1, 0),
+            ),
+            runtime_command="python",
+        )
+
+        violations = ShapePolicyEvaluator().evaluate(
+            code_map,
+            ShapeConfig(
+                max_classes_per_file=-1,
+                max_functions_per_file=-1,
+                max_methods_per_class=1,
+                max_declared_args=1,
+                max_function_lines=5,
+                max_method_lines=10,
+                max_class_lines=20,
+                allow_optional_function_args=False,
+                allow_optional_method_args=False,
+                allow_optional_class_properties=False,
+                allow_import_aliases=False,
+                allowed_import_crossing_types=("module",),
+                require_joined_imports=True,
+            ),
+        )
+        by_rule = {violation.rule_name: violation for violation in violations}
+
+        self.assertTrue(all(isinstance(violation, ShapeViolation) for violation in violations))
+        self.assertEqual(by_rule["max_methods_per_class"].actual, 2)
+        self.assertEqual(by_rule["max_class_lines"].symbol_name, "Service")
+        self.assertEqual(by_rule["max_function_lines"].symbol_name, "build")
+        self.assertEqual(by_rule["max_method_lines"].symbol_name, "run")
+        self.assertEqual(by_rule["allow_optional_function_args"].symbol_name, "build")
+        self.assertEqual(by_rule["allow_optional_method_args"].symbol_name, "run")
+        self.assertEqual(by_rule["allow_optional_class_properties"].symbol_name, "maybe")
+        self.assertEqual(by_rule["allow_import_aliases"].symbol_name, "shared")
+        self.assertEqual(by_rule["allowed_import_crossing_types"].actual, "symbol")
+        self.assertEqual(by_rule["require_joined_imports"].symbol_name, "shared")
+        self.assertEqual(
+            by_rule["max_declared_args"].to_dict()["source_id"],
+            "app",
+        )
 
     def test_supported_apps_produce_the_same_dependency_graph(self) -> None:
         graphs_by_language: dict[str, set[tuple[str, str]]] = {}
