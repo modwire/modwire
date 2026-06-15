@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
-from ..definitions import SourceExport, SourceFile, SourceImport
+from ..definitions import SourceExport, SourceImport
 from .base import (
     SourceExtraction,
     SourceExtractor,
-    _collect_extraction_targets,
-    _join_source_id,
-    _json_from_output,
+    _extract_files,
 )
 
 
@@ -21,6 +18,7 @@ class PhpExtractor(SourceExtractor):
     file_extensions = (".php",)
     command = "php"
     extractor_file = "php_extractor.php"
+    batch_size = 500
 
     def extract_files(
         self,
@@ -28,48 +26,12 @@ class PhpExtractor(SourceExtractor):
         exclusions: tuple[str, ...],
         source_id_prefix: str = "",
     ) -> SourceExtraction:
-        script = Path(__file__).parent / "scripts" / self.extractor_file
-        assert script.is_file(), f"Extractor script {script} not found"
-
-        targets, files_found, files_excluded = _collect_extraction_targets(
+        return _extract_files(
+            self,
             sources_root,
-            self.file_extensions,
             exclusions,
-        )
-        if not targets:
-            return SourceExtraction(
-                files={},
-                files_found=files_found,
-                files_excluded=files_excluded,
-            )
-
-        input_data = {
-            self.normalize_source_id(
-                _join_source_id(source_id_prefix, target.source_id)
-            ): str(target.path.resolve())
-            for target in targets
-        }
-        cmd = [self.command, str(script), "--batch", str(sources_root.resolve())]
-        raw_files = _json_from_output(cmd, json.dumps(input_data))
-        result = {
-            source_id: SourceFile.model_validate(source_file)
-            for source_id, source_file in raw_files.items()
-        }
-
-        known_source_ids = set(result)
-        result = {
-            source_id: self.normalize_source_file(
-                source_id,
-                source_file,
-                known_source_ids,
-            )
-            for source_id, source_file in result.items()
-        }
-
-        return SourceExtraction(
-            files=result,
-            files_found=files_found,
-            files_excluded=files_excluded,
+            source_id_prefix=source_id_prefix,
+            batch_size=self.batch_size,
         )
 
     def normalize_import(

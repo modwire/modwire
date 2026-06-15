@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
-from subprocess import run
+from subprocess import CalledProcessError, run
 from typing import Protocol
 
 from ..definitions import SourceExport, SourceFile, SourceImport
@@ -21,6 +21,10 @@ class SourceExtraction:
 class ExtractionTarget:
     source_id: str
     path: Path
+
+
+class ExtractorProcessError(RuntimeError):
+    """Raised when a language extractor subprocess fails."""
 
 
 class SourceExtractor(Protocol):
@@ -84,48 +88,11 @@ class SourceExtractor(Protocol):
         exclusions: tuple[str, ...],
         source_id_prefix: str = "",
     ) -> SourceExtraction:
-        script = Path(__file__).parent / "scripts" / self.extractor_file
-        assert script.is_file(), f"Extractor script {script} not found"
-
-        targets, files_found, files_excluded = _collect_extraction_targets(
+        return _extract_files(
+            self,
             sources_root,
-            self.file_extensions,
             exclusions,
-        )
-        if not targets:
-            return SourceExtraction(
-                files={},
-                files_found=files_found,
-                files_excluded=files_excluded,
-            )
-
-        input_data = {
-            self.normalize_source_id(
-                _join_source_id(source_id_prefix, target.source_id)
-            ): str(target.path.resolve())
-            for target in targets
-        }
-        cmd = [self.command, str(script), "--batch", str(sources_root.resolve())]
-        raw_files = _json_from_output(cmd, json.dumps(input_data))
-        result = {
-            source_id: SourceFile.model_validate(source_file)
-            for source_id, source_file in raw_files.items()
-        }
-
-        known_source_ids = set(result)
-        result = {
-            source_id: self.normalize_source_file(
-                source_id,
-                source_file,
-                known_source_ids,
-            )
-            for source_id, source_file in result.items()
-        }
-
-        return SourceExtraction(
-            files=result,
-            files_found=files_found,
-            files_excluded=files_excluded,
+            source_id_prefix=source_id_prefix,
         )
 
     def normalize_source_file(
@@ -197,6 +164,74 @@ class SourceExtractor(Protocol):
         return [module_export, *exports]
 
 
+def _extract_files(
+    extractor: SourceExtractor,
+    sources_root: Path,
+    exclusions: tuple[str, ...],
+    *,
+    source_id_prefix: str = "",
+    batch_size: int = 0,
+) -> SourceExtraction:
+    script = Path(__file__).parent / "scripts" / extractor.extractor_file
+    assert script.is_file(), f"Extractor script {script} not found"
+
+    targets, files_found, files_excluded = _collect_extraction_targets(
+        sources_root,
+        extractor.file_extensions,
+        exclusions,
+    )
+    if not targets:
+        return SourceExtraction(
+            files={},
+            files_found=files_found,
+            files_excluded=files_excluded,
+        )
+
+    input_data = {
+        extractor.normalize_source_id(
+            _join_source_id(source_id_prefix, target.source_id)
+        ): str(target.path.resolve())
+        for target in targets
+    }
+    cmd = [extractor.command, str(script), "--batch", str(sources_root.resolve())]
+    if batch_size:
+        raw_files = _json_from_output_in_batches(
+            cmd,
+            input_data,
+            language=extractor.language,
+            sources_root=sources_root,
+            batch_size=batch_size,
+        )
+    else:
+        raw_files = _json_from_output(
+            cmd,
+            json.dumps(input_data),
+            language=extractor.language,
+            sources_root=sources_root,
+            file_count=len(input_data),
+        )
+    result = {
+        source_id: SourceFile.model_validate(source_file)
+        for source_id, source_file in raw_files.items()
+    }
+
+    known_source_ids = set(result)
+    result = {
+        source_id: extractor.normalize_source_file(
+            source_id,
+            source_file,
+            known_source_ids,
+        )
+        for source_id, source_file in result.items()
+    }
+
+    return SourceExtraction(
+        files=result,
+        files_found=files_found,
+        files_excluded=files_excluded,
+    )
+
+
 def _collect_extraction_targets(
     sources_root: Path,
     file_extensions: tuple[str, ...],
@@ -250,19 +285,96 @@ def _collect_extraction_targets(
     return tuple(targets), files_found, files_excluded
 
 
-def _json_from_output(cmd: list[str], input_json: str = "") -> dict:
-    output_json = run(
-        cmd,
-        capture_output=True,
-        text=True,
-        input=input_json,
-        check=True,
-    ).stdout
+def _json_from_output(
+    cmd: list[str],
+    input_json: str = "",
+    *,
+    language: str = "",
+    sources_root: Path | None = None,
+    file_count: int | None = None,
+) -> dict:
+    try:
+        output_json = run(
+            cmd,
+            capture_output=True,
+            text=True,
+            input=input_json,
+            check=True,
+        ).stdout
+    except CalledProcessError as e:
+        raise ExtractorProcessError(
+            _format_process_error(e, language, sources_root, file_count)
+        ) from e
 
     try:
         return json.loads(output_json)
     except json.JSONDecodeError as e:
         raise ValueError(f"Failed to parse JSON from output: {output_json}") from e
+
+
+def _json_from_output_in_batches(
+    cmd: list[str],
+    input_data: dict[str, str],
+    *,
+    language: str,
+    sources_root: Path,
+    batch_size: int,
+) -> dict:
+    result: dict[str, object] = {}
+    items = tuple(input_data.items())
+    for start in range(0, len(items), batch_size):
+        chunk = dict(items[start : start + batch_size])
+        raw_files = _json_from_output(
+            cmd,
+            json.dumps(chunk),
+            language=language,
+            sources_root=sources_root,
+            file_count=len(chunk),
+        )
+        result.update(raw_files)
+    return result
+
+
+def _format_process_error(
+    error: CalledProcessError,
+    language: str,
+    sources_root: Path | None,
+    file_count: int | None,
+) -> str:
+    lines = [
+        "Extractor subprocess failed.",
+        f"command: {_format_command(error.cmd)}",
+        f"exit code: {error.returncode}",
+    ]
+    if language:
+        lines.append(f"language: {language}")
+    if sources_root is not None:
+        lines.append(f"source root: {sources_root.resolve()}")
+    if file_count is not None:
+        lines.append(f"files: {file_count}")
+
+    stdout = _text_tail(error.stdout or error.output)
+    stderr = _text_tail(error.stderr)
+    if stdout:
+        lines.extend(("stdout tail:", stdout))
+    if stderr:
+        lines.extend(("stderr tail:", stderr))
+    return "\n".join(lines)
+
+
+def _format_command(cmd: object) -> str:
+    if isinstance(cmd, (list, tuple)):
+        return " ".join(str(part) for part in cmd)
+    return str(cmd)
+
+
+def _text_tail(value: object, max_lines: int = 20) -> str:
+    if not isinstance(value, str):
+        return ""
+    lines = value.strip().splitlines()
+    if len(lines) > max_lines:
+        lines = lines[-max_lines:]
+    return "\n".join(lines)
 
 
 def _matches_exclusion(source_id: str, exclusion: str) -> bool:
@@ -350,6 +462,7 @@ def _join_source_id(prefix: str, source_id: str) -> str:
 
 
 __all__ = [
+    "ExtractorProcessError",
     "ExtractionTarget",
     "SourceExtraction",
     "SourceExtractor",

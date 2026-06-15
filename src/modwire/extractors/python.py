@@ -4,10 +4,10 @@ import sys
 
 from dataclasses import dataclass
 from posixpath import normpath
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 from ..definitions import SourceExport, SourceImport
-from .base import SourceExtractor
+from .base import SourceExtraction, SourceExtractor, _extract_files
 
 
 @dataclass(frozen=True)
@@ -16,6 +16,21 @@ class PythonExtractor(SourceExtractor):
     file_extensions = (".py",)
     command = sys.executable
     extractor_file = "python_extractor.py"
+    batch_size = 500
+
+    def extract_files(
+        self,
+        sources_root: Path,
+        exclusions: tuple[str, ...],
+        source_id_prefix: str = "",
+    ) -> SourceExtraction:
+        return _extract_files(
+            self,
+            sources_root,
+            exclusions,
+            source_id_prefix=source_id_prefix,
+            batch_size=self.batch_size,
+        )
 
     def normalize_import(
         self,
