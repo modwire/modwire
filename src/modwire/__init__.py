@@ -1,3 +1,4 @@
+from ._version import __version__
 from .extraction import (
     CodeMap,
     CodeMapSerializationError,
@@ -11,9 +12,26 @@ from .extraction import (
     extract_code,
     serialize_code_map,
 )
-from .extractors.loader import normalize_source_id, supported_languages
+from .extractors.loader import (
+    UnsupportedLanguageError,
+    normalize_source_id,
+    supported_languages,
+)
 from .exports import UnusedExport, find_unused_exports
 from .graph import DependencyGraph, Edge, Node, build_dependency_graph
+from .metadata import (
+    EXTRACTION_SCHEMA_VERSION,
+    PUBLIC_API_STABILITY,
+    ExtractorRuntimeError,
+    LanguageInfo,
+    MissingRuntimeError,
+    RuntimeInfo,
+    extraction_implementation_stamp,
+    language,
+    languages,
+    require_runtime,
+    runtime_diagnostics,
+)
 
 
 __all__ = [
@@ -21,19 +39,32 @@ __all__ = [
     "CodeMapSerializationError",
     "DependencyGraph",
     "Edge",
+    "EXTRACTION_SCHEMA_VERSION",
     "ExtractionCache",
+    "ExtractorRuntimeError",
+    "LanguageInfo",
+    "MissingRuntimeError",
     "Node",
+    "PUBLIC_API_STABILITY",
+    "RuntimeInfo",
     "SourceChangedDuringExtractionError",
     "SourceManifest",
     "SourceManifestEntry",
     "SourceRoots",
+    "UnsupportedLanguageError",
     "UnusedExport",
+    "__version__",
     "build_dependency_graph",
     "deserialize_code_map",
     "discover_sources",
+    "extraction_implementation_stamp",
     "extract_code",
     "find_unused_exports",
+    "language",
+    "languages",
     "normalize_source_id",
+    "require_runtime",
+    "runtime_diagnostics",
     "serialize_code_map",
     "supported_languages",
 ]

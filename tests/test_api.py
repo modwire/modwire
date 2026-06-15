@@ -12,14 +12,23 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from modwire import (
+    EXTRACTION_SCHEMA_VERSION,
     ExtractionCache,
+    LanguageInfo,
+    RuntimeInfo,
     SourceRoots,
+    UnsupportedLanguageError,
+    __version__,
     build_dependency_graph,
     deserialize_code_map,
     discover_sources,
     extract_code,
+    extraction_implementation_stamp,
     find_unused_exports,
+    language,
+    languages,
     normalize_source_id,
+    runtime_diagnostics,
     serialize_code_map,
     supported_languages,
 )
@@ -52,6 +61,25 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         self.assertEqual(normalize_source_id("python", r"src\app.py"), "src/app")
         self.assertEqual(normalize_source_id("typescript", "src/view.tsx"), "src/view")
         self.assertEqual(normalize_source_id("php", "src/Controller.php"), "src/Controller")
+
+    def test_language_metadata_is_public_and_runtime_aware(self) -> None:
+        infos = languages()
+
+        self.assertEqual([info.name for info in infos], ["python", "typescript", "php"])
+        self.assertTrue(all(isinstance(info, LanguageInfo) for info in infos))
+        self.assertEqual(language("python").file_extensions, (".py",))
+        self.assertEqual(language("typescript").command, "node")
+        self.assertTrue(language("python").extractor_path.is_file())
+        self.assertTrue(extraction_implementation_stamp("python"))
+        self.assertIsInstance(runtime_diagnostics("python"), RuntimeInfo)
+        self.assertTrue(runtime_diagnostics("python").available)
+        self.assertTrue(runtime_diagnostics("python").command_path)
+        self.assertIsInstance(__version__, str)
+        self.assertEqual(EXTRACTION_SCHEMA_VERSION, 1)
+
+    def test_unsupported_languages_raise_explicit_error(self) -> None:
+        with self.assertRaises(UnsupportedLanguageError):
+            language("ruby")
 
     def test_supported_apps_produce_the_same_dependency_graph(self) -> None:
         graphs_by_language: dict[str, set[tuple[str, str]]] = {}

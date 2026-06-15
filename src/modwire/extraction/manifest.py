@@ -60,9 +60,9 @@ def discover_sources(
     extractor_path = (
         Path(__file__).parents[1] / "extractors" / "scripts" / extractor.extractor_file
     ).resolve()
-    runtime_path = shutil.which(extractor.command)
-    runtime_mtime_ns = None
-    if runtime_path is not None:
+    runtime_path = shutil.which(extractor.command) or ""
+    runtime_mtime_ns = 0
+    if runtime_path != "":
         runtime_mtime_ns = Path(runtime_path).stat().st_mtime_ns
 
     return SourceManifest(

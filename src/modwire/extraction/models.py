@@ -77,8 +77,8 @@ class SourceManifest:
     exclusions: tuple[str, ...]
     file_extensions: tuple[str, ...]
     runtime_command: str
-    runtime_path: str | None
-    runtime_mtime_ns: int | None
+    runtime_path: str
+    runtime_mtime_ns: int
     extractor_file: str
     extractor_path: Path
     extractor_mtime_ns: int

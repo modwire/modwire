@@ -14,12 +14,17 @@ _map: dict[str, type[SourceExtractor]] = {
 _instances: dict[str, SourceExtractor] = {}
 
 
+class UnsupportedLanguageError(ValueError):
+    """Raised when a requested language is not supported by Modwire."""
+
+
 def supported_languages() -> tuple[str, ...]:
     return tuple(_map)
 
 
 def load_extractor(language: str) -> SourceExtractor:
-    assert language in _map, f"Unsupported language: {language}"
+    if language not in _map:
+        raise UnsupportedLanguageError(f"Unsupported language: {language}")
 
     if language not in _instances:
         _instances[language] = _map[language]()
