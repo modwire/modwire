@@ -13,8 +13,27 @@ class FlowAnalyzer:
     run: Callable
 
 
+@dataclass(frozen=True)
+class AnalyzerInfo:
+    name: str
+    title: str
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "name": self.name,
+            "title": self.title,
+        }
+
+
 def supported_analyzers() -> tuple[str, ...]:
     return tuple(_ANALYZERS)
+
+
+def analyzer_metadata() -> tuple[AnalyzerInfo, ...]:
+    return tuple(
+        AnalyzerInfo(name=analyzer.name, title=analyzer.title)
+        for analyzer in _ANALYZERS.values()
+    )
 
 
 def analyzer_title(name: str) -> str:

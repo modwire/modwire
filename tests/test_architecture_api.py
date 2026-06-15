@@ -5,13 +5,23 @@ import unittest
 from types import SimpleNamespace
 
 from modwire.architecture import (
+    AnalyzerInfo,
+    ArchitectureBoundaryRule,
+    ArchitectureConfig,
+    ArchitectureConfigError,
+    ArchitectureFlowRules,
     ArchitecturePolicyEvaluator,
+    ArchitectureRules,
+    ArchitectureTagRule,
     EdgeRuleViolation,
     FlowViolation,
     TagMap,
     TagMatch,
     TagMatcher,
+    analyzer_metadata,
     supported_analyzers,
+    validate_policy_config,
+    violation_to_dict,
 )
 from modwire.extraction import CodeMap, ExtractionResult, ExtractionSummary
 from modwire.graph import DependencyGraph
@@ -44,6 +54,7 @@ class ArchitectureApiTest(unittest.TestCase):
             supported_analyzers(),
             ("backward-flow", "no-reentry", "no-cycles"),
         )
+        self.assertTrue(all(isinstance(info, AnalyzerInfo) for info in analyzer_metadata()))
 
     def test_compiled_tag_matcher_maps_code_and_exposes_match_details(self) -> None:
         matcher = TagMatcher(
@@ -99,6 +110,81 @@ class ArchitectureApiTest(unittest.TestCase):
         self.assertEqual(
             tag_map.first_match("src/features/billing/domain", ("module",)).captured_path,
             "src/features/billing",
+        )
+
+    def test_architecture_config_models_validate_and_evaluate_policy(self) -> None:
+        graph = DependencyGraph()
+        graph.add_edge("src/features/billing/ui", "src/features/billing/domain")
+        config = ArchitectureConfig(
+            language="python",
+            architecture_root="src",
+            rules=ArchitectureRules(
+                tags=(
+                    ArchitectureTagRule(name="ui", match="features/*/ui"),
+                    ArchitectureTagRule(name="domain", match="features/*/domain"),
+                ),
+                boundaries=(
+                    ArchitectureBoundaryRule(
+                        source="features/*/ui",
+                        disallow=("features/*/domain",),
+                    ),
+                ),
+                flow=ArchitectureFlowRules(),
+            ),
+        )
+
+        violations = ArchitecturePolicyEvaluator().evaluate(graph, config)
+
+        self.assertEqual(len(violations), 1)
+        self.assertEqual(violations[0].source_pattern, "features/*/ui")
+        self.assertEqual(
+            violation_to_dict(violations[0]),
+            {
+                "violation_type": "edge-rule",
+                "source_id": "src/features/billing/ui",
+                "target_id": "src/features/billing/domain",
+                "source_pattern": "features/*/ui",
+                "target_pattern": "features/*/domain",
+                "rule_name": "boundary:features/*/ui->features/*/domain:deny",
+            },
+        )
+
+    def test_architecture_config_errors_are_structured(self) -> None:
+        with self.assertRaises(ArchitectureConfigError) as context:
+            validate_policy_config(
+                {
+                    "language": "python",
+                    "rules": {
+                        "flow": {
+                            "analyzers": ("missing-analyzer",),
+                        }
+                    },
+                }
+            )
+
+        payload = context.exception.to_dict()
+        self.assertEqual(payload["error"], "invalid_architecture_config")
+        self.assertIn("rules.flow.analyzers", payload["issues"][0]["field"])
+        self.assertIn("Unsupported flow analyzer", payload["issues"][0]["message"])
+
+    def test_flow_violations_have_stable_dict_shape(self) -> None:
+        violation = FlowViolation(
+            violation_type="backward-flow",
+            path=("src/ui", "src/domain"),
+            violation_index=1,
+            rule_name="analyzer:backward-flow",
+            message="layer order violated",
+        )
+
+        self.assertEqual(
+            violation.to_dict(),
+            {
+                "violation_type": "backward-flow",
+                "path": ("src/ui", "src/domain"),
+                "violation_index": 1,
+                "rule_name": "analyzer:backward-flow",
+                "message": "layer order violated",
+            },
         )
 
 
