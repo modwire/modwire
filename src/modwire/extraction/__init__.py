@@ -7,6 +7,7 @@ from .models import (
     SourceManifest,
     SourceManifestEntry,
 )
+from .roots import SourceRoots
 from .serialization import (
     CodeMapSerializationError,
     deserialize_code_map,
@@ -24,6 +25,7 @@ __all__ = [
     "SourceChangedDuringExtractionError",
     "SourceManifest",
     "SourceManifestEntry",
+    "SourceRoots",
     "deserialize_code_map",
     "discover_sources",
     "extract_code",

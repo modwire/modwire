@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 from modwire import (
     ExtractionCache,
+    SourceRoots,
     build_dependency_graph,
     deserialize_code_map,
     discover_sources,
@@ -257,6 +258,102 @@ class BuildDependencyGraphFunctionalTest(unittest.TestCase):
         self.assertEqual(first.cache_key, second.cache_key)
         self.assertEqual(run_mock.call_count, 1)
         self.assertEqual(set(second.extraction_result.files), {"one", "two"})
+
+    def test_extraction_can_return_workspace_relative_source_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            source_root = workspace / "src" / "app" / "features"
+            source_root.joinpath("application").mkdir(parents=True)
+            source_root.joinpath("domain").mkdir()
+            source_root.joinpath("generated").mkdir()
+            source_root.joinpath("domain", "model.py").write_text(
+                "class Model:\n    pass\n",
+                encoding="utf-8",
+            )
+            source_root.joinpath("application", "use_case.py").write_text(
+                "from ..domain.model import Model\n\n"
+                "def run():\n"
+                "    return Model()\n",
+                encoding="utf-8",
+            )
+            source_root.joinpath("generated", "ignored.py").write_text(
+                "def ignored():\n    pass\n",
+                encoding="utf-8",
+            )
+
+            result = extract_code(
+                "python",
+                source_root,
+                ("src/app/features/generated/**",),
+                source_roots=SourceRoots(
+                    workspace_root=workspace,
+                    source_id_mode="relative_to_workspace_root",
+                ),
+            )
+            manifest = discover_sources(
+                "python",
+                source_root,
+                ("src/app/features/generated/**",),
+                source_roots=SourceRoots(
+                    workspace_root=workspace,
+                    source_id_mode="relative_to_workspace_root",
+                ),
+            )
+
+        self.assertEqual(
+            set(result.extraction_result.files),
+            {
+                "src/app/features/application/use_case",
+                "src/app/features/domain/model",
+            },
+        )
+        self.assertIn(
+            ("src/app/features/application/use_case", "src/app/features/domain/model"),
+            {(edge.from_id, edge.to_id) for edge in result.graph.edges},
+        )
+        self.assertEqual(result.extraction_result.summary.files_found, 3)
+        self.assertEqual(result.extraction_result.summary.files_excluded, 1)
+        self.assertEqual(manifest.exclusions, ("generated/**",))
+        self.assertEqual(
+            [entry.source_id for entry in manifest.entries],
+            [
+                "src/app/features/application/use_case",
+                "src/app/features/domain/model",
+            ],
+        )
+
+    def test_extraction_can_use_explicit_logical_source_id_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            source_root = workspace / "packages" / "sales"
+            source_root.mkdir(parents=True)
+            source_root.joinpath("service.py").write_text(
+                "def run():\n    pass\n",
+                encoding="utf-8",
+            )
+
+            result = extract_code(
+                "python",
+                source_root,
+                (),
+                source_roots=SourceRoots(
+                    workspace_root=workspace,
+                    source_id_root="logical/sales",
+                ),
+            )
+            manifest = discover_sources(
+                "python",
+                source_root,
+                (),
+                source_roots=SourceRoots(
+                    workspace_root=workspace,
+                    source_id_root="logical/sales",
+                ),
+            )
+
+        self.assertEqual(set(result.extraction_result.files), {"logical/sales/service"})
+        self.assertEqual(manifest.source_id_root, "logical/sales")
+        self.assertEqual(manifest.source_id_prefix, "logical/sales")
 
     def test_python_batch_output_equals_single_file_output(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

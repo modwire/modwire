@@ -10,6 +10,7 @@ from .base import (
     SourceExtraction,
     SourceExtractor,
     _collect_extraction_targets,
+    _join_source_id,
     _json_from_output,
 )
 
@@ -25,6 +26,7 @@ class PhpExtractor(SourceExtractor):
         self,
         sources_root: Path,
         exclusions: tuple[str, ...],
+        source_id_prefix: str = "",
     ) -> SourceExtraction:
         script = Path(__file__).parent / "scripts" / self.extractor_file
         assert script.is_file(), f"Extractor script {script} not found"
@@ -42,7 +44,9 @@ class PhpExtractor(SourceExtractor):
             )
 
         input_data = {
-            self.normalize_source_id(target.source_id): str(target.path.resolve())
+            self.normalize_source_id(
+                _join_source_id(source_id_prefix, target.source_id)
+            ): str(target.path.resolve())
             for target in targets
         }
         cmd = [self.command, str(script), "--batch", str(sources_root.resolve())]

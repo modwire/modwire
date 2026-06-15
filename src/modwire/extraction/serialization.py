@@ -51,8 +51,8 @@ def serialize_code_map(code_map: CodeMap) -> dict[str, Any]:
 def deserialize_code_map(
     payload: dict[str, Any],
     *,
-    cache_status: str | None = None,
-    cache_key: str | None = None,
+    cache_status: str = "",
+    cache_key: str = "",
 ) -> CodeMap:
     try:
         if payload["schema_version"] != CODE_MAP_SCHEMA_VERSION:
@@ -96,7 +96,7 @@ def deserialize_code_map(
             ),
             runtime_command=payload["runtime_command"],
             cache_status=cache_status or payload.get("cache_status", "disabled"),
-            cache_key=cache_key if cache_key is not None else payload.get("cache_key"),
+            cache_key=cache_key or payload.get("cache_key") or "",
         )
     except (KeyError, TypeError, ValueError) as error:
         if isinstance(error, CodeMapSerializationError):

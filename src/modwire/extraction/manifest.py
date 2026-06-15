@@ -9,28 +9,49 @@ from .._version import __version__
 from ..extractors import load_extractor
 from ..extractors.base import _collect_extraction_targets
 from .models import SourceManifest, SourceManifestEntry
+from .roots import (
+    DEFAULT_SOURCE_ROOTS,
+    SourceRoots,
+    has_workspace_root,
+    join_source_id,
+    normalize_exclusions,
+    source_id_prefix,
+)
 
 
 def discover_sources(
     language: str,
     sources_root: Path,
     exclusions: tuple[str, ...] = (),
+    *,
+    source_roots: SourceRoots = DEFAULT_SOURCE_ROOTS,
 ) -> SourceManifest:
     """Return the source manifest using the same traversal as extraction."""
     assert sources_root.is_dir(), f"Project root {sources_root} is not a directory"
 
     extractor = load_extractor(language)
+    normalized_exclusions = normalize_exclusions(
+        exclusions,
+        sources_root=sources_root,
+        source_roots=source_roots,
+    )
+    prefix = source_id_prefix(
+        sources_root=sources_root,
+        source_roots=source_roots,
+    )
     targets, files_found, files_excluded = _collect_extraction_targets(
         sources_root,
         extractor.file_extensions,
-        exclusions,
+        normalized_exclusions,
     )
     entries = []
     for target in targets:
         stat = target.path.stat()
         entries.append(
             SourceManifestEntry(
-                source_id=extractor.normalize_source_id(target.source_id),
+                source_id=extractor.normalize_source_id(
+                    join_source_id(prefix, target.source_id)
+                ),
                 path=target.path.resolve(),
                 size=stat.st_size,
                 mtime_ns=stat.st_mtime_ns,
@@ -46,8 +67,16 @@ def discover_sources(
 
     return SourceManifest(
         language=language,
+        workspace_root=(
+            source_roots.workspace_root.resolve()
+            if has_workspace_root(source_roots)
+            else Path()
+        ),
         sources_root=sources_root.resolve(),
-        exclusions=tuple(exclusions),
+        source_id_root=source_roots.source_id_root,
+        source_id_mode=source_roots.source_id_mode,
+        source_id_prefix=prefix,
+        exclusions=normalized_exclusions,
         file_extensions=extractor.file_extensions,
         runtime_command=extractor.command,
         runtime_path=runtime_path,

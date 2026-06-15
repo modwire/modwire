@@ -18,7 +18,7 @@ CACHE_SCHEMA_VERSION = 1
 
 @dataclass(frozen=True)
 class ExtractionCache:
-    root: Path
+    root: Path = Path()
     max_entries: int = 10
     enabled: bool = True
 
@@ -87,3 +87,6 @@ class ExtractionCache:
         )
         for stale_path in entries[self.max_entries :]:
             stale_path.unlink(missing_ok=True)
+
+
+DEFAULT_EXTRACTION_CACHE = ExtractionCache(enabled=False)

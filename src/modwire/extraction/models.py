@@ -7,6 +7,7 @@ from typing import Any
 
 from ..definitions import SourceFile
 from ..graph import DependencyGraph
+from .roots import SourceIdMode
 
 
 @dataclass(frozen=True)
@@ -28,7 +29,7 @@ class CodeMap:
     extraction_result: ExtractionResult
     runtime_command: str
     cache_status: str = "disabled"
-    cache_key: str | None = None
+    cache_key: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         from .serialization import serialize_code_map
@@ -68,7 +69,11 @@ class SourceManifestEntry:
 @dataclass(frozen=True)
 class SourceManifest:
     language: str
+    workspace_root: Path
     sources_root: Path
+    source_id_root: str
+    source_id_mode: SourceIdMode
+    source_id_prefix: str
     exclusions: tuple[str, ...]
     file_extensions: tuple[str, ...]
     runtime_command: str
@@ -86,7 +91,11 @@ class SourceManifest:
     def to_dict(self) -> dict[str, Any]:
         return {
             "language": self.language,
+            "workspace_root": str(self.workspace_root),
             "sources_root": str(self.sources_root),
+            "source_id_root": self.source_id_root,
+            "source_id_mode": self.source_id_mode,
+            "source_id_prefix": self.source_id_prefix,
             "exclusions": list(self.exclusions),
             "file_extensions": list(self.file_extensions),
             "runtime_command": self.runtime_command,

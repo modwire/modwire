@@ -82,6 +82,7 @@ class SourceExtractor(Protocol):
         self,
         sources_root: Path,
         exclusions: tuple[str, ...],
+        source_id_prefix: str = "",
     ) -> SourceExtraction:
         script = Path(__file__).parent / "scripts" / self.extractor_file
         assert script.is_file(), f"Extractor script {script} not found"
@@ -99,7 +100,9 @@ class SourceExtractor(Protocol):
             )
 
         input_data = {
-            self.normalize_source_id(target.source_id): str(target.path.resolve())
+            self.normalize_source_id(
+                _join_source_id(source_id_prefix, target.source_id)
+            ): str(target.path.resolve())
             for target in targets
         }
         cmd = [self.command, str(script), "--batch", str(sources_root.resolve())]
@@ -244,7 +247,7 @@ def _collect_extraction_targets(
     return tuple(targets), files_found, files_excluded
 
 
-def _json_from_output(cmd: list[str], input_json: str | None = None) -> dict:
+def _json_from_output(cmd: list[str], input_json: str = "") -> dict:
     output_json = run(
         cmd,
         capture_output=True,
@@ -331,6 +334,16 @@ def _matches_path_pattern(source_id: str, pattern: str) -> bool:
     if pattern.startswith("**/") and fnmatch(source_id, pattern[3:]):
         return True
     return False
+
+
+def _join_source_id(prefix: str, source_id: str) -> str:
+    normalized_prefix = prefix.replace("\\", "/").strip().strip("/")
+    normalized_source_id = source_id.replace("\\", "/").strip().strip("/")
+    if not normalized_prefix:
+        return normalized_source_id
+    if not normalized_source_id:
+        return normalized_prefix
+    return f"{normalized_prefix}/{normalized_source_id}"
 
 
 __all__ = [

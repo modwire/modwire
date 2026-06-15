@@ -20,7 +20,7 @@ def _edge_violations(graph, config):
     violations = []
     exclusions = {rule.match: rule.excluded_patterns for rule in config.rules.tags}
     for edge in graph.edges:
-        denied: tuple[str, str] | None = None
+        denied: tuple[str, str] = ("", "")
         for rule in config.rules.boundaries:
             source = match_node(edge.from_id, rule.source, config, exclusions)
             if source is None:
@@ -38,8 +38,8 @@ def _edge_violations(graph, config):
                     denied = (rule.source, target)
             for target in rule.allow:
                 if match_node(edge.to_id, target, config, exclusions, scope=target in exclusions):
-                    denied = None
-        if denied:
+                    denied = ("", "")
+        if denied[0]:
             violations.append(
                 EdgeRuleViolation(
                     edge.from_id,
