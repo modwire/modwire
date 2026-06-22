@@ -3,7 +3,7 @@ from __future__ import annotations
 from modwire.graph import DependencyGraph
 
 from .analyzers import run_analyzer
-from .config import validate_policy_config
+from .config import flow_realms, validate_policy_config
 from .matching import TagMatcher
 from .violations import EdgeRuleViolation, FlowViolation
 
@@ -14,7 +14,13 @@ class ArchitecturePolicyEvaluator:
         tags = _tags(graph.node_ids(), config)
         violations: list[EdgeRuleViolation | FlowViolation] = _edge_violations(graph, config)
         for analyzer_name in config.rules.flow.analyzers:
-            violations.extend(run_analyzer(analyzer_name, graph, tags, config))
+            for realm in flow_realms(config.rules.flow):
+                if analyzer_name == "backward-flow" and not realm.layers:
+                    continue
+                analyzer_realm = realm if config.rules.flow.realms else None
+                violations.extend(
+                    run_analyzer(analyzer_name, graph, tags, config, analyzer_realm)
+                )
         return violations
 
 

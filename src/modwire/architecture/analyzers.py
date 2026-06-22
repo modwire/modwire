@@ -40,9 +40,9 @@ def analyzer_title(name: str) -> str:
     return _ANALYZERS[name].title
 
 
-def run_analyzer(name: str, graph, tags, config):
+def run_analyzer(name: str, graph, tags, config, realm=None):
     analyzer = _ANALYZERS[name]
-    return analyzer.run(analyzer.name, graph, tags, config)
+    return analyzer.run(analyzer.name, graph, tags, config, realm)
 
 
 def _roots(graph):
@@ -65,12 +65,18 @@ def _dedupe(violations):
     return unique
 
 
-def _flow(name, path, index, message):
-    return FlowViolation(name, tuple(path), index, f"analyzer:{name}", message)
+def _flow(name, path, index, message, realm=None):
+    realm_name = "" if realm is None else getattr(realm, "name", "") or getattr(
+        realm,
+        "module_tag",
+        "",
+    )
+    rule_name = f"analyzer:{realm_name}:{name}" if realm_name else f"analyzer:{name}"
+    return FlowViolation(name, tuple(path), index, rule_name, message)
 
 
-def _backward_flow(name, graph, tags, config):
-    layers = config.rules.flow.layers
+def _backward_flow(name, graph, tags, config, realm):
+    layers = realm.layers if realm is not None else config.rules.flow.layers
 
     def layer(node):
         return next((i for i, layer_name in enumerate(layers) if layer_name in tags.get(node, set())), None)
@@ -85,7 +91,7 @@ def _backward_flow(name, graph, tags, config):
         for edge in graph.outgoing(node):
             next_layer = layer(edge.to_id)
             if current_layer is not None and next_layer is not None and next_layer < current_layer:
-                violations.append(_flow(name, [*path, edge.to_id], len(path), "layer order violated"))
+                violations.append(_flow(name, [*path, edge.to_id], len(path), "layer order violated", realm))
                 continue
             walk(edge.to_id, current_layer if next_layer is None else next_layer, [*path, edge.to_id])
 
@@ -94,8 +100,8 @@ def _backward_flow(name, graph, tags, config):
     return _dedupe(violations)
 
 
-def _no_reentry(name, graph, tags, config):
-    module_tag = config.rules.flow.module_tag
+def _no_reentry(name, graph, tags, config, realm):
+    module_tag = realm.module_tag if realm is not None else config.rules.flow.module_tag
     violations = []
     seen = set()
 
@@ -107,7 +113,7 @@ def _no_reentry(name, graph, tags, config):
             inside = module_tag in tags.get(edge.to_id, set())
             next_state = 1 if state == 0 and inside else 2 if state == 1 and not inside else state
             if state == 2 and inside:
-                violations.append(_flow(name, [*path, edge.to_id], len(path), "module layer re-entered after exit"))
+                violations.append(_flow(name, [*path, edge.to_id], len(path), "module layer re-entered after exit", realm))
                 continue
             walk(edge.to_id, next_state, [*path, edge.to_id])
 
@@ -116,8 +122,9 @@ def _no_reentry(name, graph, tags, config):
     return _dedupe(violations)
 
 
-def _no_cycles(name, graph, tags, config):
-    scoped = {node for node, node_tags in tags.items() if config.rules.flow.module_tag in node_tags}
+def _no_cycles(name, graph, tags, config, realm):
+    module_tag = realm.module_tag if realm is not None else config.rules.flow.module_tag
+    scoped = {node for node, node_tags in tags.items() if module_tag in node_tags}
     seen, stack, index, emitted, violations = set(), [], {}, set(), []
 
     def canonical(cycle):
@@ -137,7 +144,7 @@ def _no_cycles(name, graph, tags, config):
                 key = canonical(cycle)
                 if key not in emitted:
                     emitted.add(key)
-                    violations.append(_flow(name, cycle, len(cycle) - 1, "module cycle detected"))
+                    violations.append(_flow(name, cycle, len(cycle) - 1, "module cycle detected", realm))
             elif edge.to_id not in seen:
                 dfs(edge.to_id)
         stack.pop()

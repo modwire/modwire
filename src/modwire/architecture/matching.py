@@ -43,14 +43,31 @@ class TagMatcher:
         self.tags = tuple(getattr(config.rules, "tags", ()))
 
     def match(self, node_id: str, name: str, *, scope: bool = True) -> TagMatch | None:
-        tag = self._tag(name)
-        pattern = tag.match if tag is not None else name
+        matches = self.matches(node_id, name, scope=scope)
+        if matches:
+            return matches[0]
+        if self._has_tag(name):
+            return None
+        pattern = name
         return self.match_pattern(
             node_id,
             pattern,
             name=name,
             scope=scope,
-            exclude=() if tag is None else tag.excluded_patterns,
+        )
+
+    def matches(
+        self,
+        node_id: str,
+        name: str,
+        *,
+        scope: bool = True,
+    ) -> tuple[TagMatch, ...]:
+        return tuple(
+            match
+            for tag in self.tags
+            if tag.name == name
+            if (match := self._match_tag(node_id, tag, scope=scope)) is not None
         )
 
     def match_pattern(
@@ -80,9 +97,19 @@ class TagMatcher:
                 )
         return None
 
-    def first_match(self, node_id: str, names: tuple[str, ...]) -> TagMatch | None:
+    def first_match(
+        self,
+        node_id: str,
+        names: tuple[str, ...],
+        *,
+        scope: bool = True,
+    ) -> TagMatch | None:
         return next(
-            (match for name in names if (match := self.match(node_id, name)) is not None),
+            (
+                tag_match
+                for name in names
+                if (tag_match := self.match(node_id, name, scope=scope)) is not None
+            ),
             None,
         )
 
@@ -90,7 +117,7 @@ class TagMatcher:
         return tuple(
             match
             for tag in self.tags
-            if (match := self.match(node_id, tag.name)) is not None
+            if (match := self._match_tag(node_id, tag)) is not None
         )
 
     def map_code_map(self, code_map) -> TagMap:
@@ -111,8 +138,17 @@ class TagMatcher:
             return path[len(architecture_root) + 1 :]
         return path
 
-    def _tag(self, name: str):
-        return next((tag for tag in self.tags if tag.name == name), None)
+    def _match_tag(self, node_id: str, tag, *, scope: bool = True) -> TagMatch | None:
+        return self.match_pattern(
+            node_id,
+            tag.match,
+            name=tag.name,
+            scope=scope,
+            exclude=tag.excluded_patterns,
+        )
+
+    def _has_tag(self, name: str) -> bool:
+        return any(tag.name == name for tag in self.tags)
 
 
 def _normalized_patterns(language, pattern, config):

@@ -11,6 +11,7 @@ from modwire.architecture import (
     ArchitectureConfig,
     ArchitectureConfigError,
     ArchitectureFlowRules,
+    ArchitectureFlowRealm,
     ArchitectureMap,
     ArchitecturePolicyEvaluator,
     ArchitectureRules,
@@ -120,6 +121,36 @@ class ArchitectureApiTest(unittest.TestCase):
             "src/features/billing",
         )
 
+    def test_tag_matcher_exposes_duplicate_name_matches_explicitly(self) -> None:
+        matcher = TagMatcher(
+            ArchitectureConfig(
+                language="python",
+                architecture_root="src",
+                rules=ArchitectureRules(
+                    tags=(
+                        ArchitectureTagRule(name="module", match="features/*"),
+                        ArchitectureTagRule(name="module", match="features/*/domain"),
+                    ),
+                ),
+            )
+        )
+
+        matches = matcher.matches("src/features/billing/domain", "module")
+        tag_matches = matcher.tags_for("src/features/billing/domain")
+
+        self.assertEqual(
+            [match.pattern for match in matches],
+            ["features/*", "features/*/domain"],
+        )
+        self.assertEqual(
+            [match.pattern for match in tag_matches],
+            ["features/*", "features/*/domain"],
+        )
+        self.assertEqual(
+            matcher.match("src/features/billing/domain", "module").pattern,
+            "features/*",
+        )
+
     def test_architecture_config_models_validate_and_evaluate_policy(self) -> None:
         graph = DependencyGraph()
         graph.add_edge("src/features/billing/ui", "src/features/billing/domain")
@@ -216,6 +247,70 @@ class ArchitectureApiTest(unittest.TestCase):
                     )
 
                 self.assertIn(expected_message, context.exception.to_dict()["issues"][0]["message"])
+
+    def test_legacy_flow_module_tag_still_evaluates_without_realm_rule_names(self) -> None:
+        graph = DependencyGraph()
+        graph.add_edge("src/features/billing", "src/features/orders")
+        graph.add_edge("src/features/orders", "src/features/billing")
+        config = ArchitectureConfig(
+            language="python",
+            architecture_root="src",
+            rules=ArchitectureRules(
+                tags=(ArchitectureTagRule(name="module", match="features/*"),),
+                flow=ArchitectureFlowRules(
+                    module_tag="module",
+                    analyzers=("no-cycles",),
+                ),
+            ),
+        )
+
+        violations = ArchitecturePolicyEvaluator().evaluate(graph, config)
+
+        self.assertEqual(len(violations), 1)
+        self.assertEqual(violations[0].violation_type, "no-cycles")
+        self.assertEqual(violations[0].rule_name, "analyzer:no-cycles")
+
+    def test_flow_realms_evaluate_each_module_tag_independently(self) -> None:
+        graph = DependencyGraph()
+        graph.add_edge("src/features/billing", "src/features/orders")
+        graph.add_edge("src/features/orders", "src/features/billing")
+        graph.add_edge("src/app/pages/home", "src/app/pages/settings")
+        graph.add_edge("src/app/pages/settings", "src/app/pages/home")
+        config = ArchitectureConfig(
+            language="python",
+            architecture_root="src",
+            rules=ArchitectureRules(
+                tags=(
+                    ArchitectureTagRule(name="backend_module", match="features/*"),
+                    ArchitectureTagRule(name="gui_page", match="app/pages/*"),
+                ),
+                flow=ArchitectureFlowRules(
+                    realms=(
+                        ArchitectureFlowRealm(
+                            name="backend",
+                            module_tag="backend_module",
+                            layers=("domain", "application"),
+                        ),
+                        ArchitectureFlowRealm(
+                            name="gui",
+                            module_tag="gui_page",
+                            layers=(),
+                        ),
+                    ),
+                    analyzers=("backward-flow", "no-cycles"),
+                ),
+            ),
+        )
+
+        violations = ArchitecturePolicyEvaluator().evaluate(graph, config)
+
+        self.assertEqual(
+            [(violation.violation_type, violation.rule_name) for violation in violations],
+            [
+                ("no-cycles", "analyzer:backend:no-cycles"),
+                ("no-cycles", "analyzer:gui:no-cycles"),
+            ],
+        )
 
     def test_flow_violations_have_stable_dict_shape(self) -> None:
         violation = FlowViolation(

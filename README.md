@@ -103,6 +103,7 @@ from modwire import extract_code
 from modwire.architecture import (
     ArchitectureBoundaryRule,
     ArchitectureConfig,
+    ArchitectureFlowRealm,
     ArchitectureFlowRules,
     ArchitecturePolicyEvaluator,
     ArchitectureRules,
@@ -142,6 +143,41 @@ config = ArchitectureConfig(
 violations = ArchitecturePolicyEvaluator().evaluate(code_map.graph, config)
 print(render_violations(tuple(violations)))
 ```
+
+For repositories with more than one module ladder, configure flow realms and run
+the same analyzers across each module tag:
+
+```python
+config = ArchitectureConfig(
+    language="python",
+    architecture_root="src",
+    rules=ArchitectureRules(
+        tags=(
+            ArchitectureTagRule(name="backend_module", match="features/*"),
+            ArchitectureTagRule(name="gui_page", match="app/pages/*"),
+            ArchitectureTagRule(name="domain", match="features/*/domain"),
+            ArchitectureTagRule(name="application", match="features/*/application"),
+        ),
+        flow=ArchitectureFlowRules(
+            realms=(
+                ArchitectureFlowRealm(
+                    name="backend",
+                    module_tag="backend_module",
+                    layers=("domain", "application"),
+                ),
+                ArchitectureFlowRealm(
+                    name="gui",
+                    module_tag="gui_page",
+                ),
+            ),
+            analyzers=("backward-flow", "no-cycles"),
+        ),
+    ),
+)
+```
+
+`backward-flow` evaluates realms with layers and skips layerless realms; scoped
+analyzers such as `no-cycles` evaluate every configured realm.
 
 Architecture insight helpers summarize ownership and graph pressure:
 

@@ -31,11 +31,20 @@ class ArchitectureBoundaryRule(BaseModel):
     allow_same_match: bool = False
 
 
+class ArchitectureFlowRealm(BaseModel):
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+
+    name: str = ""
+    module_tag: str = ""
+    layers: tuple[str, ...] = ()
+
+
 class ArchitectureFlowRules(BaseModel):
     model_config = ConfigDict(frozen=True, from_attributes=True)
 
     layers: tuple[str, ...] = ()
     module_tag: str = ""
+    realms: tuple[ArchitectureFlowRealm, ...] = ()
     analyzers: tuple[str, ...] = ()
 
     @field_validator("analyzers")
@@ -50,6 +59,28 @@ class ArchitectureFlowRules(BaseModel):
 
     @model_validator(mode="after")
     def analyzers_have_required_config(self) -> ArchitectureFlowRules:
+        if self.realms:
+            if "backward-flow" in self.analyzers and not any(
+                realm.layers for realm in self.realms
+            ):
+                raise ValueError(
+                    "backward-flow requires at least one rules.flow.realms entry "
+                    "with layers"
+                )
+            scoped_analyzers = {"no-reentry", "no-cycles"}.intersection(
+                self.analyzers
+            )
+            missing_module_tag = tuple(
+                index for index, realm in enumerate(self.realms) if not realm.module_tag
+            )
+            if scoped_analyzers and missing_module_tag:
+                names = ", ".join(sorted(scoped_analyzers))
+                indexes = ", ".join(str(index) for index in missing_module_tag)
+                raise ValueError(
+                    f"{names} require rules.flow.realms module_tag values "
+                    f"(missing at indexes: {indexes})"
+                )
+            return self
         if "backward-flow" in self.analyzers and not self.layers:
             raise ValueError("backward-flow requires rules.flow.layers")
         scoped_analyzers = {"no-reentry", "no-cycles"}.intersection(self.analyzers)
@@ -114,13 +145,26 @@ def validate_policy_config(config) -> ArchitectureConfig:
         ) from error
 
 
+def flow_realms(flow: ArchitectureFlowRules) -> tuple[ArchitectureFlowRealm, ...]:
+    if flow.realms:
+        return flow.realms
+    return (
+        ArchitectureFlowRealm(
+            module_tag=flow.module_tag,
+            layers=flow.layers,
+        ),
+    )
+
+
 __all__ = [
     "ArchitectureBoundaryRule",
     "ArchitectureConfig",
     "ArchitectureConfigError",
     "ArchitectureConfigIssue",
+    "ArchitectureFlowRealm",
     "ArchitectureFlowRules",
     "ArchitectureRules",
     "ArchitectureTagRule",
+    "flow_realms",
     "validate_policy_config",
 ]
