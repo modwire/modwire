@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from .._code_map import source_files
 from .config import ShapeConfig, validate_shape_config
-from .rules import DEFAULT_SHAPE_RULES, ShapeRule
+from .rules import ShapeRule
 from .violations import ShapeViolation
 
 

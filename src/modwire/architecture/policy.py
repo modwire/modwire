@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from modwire.graph import DependencyGraph
-
 from .analyzers import run_analyzer
 from .config import flow_realms, validate_policy_config
 from .matching import TagMatcher

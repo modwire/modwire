@@ -4,8 +4,6 @@ import re
 from dataclasses import dataclass
 from functools import cache
 
-from modwire._code_map import source_files
-
 
 @dataclass(frozen=True)
 class TagMatch:

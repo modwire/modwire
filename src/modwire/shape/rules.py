@@ -360,30 +360,3 @@ def _property_violations(
     )
 
 
-def _limit_violation(
-    source_id: str,
-    rule_name: str,
-    actual: int,
-    limit: int,
-    symbol_kind: str,
-    symbol_name: str = "",
-) -> ShapeViolation | None:
-    if limit < 0 or actual <= limit:
-        return None
-    return ShapeViolation(source_id, rule_name, actual, limit, symbol_kind, symbol_name)
-
-
-DEFAULT_SHAPE_RULES: tuple[ShapeRule, ...] = (
-    FileCountRule(),
-    SymbolShapeRule(),
-    ImportShapeRule(),
-)
-
-
-__all__ = [
-    "DEFAULT_SHAPE_RULES",
-    "FileCountRule",
-    "ImportShapeRule",
-    "ShapeRule",
-    "SymbolShapeRule",
-]
