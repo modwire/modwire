@@ -1,12 +1,7 @@
-from __future__ import annotations
-
-import re
-from dataclasses import dataclass
-from functools import cache
+from pydantic import BaseModel
 
 
-@dataclass(frozen=True)
-class TagMatch:
+class TagMatch(BaseModel):
     name: str
     pattern: str
     matched_path: str
@@ -15,8 +10,7 @@ class TagMatch:
     wildcard_values: tuple[str, ...] = ()
 
 
-@dataclass(frozen=True)
-class TagMap:
+class TagMap(BaseModel):
     matches_by_node: dict[str, tuple[TagMatch, ...]]
 
     def tags_for(self, node_id: str) -> tuple[TagMatch, ...]:
@@ -148,51 +142,3 @@ class TagMatcher:
     def _has_tag(self, name: str) -> bool:
         return any(tag.name == name for tag in self.tags)
 
-
-def _normalized_patterns(language, pattern, config):
-    normalized = normalize_source_id(language, pattern).strip("/")
-    architecture_root = normalize_source_id(
-        language,
-        getattr(config, "architecture_root", None) or "",
-    ).strip("/")
-    if not architecture_root:
-        return (normalized,)
-
-    root_anchor = architecture_root.split("/", 1)[0]
-    is_full_path = normalized == architecture_root or normalized.startswith(
-        (f"{architecture_root}/", f"{root_anchor}/")
-    )
-    if is_full_path:
-        return (normalized,)
-    return (f"{architecture_root}/{normalized}",)
-
-
-def normalize_source_id(language: str, value: str) -> str:
-    del language
-    normalized = value.replace("\\", "/").strip().strip("/")
-    if not normalized:
-        return ""
-    parts = normalized.split("/")
-    if "." in parts[-1] and not any(char in parts[-1] for char in "*?"):
-        parts[-1] = parts[-1].rsplit(".", 1)[0]
-    return "/".join(parts)
-
-
-@cache
-def _regex(pattern: str, scope: bool):
-    parts = ["^("]
-    i = 0
-    while i < len(pattern):
-        char = pattern[i]
-        if char == "*":
-            is_deep = i + 1 < len(pattern) and pattern[i + 1] == "*"
-            parts.append("(.*)" if is_deep else "([^/]*)")
-            i += 2 if is_deep else 1
-        elif char == "?":
-            parts.append("([^/])")
-            i += 1
-        else:
-            parts.append(re.escape(char))
-            i += 1
-    parts.append(")(?:/.*)?" if scope else ")")
-    return re.compile("".join(parts) + "$")

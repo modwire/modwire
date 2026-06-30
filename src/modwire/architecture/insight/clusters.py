@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 
-@dataclass(frozen=True)
-class ArchitectureCluster:
+class ArchitectureCluster(BaseModel):
     name: str
     files: tuple[str, ...]
     incoming_count: int
