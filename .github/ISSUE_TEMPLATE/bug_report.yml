@@ -1,5 +1,5 @@
 name: Bug report
-description: Report incorrect architecture analysis, graph reporting, package metadata, or report output.
+description: Report incorrect architecture analysis, graph output, package metadata, or report output.
 title: "Bug: "
 labels:
   - bug
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting a bug. Clear reproduction details make it much easier to fix issues in architecture analysis and reports.
+        Thanks for reporting a bug. Clear reproduction details make it much easier to fix issues in architecture analysis, report output, and package metadata.
 
   - type: textarea
     id: summary

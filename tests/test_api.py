@@ -33,7 +33,7 @@ from modwire.testing import (
 
 
 class PublicApiTest(unittest.TestCase):
-    def test_modwire_exports_architecture_and_report_api_without_extraction_runtime(self) -> None:
+    def test_modwire_exports_core_and_report_api_without_extraction_runtime(self) -> None:
         self.assertIsNotNone(ArchitecturePolicyEvaluator)
         self.assertIsNotNone(ShapePolicyEvaluator)
         self.assertIsNotNone(find_unused_exports)

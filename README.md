@@ -1,7 +1,6 @@
 # modwire
 
-`modwire` maps architecture boundaries, evaluates violations, and renders
-reports over code maps produced by
+`modwire` maps architecture boundaries and evaluates policies over code maps produced by
 [`modwire-extraction`](https://github.com/9orky/modwire-extraction).
 
 ## Installation
@@ -22,7 +21,6 @@ from modwire.architecture import (
     ArchitecturePolicyEvaluator,
     ArchitectureRules,
     ArchitectureTagRule,
-    render_violations,
 )
 
 code_map = ModwireExtraction(Path("src")).generate_map("python")
@@ -47,7 +45,7 @@ violations = ArchitecturePolicyEvaluator().evaluate(
     code_map.dependency_graph,
     config,
 )
-print(render_violations(tuple(violations)))
+print([violation.to_dict() for violation in violations])
 ```
 
 ## Architecture Mapping
@@ -109,9 +107,8 @@ set used before pull requests and releases.
 
 Feature requests and bug reports are tracked through GitHub Issues:
 
-- Open a feature request for architecture analyzers, report formats, or
-  integrations.
-- Open a bug report for incorrect architecture violations, graph reports, shape
+- Open a feature request for architecture analyzers, output formats, or integrations.
+- Open a bug report for incorrect architecture violations, graph output, shape
   reports, callable reports, unused export reports, packaging problems, or
   documentation mismatches.
 

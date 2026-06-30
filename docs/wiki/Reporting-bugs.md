@@ -15,7 +15,7 @@ Use the GitHub `Bug report` issue form when Modwire behaves incorrectly.
 ## Examples of Bugs
 
 - graph edges are missing, duplicated, or pointed at the wrong node
-- an architecture policy reports the wrong violation
+- an architecture policy returns the wrong violation
 - shape, callable, or unused-export reports omit or misclassify source metadata
 - package installation or distribution metadata is broken
 

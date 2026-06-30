@@ -1,14 +1,14 @@
 # Contributing to Modwire
 
 Modwire is a Python package for architecture mapping, violation evaluation, and
-reports over code maps produced by `modwire-extraction`.
+code-map reports produced from `modwire-extraction` data.
 
 ## Requesting Features
 
 Use the `Feature request` issue form for new capabilities, such as:
 
 - architecture mapping for another framework convention
-- richer architecture, shape, callable, or export reports
+- richer architecture analysis, shape reports, callable reports, or export checks
 - new architecture analyzers or policy matching behavior
 - export formats or integrations with other tools
 - documentation examples for common workflows

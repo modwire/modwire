@@ -1,7 +1,7 @@
 # Modwire Wiki
 
-Modwire maps architecture boundaries, evaluates violations, and renders reports
-from code maps produced by `modwire-extraction`.
+Modwire maps architecture boundaries and evaluates policies from code maps
+produced by `modwire-extraction`.
 
 ## Start Here
 

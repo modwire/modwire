@@ -29,9 +29,6 @@ from modwire.architecture import (
     coherence_summary,
     find_hotspots,
     map_code,
-    render_violation_payload,
-    render_violations,
-    structured_groups,
     supported_analyzers,
     validate_policy_config,
     violation_to_dict,
@@ -410,45 +407,6 @@ class ArchitectureApiTest(unittest.TestCase):
             mapped.modules,
             {"src/features/billing": ("src/features/billing/ui",)},
         )
-
-    def test_rendering_hooks_support_structured_groups_and_path_display(self) -> None:
-        violation = EdgeRuleViolation(
-            source_id="src/app/ui",
-            target_id="src/app/domain",
-            source_pattern="ui",
-            target_pattern="domain",
-            rule_name="boundary:ui->domain:deny",
-        )
-
-        rendered = render_violations(
-            (violation,),
-            path_display=lambda path: path.removeprefix("src/"),
-        )
-        groups = structured_groups((violation,))
-
-        self.assertIn("app/ui -> [app/domain]", rendered)
-        self.assertEqual(groups[0]["title"], "Edge Rule Violations")
-        self.assertEqual(groups[0]["violations"][0]["type"], "edge-rule")
-        self.assertEqual(
-            render_violation_payload(violation)["path"],
-            ["src/app/ui", "src/app/domain"],
-        )
-
-    def test_rendering_unknown_flow_violations_is_bounds_safe(self) -> None:
-        violation = FlowViolation(
-            violation_type="custom-flow",
-            path=("src/a", "src/b"),
-            violation_index=99,
-            rule_name="analyzer:custom-flow",
-            message="custom rule failed",
-        )
-
-        rendered = render_violations((violation,))
-        groups = structured_groups((violation,))
-
-        self.assertIn("Custom Flow Violations", rendered)
-        self.assertIn("src/a -> [src/b]", rendered)
-        self.assertEqual(groups[0]["title"], "Custom Flow Violations")
 
 
 if __name__ == "__main__":
