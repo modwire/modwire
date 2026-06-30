@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+from ._code_map import calls_from, calls_to, source_callables
 from .definitions import SourceCall, SourceCallable
-from .extraction import CodeMap
 
 
 PathDisplay = Callable[[str], str]
@@ -26,13 +26,13 @@ class CallableReportEntry:
         }
 
 
-def callable_report_entries(code_map: CodeMap) -> tuple[CallableReportEntry, ...]:
+def callable_report_entries(code_map) -> tuple[CallableReportEntry, ...]:
     return tuple(
         CallableReportEntry(
             source_callable=source_callable,
             calls=tuple(
                 sorted(
-                    code_map.calls_from(source_callable.id),
+                    calls_from(code_map, source_callable.id),
                     key=lambda source_call: (
                         source_call.line,
                         source_call.target_name,
@@ -42,7 +42,7 @@ def callable_report_entries(code_map: CodeMap) -> tuple[CallableReportEntry, ...
             ),
             callers=tuple(
                 sorted(
-                    code_map.calls_to(source_callable.id),
+                    calls_to(code_map, source_callable.id),
                     key=lambda source_call: (
                         source_call.source_id,
                         source_call.line,
@@ -52,11 +52,7 @@ def callable_report_entries(code_map: CodeMap) -> tuple[CallableReportEntry, ...
             ),
         )
         for source_callable in sorted(
-            (
-                source_callable
-                for source_file in code_map.extraction_result.files.values()
-                for source_callable in source_file.callables
-            ),
+            source_callables(code_map),
             key=lambda source_callable: (
                 source_callable.source_id,
                 source_callable.line_start,
@@ -66,12 +62,12 @@ def callable_report_entries(code_map: CodeMap) -> tuple[CallableReportEntry, ...
     )
 
 
-def structured_callable_report(code_map: CodeMap) -> tuple[dict[str, object], ...]:
+def structured_callable_report(code_map) -> tuple[dict[str, object], ...]:
     return tuple(entry.to_dict() for entry in callable_report_entries(code_map))
 
 
 def render_callable_report(
-    code_map: CodeMap,
+    code_map,
     *,
     path_display: PathDisplay = str,
 ) -> str:

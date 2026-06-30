@@ -3,8 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 
-from modwire.extraction import CodeMap
-
+from modwire._code_map import dependency_graph, source_files, tracked_edges
 from .config import validate_policy_config
 from .matching import TagMap, TagMatcher
 
@@ -51,11 +50,11 @@ class CoherenceSummary:
     external_dependencies: tuple[str, ...]
 
 
-def map_code(code_map: CodeMap, config) -> ArchitectureMap:
+def map_code(code_map, config) -> ArchitectureMap:
     config = validate_policy_config(config)
     matcher = TagMatcher(config)
     tag_map = matcher.map_code_map(code_map)
-    source_ids = set(code_map.extraction_result.files)
+    source_ids = set(source_files(code_map))
     modules = _files_by_tag(tag_map, source_ids, "module")
     layers = _files_by_tag(tag_map, source_ids, "layer")
     unknown_files = tuple(
@@ -70,9 +69,10 @@ def map_code(code_map: CodeMap, config) -> ArchitectureMap:
     )
 
 
-def cluster_code(code_map: CodeMap, group_depth: int = 2) -> tuple[ArchitectureCluster, ...]:
+def cluster_code(code_map, group_depth: int = 2) -> tuple[ArchitectureCluster, ...]:
     groups: dict[str, list[str]] = {}
-    for source_id in code_map.extraction_result.files:
+    graph = dependency_graph(code_map)
+    for source_id in source_files(code_map):
         group = "/".join(source_id.split("/")[:group_depth])
         groups.setdefault(group, []).append(source_id)
 
@@ -81,16 +81,16 @@ def cluster_code(code_map: CodeMap, group_depth: int = 2) -> tuple[ArchitectureC
         file_set = set(files)
         incoming = sum(
             1
-            for edge in code_map.graph.edges
+            for edge in graph.edges
             if edge.to_id in file_set and edge.from_id not in file_set
         )
         outgoing = sum(
             1
-            for edge in code_map.graph.edges
+            for edge in graph.edges
             if edge.from_id in file_set and edge.to_id not in file_set
         )
         per_file_pressure = Counter()
-        for edge in code_map.graph.edges:
+        for edge in graph.edges:
             if edge.from_id in file_set:
                 per_file_pressure[edge.from_id] += 1
             if edge.to_id in file_set:
@@ -115,24 +115,25 @@ def cluster_code(code_map: CodeMap, group_depth: int = 2) -> tuple[ArchitectureC
 
 
 def find_hotspots(
-    code_map: CodeMap,
+    code_map,
     limit: int = 10,
 ) -> tuple[DependencyHotspot, ...]:
-    source_ids = set(code_map.extraction_result.files)
+    source_ids = set(source_files(code_map))
+    graph = dependency_graph(code_map)
     hotspots = [
         DependencyHotspot(
             source_id=source_id,
             incoming_count=len(
                 [
                     edge
-                    for edge in code_map.graph.incoming(source_id)
+                    for edge in graph.incoming(source_id)
                     if edge.from_id in source_ids
                 ]
             ),
             outgoing_count=len(
                 [
                     edge
-                    for edge in code_map.graph.outgoing(source_id)
+                    for edge in graph.outgoing(source_id)
                     if edge.to_id in source_ids
                 ]
             ),
@@ -157,15 +158,16 @@ def find_hotspots(
     )
 
 
-def coherence_summary(code_map: CodeMap) -> CoherenceSummary:
-    source_ids = set(code_map.extraction_result.files)
+def coherence_summary(code_map) -> CoherenceSummary:
+    source_ids = set(source_files(code_map))
+    graph = dependency_graph(code_map)
     roots = tuple(
         sorted(
             source_id
             for source_id in source_ids
             if not [
                 edge
-                for edge in code_map.graph.incoming(source_id)
+                for edge in graph.incoming(source_id)
                 if edge.from_id in source_ids
             ]
         )
@@ -176,7 +178,7 @@ def coherence_summary(code_map: CodeMap) -> CoherenceSummary:
             for source_id in source_ids
             if not [
                 edge
-                for edge in code_map.graph.outgoing(source_id)
+                for edge in graph.outgoing(source_id)
                 if edge.to_id in source_ids
             ]
         )
@@ -186,7 +188,7 @@ def coherence_summary(code_map: CodeMap) -> CoherenceSummary:
         sorted(
             {
                 edge.to_id
-                for edge in code_map.graph.edges
+                for edge in graph.edges
                 if edge.from_id in source_ids and edge.to_id not in source_ids
             }
         )
@@ -216,11 +218,11 @@ def _files_by_tag(
 
 
 def _cross_module_dependencies(
-    code_map: CodeMap,
+    code_map,
     tag_map: TagMap,
 ) -> tuple[CrossModuleDependency, ...]:
     counts: Counter[tuple[str, str]] = Counter()
-    for edge in code_map.tracked_edges():
+    for edge in tracked_edges(code_map):
         source = tag_map.first_match(edge.from_id, ("module",))
         target = tag_map.first_match(edge.to_id, ("module",))
         if source is None or target is None:

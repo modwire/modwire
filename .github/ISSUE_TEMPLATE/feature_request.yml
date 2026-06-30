@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest a new capability, supported language, extractor improvement, graph API, or architecture rule.
+description: Suggest a new architecture, graph, shape, callable, export, or integration capability.
 title: "Feature: "
 labels:
   - enhancement
@@ -23,13 +23,12 @@ body:
     attributes:
       label: Feature area
       options:
-        - New language support
-        - Python extractor
-        - TypeScript/JavaScript extractor
-        - PHP extractor
-        - Dependency graph
+        - Dependency graph report
         - Architecture policy API
-        - Exports or integrations
+        - Shape policy API
+        - Callable report
+        - Unused export report
+        - Integrations
         - Documentation
         - Other
     validations:

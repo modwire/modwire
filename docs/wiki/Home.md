@@ -1,15 +1,12 @@
 # Modwire Wiki
 
-Modwire extracts source-code structure and import dependencies from Python,
-TypeScript/JavaScript, and PHP projects. It returns typed Python objects for
-building dependency graphs, inspecting symbols, and evaluating architecture
-rules.
+Modwire maps architecture boundaries, evaluates violations, and renders reports
+from code maps produced by `modwire-extraction`.
 
 ## Start Here
 
-- README examples cover extraction manifests, source roots, caching,
-  architecture policies, architecture insights, shape policies, serialization,
-  and unused export checks.
+- README examples cover architecture policies, architecture insights, shape
+  policies, callable reports, and unused export checks.
 - [Reporting bugs](Reporting-bugs.md)
 - [Requesting features](Requesting-features.md)
 - [Development checks](Development-checks.md)
@@ -21,11 +18,7 @@ rules.
 - Bug report form: https://github.com/9orky/modwire/issues/new?template=bug_report.yml
 - Feature request form: https://github.com/9orky/modwire/issues/new?template=feature_request.yml
 
-## Supported Languages
+## Code Maps
 
-- Python
-- TypeScript and JavaScript
-- PHP
-
-The Python extractor works with Python alone. TypeScript/JavaScript extraction
-requires Node.js at runtime, and PHP extraction requires PHP at runtime.
+Use `modwire-extraction` to produce `CodeMap` objects. Pass those maps into
+Modwire's architecture, shape, callable, and unused-export APIs.

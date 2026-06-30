@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .definitions import SourceExport, SourceFile, SourceImportedSymbol, SourceImport
-from .extraction import ExtractionResult
+from .definitions import SourceExport, SourceImportedSymbol, SourceImport
 
 
 @dataclass(frozen=True)
@@ -16,9 +15,9 @@ class UnusedExport:
 
 
 def find_unused_exports(
-    extraction_result: ExtractionResult | dict[str, SourceFile],
+    extraction_result,
 ) -> tuple[UnusedExport, ...]:
-    files = _source_files(extraction_result)
+    files = source_files(extraction_result)
     exports_by_source = {
         source_id: tuple(source_file.exports)
         for source_id, source_file in files.items()
@@ -129,14 +128,6 @@ def find_unused_exports(
             )
 
     return tuple(unused)
-
-
-def _source_files(
-    extraction_result: ExtractionResult | dict[str, SourceFile],
-) -> dict[str, SourceFile]:
-    if isinstance(extraction_result, dict):
-        return extraction_result
-    return extraction_result.files
 
 
 def _imported_symbols(source_import: SourceImport) -> tuple[SourceImportedSymbol, ...]:

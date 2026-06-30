@@ -23,8 +23,8 @@ class ShapeConfig(BaseModel):
     allow_optional_function_args: bool = True
     allow_optional_method_args: bool = True
     allow_optional_class_properties: bool = True
-    allow_import_aliases: bool = True
-    allowed_import_crossing_types: tuple[ImportCrossingType, ...] = ("module", "symbol")
+    allow_import_aliases: bool = False
+    allowed_import_crossing_types: tuple[ImportCrossingType, ...] = ("module",)
     require_joined_imports: bool = False
 
     @field_validator(

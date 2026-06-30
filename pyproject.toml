@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "modwire"
-description = "Extract source-code dependencies and build dependency graphs."
+description = "Map architecture boundaries and report on extracted code maps."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -33,6 +33,7 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
+    "modwire-extraction>=1.0.1",
     "pydantic>=2.8",
 ]
 
@@ -57,6 +58,9 @@ dev = [
     "twine>=5.1",
 ]
 
+[tool.uv.sources]
+modwire-extraction = { path = "../modwire-extraction", editable = true }
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 cache_dir = ".dev/pytest_cache"
@@ -70,12 +74,6 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.setuptools.package-data]
-"modwire.extractors.scripts" = [
-    "*.js",
-    "*.php",
-]
 
 [tool.setuptools_scm]
 fallback_version = "0.0.0.dev0"

@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from functools import cache
 
-from modwire.extractors.loader import normalize_source_id
+from modwire._code_map import source_files
 
 
 @dataclass(frozen=True)
@@ -124,7 +124,7 @@ class TagMatcher:
         return TagMap(
             {
                 source_id: self.tags_for(source_id)
-                for source_id in code_map.extraction_result.files
+                for source_id in source_files(code_map)
             }
         )
 
@@ -167,6 +167,17 @@ def _normalized_patterns(language, pattern, config):
     if is_full_path:
         return (normalized,)
     return (f"{architecture_root}/{normalized}",)
+
+
+def normalize_source_id(language: str, value: str) -> str:
+    del language
+    normalized = value.replace("\\", "/").strip().strip("/")
+    if not normalized:
+        return ""
+    parts = normalized.split("/")
+    if "." in parts[-1] and not any(char in parts[-1] for char in "*?"):
+        parts[-1] = parts[-1].rsplit(".", 1)[0]
+    return "/".join(parts)
 
 
 @cache
