@@ -1,0 +1,29 @@
+import { {{ entity_name }} } from "../entities/{{ entity_name }}";
+import { {{ event_name }} } from "../events/{{ event_name }}";
+import { {{ value_object_name }} } from "../value_objects/{{ value_object_name }}";
+
+export class {{ aggregate_name }} {
+  private events: {{ event_name }}[] = [];
+
+  private constructor(
+    public readonly aggregateId: string,
+    public readonly entity: {{ entity_name }},
+  ) {}
+
+  static create(aggregateId: string, name: string): {{ aggregate_name }} {
+    const entity = new {{ entity_name }}(aggregateId, new {{ value_object_name }}(name));
+    const aggregate = new {{ aggregate_name }}(aggregateId, entity);
+    aggregate.events.push(new {{ event_name }}(aggregateId, name));
+    return aggregate;
+  }
+
+  get name(): string {
+    return this.entity.name.value;
+  }
+
+  pullEvents(): readonly {{ event_name }}[] {
+    const pulled = [...this.events];
+    this.events = [];
+    return pulled;
+  }
+}

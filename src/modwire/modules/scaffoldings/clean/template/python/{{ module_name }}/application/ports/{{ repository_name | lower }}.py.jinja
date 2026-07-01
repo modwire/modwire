@@ -1,0 +1,13 @@
+from __future__ import annotations
+
+from typing import Protocol
+
+from ...domain.entities.{{ entity_name | lower }} import {{ entity_name }}
+
+
+class {{ repository_name }}(Protocol):
+    def save(self, entity: {{ entity_name }}) -> None:
+        ...
+
+    def get(self, entity_id: str) -> {{ entity_name }} | None:
+        ...

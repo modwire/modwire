@@ -1,0 +1,17 @@
+from __future__ import annotations
+
+from ...application.use_cases.{{ use_case_name | lower }} import (
+    {{ use_case_name }},
+    {{ use_case_name }}Command,
+)
+
+
+class {{ controller_name }}:
+    def __init__(self, use_case: {{ use_case_name }}) -> None:
+        self._use_case = use_case
+
+    def create(self, aggregate_id: str, name: str) -> dict[str, str]:
+        aggregate = self._use_case.execute(
+            {{ use_case_name }}Command(aggregate_id, name)
+        )
+        return {"id": aggregate.aggregate_id, "name": aggregate.name}

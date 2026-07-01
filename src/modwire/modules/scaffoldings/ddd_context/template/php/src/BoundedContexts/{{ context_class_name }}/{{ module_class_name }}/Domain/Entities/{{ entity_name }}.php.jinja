@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ php_namespace }}\Domain\Entities;
+
+use {{ php_namespace }}\Domain\ValueObjects\{{ value_object_name }};
+
+final class {{ entity_name }}
+{
+    public function __construct(
+        public readonly string $entityId,
+        public readonly {{ value_object_name }} $name,
+    ) {
+    }
+}

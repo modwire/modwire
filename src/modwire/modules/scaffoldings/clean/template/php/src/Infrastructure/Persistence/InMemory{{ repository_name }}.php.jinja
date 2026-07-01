@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ php_namespace }}\Infrastructure\Persistence;
+
+use {{ php_namespace }}\Application\Ports\{{ repository_name }};
+use {{ php_namespace }}\Domain\Entities\{{ entity_name }};
+
+final class InMemory{{ repository_name }} implements {{ repository_name }}
+{
+    /** @var array<string, {{ entity_name }}> */
+    private array $items = [];
+
+    public function save({{ entity_name }} $entity): void
+    {
+        $this->items[$entity->entityId] = $entity;
+    }
+
+    public function get(string $entityId): ?{{ entity_name }}
+    {
+        return $this->items[$entityId] ?? null;
+    }
+}

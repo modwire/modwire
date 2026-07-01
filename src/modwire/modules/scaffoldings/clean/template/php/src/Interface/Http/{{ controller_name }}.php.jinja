@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ php_namespace }}\Interface\Http;
+
+use {{ php_namespace }}\Application\UseCases\{{ use_case_name }};
+use {{ php_namespace }}\Application\UseCases\{{ use_case_name }}Command;
+
+final class {{ controller_name }}
+{
+    public function __construct(private readonly {{ use_case_name }} $useCase)
+    {
+    }
+
+    /** @return array{id: string, name: string} */
+    public function create(string $entityId, string $name): array
+    {
+        $entity = $this->useCase->execute(new {{ use_case_name }}Command($entityId, $name));
+
+        return ['id' => $entity->entityId, 'name' => $entity->name];
+    }
+}

@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ php_namespace }}\Domain\ValueObjects;
+
+use {{ php_namespace }}\Domain\Exceptions\{{ aggregate_name }}ValidationException;
+
+final class {{ value_object_name }}
+{
+    public function __construct(public readonly string $value)
+    {
+        if ($value === '') {
+            throw new {{ aggregate_name }}ValidationException('Name cannot be empty');
+        }
+    }
+}

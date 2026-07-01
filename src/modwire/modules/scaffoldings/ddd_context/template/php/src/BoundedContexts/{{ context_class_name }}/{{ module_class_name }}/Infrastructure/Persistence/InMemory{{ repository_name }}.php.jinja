@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ php_namespace }}\Infrastructure\Persistence;
+
+use {{ php_namespace }}\Application\Ports\{{ repository_name }};
+use {{ php_namespace }}\Domain\Aggregates\{{ aggregate_name }};
+
+final class InMemory{{ repository_name }} implements {{ repository_name }}
+{
+    /** @var array<string, {{ aggregate_name }}> */
+    private array $items = [];
+
+    public function save({{ aggregate_name }} $aggregate): void
+    {
+        $this->items[$aggregate->aggregateId] = $aggregate;
+    }
+
+    public function get(string $aggregateId): ?{{ aggregate_name }}
+    {
+        return $this->items[$aggregateId] ?? null;
+    }
+}

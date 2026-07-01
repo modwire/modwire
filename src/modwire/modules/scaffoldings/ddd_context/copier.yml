@@ -1,0 +1,68 @@
+_min_copier_version: "9.0.0"
+_templates_suffix: ".jinja"
+_subdirectory: template
+
+module_name:
+  type: str
+  default: sample_module
+  help: Importable module or package directory name.
+
+module_class_name:
+  type: str
+  default: "{{ module_name | replace('-', '_') | replace(' ', '_') | title | replace('_', '') }}"
+  help: PascalCase module name used to derive default class names.
+
+context_name:
+  type: str
+  default: "{{ module_name }}"
+  help: Bounded context package or directory name.
+
+context_class_name:
+  type: str
+  default: "{{ context_name | replace('-', '_') | replace(' ', '_') | title | replace('_', '') }}"
+  help: PascalCase bounded context name.
+
+aggregate_name:
+  type: str
+  default: "{{ module_class_name }}Aggregate"
+  help: Domain aggregate class name.
+
+entity_name:
+  type: str
+  default: "{{ module_class_name }}Entity"
+  help: Domain entity class name.
+
+use_case_name:
+  type: str
+  default: "Create{{ module_class_name }}"
+  help: Application use case class name.
+
+repository_name:
+  type: str
+  default: "{{ module_class_name }}Repository"
+  help: Repository port and adapter class suffix.
+
+controller_name:
+  type: str
+  default: "{{ module_class_name }}Controller"
+  help: Interface controller class name.
+
+event_name:
+  type: str
+  default: "{{ module_class_name }}Created"
+  help: Domain event class name.
+
+value_object_name:
+  type: str
+  default: "{{ module_class_name }}Name"
+  help: Value object class name.
+
+domain_service_name:
+  type: str
+  default: "{{ module_class_name }}DomainService"
+  help: Domain service class name.
+
+php_namespace:
+  type: str
+  default: "App\\{{ context_class_name }}\\{{ module_class_name }}"
+  help: PHP namespace root for the generated classes.

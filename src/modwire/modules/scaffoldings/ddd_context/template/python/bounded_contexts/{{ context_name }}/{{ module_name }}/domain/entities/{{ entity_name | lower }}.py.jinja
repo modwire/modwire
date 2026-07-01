@@ -1,0 +1,9 @@
+from dataclasses import dataclass
+
+from ..value_objects.{{ value_object_name | lower }} import {{ value_object_name }}
+
+
+@dataclass(frozen=True)
+class {{ entity_name }}:
+    entity_id: str
+    name: {{ value_object_name }}

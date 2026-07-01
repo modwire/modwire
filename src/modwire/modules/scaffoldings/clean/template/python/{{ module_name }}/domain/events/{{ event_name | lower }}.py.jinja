@@ -1,0 +1,7 @@
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class {{ event_name }}:
+    entity_id: str
+    name: str

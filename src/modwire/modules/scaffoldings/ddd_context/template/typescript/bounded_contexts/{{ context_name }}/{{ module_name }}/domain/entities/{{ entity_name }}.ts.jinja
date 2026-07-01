@@ -1,0 +1,8 @@
+import { {{ value_object_name }} } from "../value_objects/{{ value_object_name }}";
+
+export class {{ entity_name }} {
+  constructor(
+    public readonly entityId: string,
+    public readonly name: {{ value_object_name }},
+  ) {}
+}

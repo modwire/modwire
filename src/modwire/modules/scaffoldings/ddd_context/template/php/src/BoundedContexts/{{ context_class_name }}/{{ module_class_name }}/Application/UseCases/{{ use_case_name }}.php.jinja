@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ php_namespace }}\Application\UseCases;
+
+use {{ php_namespace }}\Application\Ports\{{ repository_name }};
+use {{ php_namespace }}\Domain\Aggregates\{{ aggregate_name }};
+use {{ php_namespace }}\Domain\Services\{{ domain_service_name }};
+
+final class {{ use_case_name }}Command
+{
+    public function __construct(
+        public readonly string $aggregateId,
+        public readonly string $name,
+    ) {
+    }
+}
+
+final class {{ use_case_name }}
+{
+    public function __construct(
+        private readonly {{ repository_name }} $repository,
+        private readonly {{ domain_service_name }} $domainService = new {{ domain_service_name }}(),
+    ) {
+    }
+
+    public function execute({{ use_case_name }}Command $command): {{ aggregate_name }}
+    {
+        $aggregate = $this->domainService->create($command->aggregateId, $command->name);
+        $this->repository->save($aggregate);
+
+        return $aggregate;
+    }
+}

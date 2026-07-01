@@ -99,9 +99,10 @@ generate_module(
 ```
 
 If no template path is provided, `generate_module` uses the bundled `layered`
-scaffolding. Pass `scaffolding="hexagonal"` to generate the bundled pluggable
-domain/ports/adapters structure. Bundled scaffoldings are packaged with the
-distribution wheel.
+scaffolding. Pass `scaffolding="hexagonal"` for a pluggable domain/ports/adapters
+structure, `scaffolding="clean"` for a domain/application/infrastructure/interface
+module, or `scaffolding="ddd_context"` for a bounded-context module. Bundled
+scaffoldings are packaged with the distribution wheel.
 
 ## Configuration
 

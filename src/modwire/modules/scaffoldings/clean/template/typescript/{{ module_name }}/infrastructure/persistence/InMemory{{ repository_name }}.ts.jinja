@@ -1,0 +1,14 @@
+import { {{ entity_name }} } from "../../domain/entities/{{ entity_name }}";
+import { {{ repository_name }} } from "../../application/ports/{{ repository_name }}";
+
+export class InMemory{{ repository_name }} implements {{ repository_name }} {
+  private readonly items = new Map<string, {{ entity_name }}>();
+
+  save(entity: {{ entity_name }}): void {
+    this.items.set(entity.entityId, entity);
+  }
+
+  get(entityId: string): {{ entity_name }} | undefined {
+    return this.items.get(entityId);
+  }
+}

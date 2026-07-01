@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ php_namespace }}\Domain\Services;
+
+use {{ php_namespace }}\Domain\Aggregates\{{ aggregate_name }};
+
+final class {{ domain_service_name }}
+{
+    public function create(string $aggregateId, string $name): {{ aggregate_name }}
+    {
+        return {{ aggregate_name }}::create($aggregateId, $name);
+    }
+}

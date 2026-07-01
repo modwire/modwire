@@ -110,3 +110,101 @@ def test_generate_module_uses_hexagonal_scaffolding(tmp_path: Path) -> None:
         }
     finally:
         sys.path.remove(str(output_root / "python"))
+
+
+def test_generate_module_uses_clean_scaffolding(tmp_path: Path) -> None:
+    output_root = tmp_path / "generated"
+
+    generate_module("orders", output_root, scaffolding="clean")
+
+    python_module = output_root / "python" / "orders"
+    expected_files = [
+        "domain/entities/ordersentity.py",
+        "domain/exceptions/ordersentityvalidationerror.py",
+        "domain/events/orderscreated.py",
+        "application/ports/ordersrepository.py",
+        "application/use_cases/createorders.py",
+        "infrastructure/persistence/inmemoryordersrepository.py",
+        "interface/http/orderscontroller.py",
+    ]
+
+    for expected_file in expected_files:
+        assert (python_module / expected_file).is_file()
+
+    assert (
+        output_root / "typescript" / "orders" / "interface/http/OrdersController.ts"
+    ).is_file()
+    assert (
+        output_root / "php" / "src" / "Infrastructure/Persistence/InMemoryOrdersRepository.php"
+    ).is_file()
+
+    sys.path.insert(0, str(output_root / "python"))
+    try:
+        from orders.application.use_cases.createorders import CreateOrders
+        from orders.infrastructure.persistence.inmemoryordersrepository import (
+            InMemoryOrdersRepository,
+        )
+        from orders.interface.http.orderscontroller import OrdersController
+
+        controller = OrdersController(CreateOrders(InMemoryOrdersRepository()))
+
+        assert controller.create("entity-1", "Orders") == {
+            "id": "entity-1",
+            "name": "Orders",
+        }
+    finally:
+        sys.path.remove(str(output_root / "python"))
+
+
+def test_generate_module_uses_ddd_context_scaffolding(tmp_path: Path) -> None:
+    output_root = tmp_path / "generated"
+
+    generate_module("catalog", output_root, scaffolding="ddd_context")
+
+    python_module = output_root / "python" / "bounded_contexts" / "catalog" / "catalog"
+    expected_files = [
+        "domain/aggregates/catalogaggregate.py",
+        "domain/entities/catalogentity.py",
+        "domain/value_objects/catalogname.py",
+        "domain/events/catalogcreated.py",
+        "domain/services/catalogdomainservice.py",
+        "application/ports/catalogrepository.py",
+        "application/use_cases/createcatalog.py",
+        "infrastructure/persistence/inmemorycatalogrepository.py",
+        "interface/http/catalogcontroller.py",
+    ]
+
+    for expected_file in expected_files:
+        assert (python_module / expected_file).is_file()
+
+    assert (
+        output_root
+        / "typescript"
+        / "bounded_contexts/catalog/catalog/interface/http/CatalogController.ts"
+    ).is_file()
+    assert (
+        output_root
+        / "php"
+        / "src/BoundedContexts/Catalog/Catalog/Domain/Aggregates/CatalogAggregate.php"
+    ).is_file()
+
+    sys.path.insert(0, str(output_root / "python"))
+    try:
+        from bounded_contexts.catalog.catalog.application.use_cases.createcatalog import (
+            CreateCatalog,
+        )
+        from bounded_contexts.catalog.catalog.infrastructure.persistence.inmemorycatalogrepository import (
+            InMemoryCatalogRepository,
+        )
+        from bounded_contexts.catalog.catalog.interface.http.catalogcontroller import (
+            CatalogController,
+        )
+
+        controller = CatalogController(CreateCatalog(InMemoryCatalogRepository()))
+
+        assert controller.create("aggregate-1", "Catalog") == {
+            "id": "aggregate-1",
+            "name": "Catalog",
+        }
+    finally:
+        sys.path.remove(str(output_root / "python"))

@@ -1,0 +1,23 @@
+import { {{ repository_name }} } from "../ports/{{ repository_name }}";
+import { {{ aggregate_name }} } from "../../domain/aggregates/{{ aggregate_name }}";
+import { {{ domain_service_name }} } from "../../domain/services/{{ domain_service_name }}";
+
+export class {{ use_case_name }}Command {
+  constructor(
+    public readonly aggregateId: string,
+    public readonly name: string,
+  ) {}
+}
+
+export class {{ use_case_name }} {
+  constructor(
+    private readonly repository: {{ repository_name }},
+    private readonly domainService = new {{ domain_service_name }}(),
+  ) {}
+
+  execute(command: {{ use_case_name }}Command): {{ aggregate_name }} {
+    const aggregate = this.domainService.create(command.aggregateId, command.name);
+    this.repository.save(aggregate);
+    return aggregate;
+  }
+}
