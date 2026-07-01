@@ -1,18 +1,6 @@
-from __future__ import annotations
-
-import re
-from typing import Protocol
-
 from pydantic import BaseModel
 
-
-class SourceIdProvider(Protocol):
-    def source_ids(self) -> tuple[str, ...]:
-        raise NotImplementedError
-
-
-class ArchitectureRootProvider(Protocol):
-    architecture_root: str
+from ..config import ArchitectureConfig
 
 
 class TagMatch(BaseModel):
@@ -39,14 +27,10 @@ class TagMap(BaseModel):
 
 
 class TagMatcher:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, config: ArchitectureConfig):
+        self.boundaries = config.boundaries
         self.language = config.language
-        self.exclusions = {
-            rule.match: tuple(rule.excluded_patterns)
-            for rule in getattr(config.rules, "tags", ())
-        }
-        self.tags = tuple(getattr(config.rules, "tags", ()))
+        self.tags = self.boundaries.tags
 
     def match(self, node_id: str, name: str, *, scope: bool = True) -> TagMatch | None:
         matches = self.matches(node_id, name, scope=scope)
@@ -157,49 +141,9 @@ class TagMatcher:
         return any(tag.name == name for tag in self.tags)
 
 
-def source_files(code_map: SourceIdProvider) -> tuple[str, ...]:
-    return code_map.source_ids()
-
-
-def normalize_source_id(language: str, node_id: str) -> str:
-    del language
-    return node_id.replace("\\", "/").strip("/")
-
-
-def normalized_patterns(
-    language: str,
-    pattern: str,
-    config: ArchitectureRootProvider,
-) -> tuple[str, ...]:
-    normalized = normalize_source_id(language, pattern)
-    architecture_root = normalize_source_id(
-        language,
-        getattr(config, "architecture_root", "") or "",
-    ).strip("/")
-    if architecture_root and not normalized.startswith(f"{architecture_root}/"):
-        return (f"{architecture_root}/{normalized}",)
-    return (normalized,)
-
-
-def pattern_regex(pattern: str, scope: bool) -> re.Pattern[str]:
-    parts: list[str] = []
-    for character in pattern:
-        if character == "*":
-            parts.append("([^/]+)")
-        elif character == "?":
-            parts.append("([^/])")
-        else:
-            parts.append(re.escape(character))
-    suffix = r"(?:/.*)?$" if scope else "$"
-    return re.compile(rf"^({''.join(parts)}){suffix}")
-
 
 __all__ = [
     "TagMap",
     "TagMatch",
     "TagMatcher",
-    "normalize_source_id",
-    "normalized_patterns",
-    "pattern_regex",
-    "source_files",
 ]

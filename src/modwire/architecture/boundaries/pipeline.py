@@ -1,23 +1,16 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 
 from modwire_extraction.code import QueryableCodeMap
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
-from ..map import ArchitectureConfig, flow_realms
-from ..matching import TagMatcher
+from ..config import ArchitectureConfig
+from .matching import TagMatcher
 from .base import FlowAnalysisContext, FlowViolation
-from .catalog import FlowAnalyzerCatalog
 
 
 class FlowPipelineStepInterface(ABC):
     @abstractmethod
-    def run(
-        self,
-        code_map: QueryableCodeMap,
-        config: ArchitectureConfig,
-    ) -> FlowReport:
+    def run( self, code_map: QueryableCodeMap, config: ArchitectureConfig) -> FlowReport:
         raise NotImplementedError
 
 
@@ -28,22 +21,14 @@ class FlowReport(BaseModel):
     analyzers: tuple[str, ...] = ()
 
 
-class FlowPipelineStep(BaseModel, FlowPipelineStepInterface):
-    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-
-    catalog: FlowAnalyzerCatalog = Field(default_factory=FlowAnalyzerCatalog)
-
-    def run(
-        self,
-        code_map: QueryableCodeMap,
-        config: ArchitectureConfig,
-    ) -> FlowReport:
+class FlowPipelineStep(FlowPipelineStepInterface):
+    def run( self, code_map: QueryableCodeMap, config: ArchitectureConfig) -> FlowReport:
         matcher = TagMatcher(config)
         violations: list[FlowViolation] = []
-        analyzer_names = config.rules.flow.analyzers
+        analyzer_names = config.boundaries.flow.analyzers
         for analyzer_name in analyzer_names:
             analyzer = self.catalog.analyzer(analyzer_name)
-            for realm in flow_realms(config.rules.flow):
+            for realm in flow_realms(config.boundaries.flow):
                 violations.extend(
                     analyzer.analyze(
                         FlowAnalysisContext(

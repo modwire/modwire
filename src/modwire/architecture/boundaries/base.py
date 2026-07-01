@@ -5,17 +5,31 @@ from abc import ABC, abstractmethod
 from modwire_extraction.code import QueryableCodeMap
 from pydantic import BaseModel, ConfigDict, computed_field
 
-from ..map import ArchitectureConfig, ArchitectureFlowRealm
-from ..matching import TagMatcher
+from ..config import ArchitectureConfig, FlowRealm
+from .matching import TagMatcher
 
 
 EDGE_RULE_TYPE = "edge-rule"
 
 
-class ViolationInterface(ABC):
-    @abstractmethod
-    def violation_key(self) -> tuple[object, ...]:
-        raise NotImplementedError
+class EdgeRuleViolation(BaseModel):
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+
+    source_id: str
+    target_id: str
+    source_pattern: str
+    target_pattern: str
+    rule_name: str
+
+
+class FlowViolation(BaseModel):
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+
+    violation_type: str
+    path: tuple[str, ...]
+    violation_index: int
+    rule_name: str
+    message: str
 
 
 class FlowAnalysisContext(BaseModel):
@@ -23,7 +37,7 @@ class FlowAnalysisContext(BaseModel):
 
     code_map: QueryableCodeMap
     tags: TagMatcher
-    realm: ArchitectureFlowRealm
+    realm: FlowRealm
     config: ArchitectureConfig
 
 
@@ -84,55 +98,12 @@ class FlowAnalyzer(BaseModel, FlowAnalyzerInterface):
         return ""
 
 
-class EdgeRuleViolation(BaseModel, ViolationInterface):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
-    source_id: str
-    target_id: str
-    source_pattern: str
-    target_pattern: str
-    rule_name: str
-
-    @computed_field
-    @property
-    def violation_type(self) -> str:
-        return EDGE_RULE_TYPE
-
-    def violation_key(self) -> tuple[object, ...]:
-        return (
-            self.violation_type,
-            self.source_id,
-            self.target_id,
-            self.source_pattern,
-            self.target_pattern,
-            self.rule_name,
-        )
-
-
-class FlowViolation(BaseModel, ViolationInterface):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
-    violation_type: str
-    path: tuple[str, ...]
-    violation_index: int
-    rule_name: str
-    message: str
-
-    def violation_key(self) -> tuple[object, ...]:
-        return (
-            self.violation_type,
-            self.path,
-            self.violation_index,
-            self.rule_name,
-            self.message,
-        )
-
-__all__ = [
-    "EDGE_RULE_TYPE",
-    "EdgeRuleViolation",
-    "FlowAnalysisContext",
-    "FlowAnalyzer",
-    "FlowAnalyzerInterface",
-    "FlowViolation",
-    "ViolationInterface",
-]
+def flow_realms(flow: ArchitectureFlowRules) -> tuple[FlowRealm, ...]:
+    if flow.realms:
+        return flow.realms
+    return (
+        FlowRealm(
+            module_tag=flow.module_tag,
+            layers=flow.layers,
+        ),
+    )

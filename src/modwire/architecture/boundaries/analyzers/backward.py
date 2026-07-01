@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .base import FlowAnalysisContext, FlowAnalyzer, FlowViolation
+from ..base import FlowAnalysisContext, FlowAnalyzer, FlowViolation
 
 
 class BackwardFlowAnalyzer(FlowAnalyzer):
