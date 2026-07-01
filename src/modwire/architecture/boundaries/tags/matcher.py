@@ -1,29 +1,5 @@
-from pydantic import BaseModel
-
-from ..config import ArchitectureConfig
-
-
-class TagMatch(BaseModel):
-    name: str
-    pattern: str
-    matched_path: str
-    captured_path: str
-    is_wildcard: bool
-    wildcard_values: tuple[str, ...] = ()
-
-
-class TagMap(BaseModel):
-    matches_by_node: dict[str, tuple[TagMatch, ...]]
-
-    def tags_for(self, node_id: str) -> tuple[TagMatch, ...]:
-        return self.matches_by_node.get(node_id, ())
-
-    def first_match(self, node_id: str, names: tuple[str, ...]) -> TagMatch | None:
-        wanted = set(names)
-        return next(
-            (match for match in self.tags_for(node_id) if match.name in wanted),
-            None,
-        )
+from ...config import ArchitectureConfig
+from .tag_map import TagMatch
 
 
 class TagMatcher:
@@ -107,9 +83,5 @@ class TagMatcher:
         return any(tag.name == name for tag in self.tags)
 
 
-
-__all__ = [
-    "TagMap",
-    "TagMatch",
-    "TagMatcher",
-]
+def load_tag_matcher(config: ArchitectureConfig) -> TagMatcher:
+    return TagMatcher(config)

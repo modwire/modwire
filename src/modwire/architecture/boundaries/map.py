@@ -1,4 +1,6 @@
-from .matching import TagMap
+from ..config import ArchitectureConfig
+
+from .tags import TagMap
 
 
 class ArchitectureMap:
@@ -19,4 +21,6 @@ class ArchitectureMap:
         self.layers = layers
         self.unknown_files = unknown_files
 
-    
+
+def load_architecture_map(config: ArchitectureConfig) -> ArchitectureMap:
+    ...

@@ -1,17 +1,9 @@
 from abc import ABC, abstractmethod
 
-from modwire_extraction.code import QueryableCodeMap
 from pydantic import BaseModel, ConfigDict
 
-from ..config import ArchitectureConfig
-from .matching import TagMatcher
-from .base import FlowContext, FlowViolation
-
-
-class FlowPipelineStepInterface(ABC):
-    @abstractmethod
-    def run(self, code_map: QueryableCodeMap, config: ArchitectureConfig) -> FlowReport:
-        raise NotImplementedError
+from .map import ArchitectureMap
+from .base import FlowViolation
 
 
 class FlowReport(BaseModel):
@@ -21,9 +13,14 @@ class FlowReport(BaseModel):
     analyzers: tuple[str, ...] = ()
 
 
+class FlowPipelineStepInterface(ABC):
+    @abstractmethod
+    def run(self, architecture_map: ArchitectureMap) -> FlowReport:
+        raise NotImplementedError
+
+
 class FlowPipelineStep(FlowPipelineStepInterface):
-    def run(self, code_map: QueryableCodeMap, config: ArchitectureConfig) -> FlowReport:
-        matcher = TagMatcher(config)
+    def run(self, architecture_map: ArchitectureMap) -> FlowReport:
         violations: list[FlowViolation] = []
         analyzer_names = config.boundaries.flow.analyzers
         for analyzer_name in analyzer_names:
