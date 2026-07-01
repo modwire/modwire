@@ -106,10 +106,10 @@ scaffoldings are packaged with the distribution wheel.
 
 ## Project Generation
 
-`modwire.projects` can generate a whole project authority and starter layout.
-The first bundled project profile is `python-fastapi-ddd-uv`: Python, uv,
-FastAPI, and a project layout that mounts reusable `ddd_context` module
-scaffolding under the application package for future module operations.
+`modwire.projects` can generate a project authority and starter layout. The
+default bundled project profile is `python-fastapi-ddd-uv`: Python, uv,
+FastAPI, and a DDD-oriented package layout that mounts reusable `ddd_context`
+module scaffolding under the application package.
 
 ```python
 from pathlib import Path
@@ -122,6 +122,27 @@ generate_project("acme", Path("services/acme"))
 The generated project includes `.modwire/project.json`, which records the
 resolved profile, layout, dependencies, module scaffolding, and operation names
 for later project-aware automation.
+
+Open an existing generated project with `open_project` to run project-aware
+module operations against the recorded authority:
+
+```python
+from pathlib import Path
+
+from modwire.projects import open_project
+
+project = open_project(Path("services/acme"))
+
+project.add_context("commerce")
+project.add_module("billing", context_name="commerce")
+project.remove_module("billing", context_name="commerce", dry_run=True)
+```
+
+The currently exposed project helpers cover reading the project authority,
+adding contexts, adding modules, removing modules, and removing contexts. Module
+generation uses the project's configured `module_scaffolding` and language output
+root, so Python, TypeScript, and PHP profiles place generated files under their
+own layout conventions.
 
 Bundled project profiles currently include:
 

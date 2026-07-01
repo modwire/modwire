@@ -1,6 +1,24 @@
 # Changelog
 
-## 3.0.0 - Unreleased
+## 3.2.0 - Unreleased
+
+### Added
+
+- Project generation through `modwire.projects.generate_project`.
+- Bundled project profiles for Python/FastAPI/uv, TypeScript/NestJS/pnpm, and
+  PHP/Symfony/Composer.
+- Project authority loading and project-aware context/module operations through
+  `modwire.projects.open_project`.
+- Bundled `clean` and `ddd_context` module scaffoldings alongside the existing
+  `layered` and `hexagonal` scaffoldings.
+- Python, TypeScript, and PHP outputs for bundled DDD context module generation.
+
+### Changed
+
+- README project-generation documentation now covers project-aware operations and
+  the currently bundled project profiles.
+
+## 3.0.0
 
 ### Breaking Changes
 
