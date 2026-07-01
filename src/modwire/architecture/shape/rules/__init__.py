@@ -5,7 +5,7 @@ from .file_resolver import FileResolver
 from .import_resolver import ImportResolver
 from .property_resolver import PropertyResolver
 from .signature_resolver import SignatureResolver
-from .symbol_resolver import SymbolResolver 
+from .symbol_resolver import SymbolResolver
 
 
 __all__ = [
