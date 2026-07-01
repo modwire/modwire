@@ -129,7 +129,3 @@ class TagMatcher:
         if scope:
             return re.compile(f"^{pattern_regex}(?:/.*)?$")
         return re.compile(f"(?:^|.*/){pattern_regex}(?:/.*)?$")
-
-
-def load_tag_matcher(config: ArchitectureConfig) -> TagMatcher:
-    return TagMatcher(config)

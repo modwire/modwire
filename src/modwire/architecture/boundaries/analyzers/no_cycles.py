@@ -9,7 +9,7 @@ class NoCyclesFlowAnalyzer(FlowAnalyzer):
     title: str = "Cycle Violations"
 
     def analyze(self, architecture_map: ArchitectureMap) -> tuple[FlowViolation, ...]:
-        if not architecture_map.config.boundaries.flow.module_tag:
+        if not architecture_map.realm.module_tag:
             return ()
 
         adjacency = self.module_adjacency(architecture_map)

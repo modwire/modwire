@@ -1,5 +1,5 @@
 from modwire.architecture.boundaries.config import BoundariesConfig, FlowRules, TagRule
-from modwire.architecture.boundaries.map import load_architecture_map
+from modwire.architecture.boundaries.map import ArchitectureMapLoader
 from modwire.architecture.config import ArchitectureConfig
 from modwire_extraction.code import CodeMap, QueryableCodeMap
 from modwire_extraction.dependency.graph import DependencyGraph
@@ -7,7 +7,7 @@ from modwire_extraction.extractors.languages.base import SourceExtraction
 from modwire_extraction.extractors.source import SourceFile
 
 
-def test_load_architecture_map_indexes_tags_modules_and_layers():
+def test_architecture_map_loader_indexes_tags_modules_and_layers():
     code_map = QueryableCodeMap(
         CodeMap(
             language="python",
@@ -38,7 +38,7 @@ def test_load_architecture_map_indexes_tags_modules_and_layers():
         ),
     )
 
-    architecture_map = load_architecture_map(config, code_map)
+    architecture_map = ArchitectureMapLoader(config).load(code_map)
 
     assert architecture_map.code_map is code_map
     assert architecture_map.modules == {

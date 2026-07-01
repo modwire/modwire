@@ -1,6 +1,6 @@
 from pydantic import (BaseModel, ConfigDict, Field, )
 
-from .boundaries import BoundariesConfig
+from .boundaries.config import BoundariesConfig
 
 
 class ArchitectureConfig(BaseModel):

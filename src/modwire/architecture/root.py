@@ -1,6 +1,6 @@
 from modwire_extraction.code import QueryableCodeMap
 
-from .boundaries import ArchitectureMap, load_architecture_map
+from .boundaries.map import ArchitectureMap, ArchitectureMapLoader
 from .config import ArchitectureConfig
 
 
@@ -11,4 +11,4 @@ class ArchitectureRoot:
         self.config = config
 
     def load_map(self, code_map: QueryableCodeMap) -> ArchitectureMap:
-        return load_architecture_map(self.config, code_map)
+        return ArchitectureMapLoader(self.config).load(code_map)

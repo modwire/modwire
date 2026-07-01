@@ -9,7 +9,7 @@ class NoReentryFlowAnalyzer(FlowAnalyzer):
     title: str = "No Re-Entry Violations"
 
     def analyze(self, architecture_map: ArchitectureMap) -> tuple[FlowViolation, ...]:
-        if not architecture_map.config.boundaries.flow.module_tag:
+        if not architecture_map.realm.module_tag:
             return ()
 
         violations: list[FlowViolation] = []
