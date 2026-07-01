@@ -1,0 +1,15 @@
+import typer
+
+from .settings import Settings
+
+cli = typer.Typer(no_args_is_help=True)
+
+
+@cli.command()
+def info() -> None:
+    settings = Settings()
+    typer.echo(f"{settings.app_name} uses the {{ profile_name }} profile")
+
+
+def main() -> None:
+    cli()

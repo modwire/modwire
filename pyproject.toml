@@ -78,6 +78,10 @@ include-package-data = true
     "scaffoldings/*/copier.yml",
     "scaffoldings/*/template/**/*.jinja",
 ]
+"modwire.projects" = [
+    "scaffoldings/*/copier.yml",
+    "scaffoldings/*/template/**/*.jinja",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

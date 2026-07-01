@@ -104,6 +104,25 @@ structure, `scaffolding="clean"` for a domain/application/infrastructure/interfa
 module, or `scaffolding="ddd_context"` for a bounded-context module. Bundled
 scaffoldings are packaged with the distribution wheel.
 
+## Project Generation
+
+`modwire.projects` can generate a whole project authority and starter layout.
+The first bundled project profile is `python-fastapi-ddd-uv`: Python, uv,
+FastAPI, and a project layout that mounts reusable `ddd_context` module
+scaffolding under the application package for future module operations.
+
+```python
+from pathlib import Path
+
+from modwire.projects import generate_project
+
+generate_project("acme", Path("services/acme"))
+```
+
+The generated project includes `.modwire/project.json`, which records the
+resolved profile, layout, dependencies, module scaffolding, and operation names
+for later project-aware automation.
+
 ## Configuration
 
 Boundary tags classify source IDs. Flow rules then use those tags to detect
