@@ -1,6 +1,11 @@
-from __future__ import annotations
+from pathlib import Path
 
-from pydantic import ( BaseModel, ConfigDict, Field, )
+from pydantic import (BaseModel, ConfigDict, Field, )
+
+
+from modwire_extraction.code import QueryableCodeMap
+from modwire_extraction import ModwireExtraction
+
 
 from .matching import TagMap
 
@@ -72,3 +77,7 @@ def flow_realms(flow: ArchitectureFlowRules) -> tuple[ArchitectureFlowRealm, ...
             layers=flow.layers,
         ),
     )
+
+
+def extract_code_map(root_path: Path, language: str) -> QueryableCodeMap:
+    return ModwireExtraction(root_path).generate_queryable_map(language)
