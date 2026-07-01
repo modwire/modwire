@@ -46,6 +46,15 @@ jobs:
             exit 1
           fi
 
+      - name: Use release tag as package version
+        if: github.event_name == 'release'
+        run: |
+          tag_name="${{ github.event.release.tag_name }}"
+          release_version="${tag_name#v}"
+
+          echo "MODWIRE_RELEASE_VERSION=$release_version" >> "$GITHUB_ENV"
+          echo "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_MODWIRE=$release_version" >> "$GITHUB_ENV"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -90,12 +99,13 @@ jobs:
         if: github.event_name == 'release'
         run: |
           python - <<'PY'
+          import os
           import sys
           import zipfile
           from email.parser import Parser
           from pathlib import Path
 
-          expected_version = "${{ github.event.release.tag_name }}".removeprefix("v")
+          expected_version = os.environ["MODWIRE_RELEASE_VERSION"]
           wheels = sorted(Path("dist").glob("*.whl"))
           versions: dict[str, str] = {}
 
