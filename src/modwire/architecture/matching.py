@@ -1,4 +1,18 @@
+from __future__ import annotations
+
+import re
+from typing import Protocol
+
 from pydantic import BaseModel
+
+
+class SourceIdProvider(Protocol):
+    def source_ids(self) -> tuple[str, ...]:
+        raise NotImplementedError
+
+
+class ArchitectureRootProvider(Protocol):
+    architecture_root: str
 
 
 class TagMatch(BaseModel):
@@ -38,7 +52,7 @@ class TagMatcher:
         matches = self.matches(node_id, name, scope=scope)
         if matches:
             return matches[0]
-        if self._has_tag(name):
+        if self.has_tag(name):
             return None
         pattern = name
         return self.match_pattern(
@@ -59,7 +73,7 @@ class TagMatcher:
             match
             for tag in self.tags
             if tag.name == name
-            if (match := self._match_tag(node_id, tag, scope=scope)) is not None
+            if (match := self.match_tag_rule(node_id, tag, scope=scope)) is not None
         )
 
     def match_pattern(
@@ -73,11 +87,11 @@ class TagMatcher:
     ) -> TagMatch | None:
         path = normalize_source_id(self.language, node_id)
         for ignored in (*self.exclusions.get(pattern, ()), *exclude):
-            for normalized_ignored in _normalized_patterns(self.language, ignored, self.config):
-                if _regex(normalized_ignored, True).match(path):
+            for normalized_ignored in normalized_patterns(self.language, ignored, self.config):
+                if pattern_regex(normalized_ignored, True).match(path):
                     return None
-        for normalized in _normalized_patterns(self.language, pattern, self.config):
-            match = _regex(normalized, scope).match(path)
+        for normalized in normalized_patterns(self.language, pattern, self.config):
+            match = pattern_regex(normalized, scope).match(path)
             if match is not None:
                 return TagMatch(
                     name=name or pattern,
@@ -109,7 +123,7 @@ class TagMatcher:
         return tuple(
             match
             for tag in self.tags
-            if (match := self._match_tag(node_id, tag)) is not None
+            if (match := self.match_tag_rule(node_id, tag)) is not None
         )
 
     def map_code_map(self, code_map) -> TagMap:
@@ -130,7 +144,7 @@ class TagMatcher:
             return path[len(architecture_root) + 1 :]
         return path
 
-    def _match_tag(self, node_id: str, tag, *, scope: bool = True) -> TagMatch | None:
+    def match_tag_rule(self, node_id: str, tag, *, scope: bool = True) -> TagMatch | None:
         return self.match_pattern(
             node_id,
             tag.match,
@@ -139,6 +153,53 @@ class TagMatcher:
             exclude=tag.excluded_patterns,
         )
 
-    def _has_tag(self, name: str) -> bool:
+    def has_tag(self, name: str) -> bool:
         return any(tag.name == name for tag in self.tags)
 
+
+def source_files(code_map: SourceIdProvider) -> tuple[str, ...]:
+    return code_map.source_ids()
+
+
+def normalize_source_id(language: str, node_id: str) -> str:
+    del language
+    return node_id.replace("\\", "/").strip("/")
+
+
+def normalized_patterns(
+    language: str,
+    pattern: str,
+    config: ArchitectureRootProvider,
+) -> tuple[str, ...]:
+    normalized = normalize_source_id(language, pattern)
+    architecture_root = normalize_source_id(
+        language,
+        getattr(config, "architecture_root", "") or "",
+    ).strip("/")
+    if architecture_root and not normalized.startswith(f"{architecture_root}/"):
+        return (f"{architecture_root}/{normalized}",)
+    return (normalized,)
+
+
+def pattern_regex(pattern: str, scope: bool) -> re.Pattern[str]:
+    parts: list[str] = []
+    for character in pattern:
+        if character == "*":
+            parts.append("([^/]+)")
+        elif character == "?":
+            parts.append("([^/])")
+        else:
+            parts.append(re.escape(character))
+    suffix = r"(?:/.*)?$" if scope else "$"
+    return re.compile(rf"^({''.join(parts)}){suffix}")
+
+
+__all__ = [
+    "TagMap",
+    "TagMatch",
+    "TagMatcher",
+    "normalize_source_id",
+    "normalized_patterns",
+    "pattern_regex",
+    "source_files",
+]
