@@ -79,6 +79,28 @@ Reports are Pydantic models, so they can be serialized with `model_dump()` or
 payload = report.model_dump(mode="json")
 ```
 
+## Module Generation
+
+`modwire.modules` can generate a module from any Copier template. A caller only
+needs to create a normal Copier template directory and pass it to
+`generate_module`.
+
+```python
+from pathlib import Path
+
+from modwire.modules import generate_module
+
+generate_module(
+    "billing",
+    Path("src/features"),
+    Path("templates/modwire-module"),
+    data={"service_name": "BillingService"},
+)
+```
+
+If no template path is provided, `generate_module` uses the bundled `layered`
+scaffolding. Bundled scaffoldings are packaged with the distribution wheel.
+
 ## Configuration
 
 Boundary tags classify source IDs. Flow rules then use those tags to detect

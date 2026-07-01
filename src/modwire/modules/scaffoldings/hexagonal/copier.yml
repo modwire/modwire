@@ -1,0 +1,38 @@
+_min_copier_version: "9.0.0"
+_templates_suffix: ".jinja"
+_subdirectory: template
+
+module_name:
+  type: str
+  default: sample_module
+  help: Importable module or package directory name.
+
+aggregate_name:
+  type: str
+  default: SampleAggregate
+  help: Domain aggregate class name.
+
+command_name:
+  type: str
+  default: CreateSample
+  help: Application command class name.
+
+service_name:
+  type: str
+  default: SampleService
+  help: Application service class name.
+
+repository_name:
+  type: str
+  default: SampleRepository
+  help: Repository port and adapter class suffix.
+
+controller_name:
+  type: str
+  default: SampleController
+  help: UI/controller class name.
+
+php_namespace:
+  type: str
+  default: App\\SampleModule
+  help: PHP namespace root for the generated classes.

@@ -1,0 +1,18 @@
+export class {{ aggregate_name }} {
+  private constructor(
+    public readonly aggregateId: string,
+    public readonly name: string,
+  ) {}
+
+  static create(aggregateId: string, name: string): {{ aggregate_name }} {
+    if (aggregateId.length === 0) {
+      throw new Error("Aggregate id cannot be empty.");
+    }
+
+    if (name.length === 0) {
+      throw new Error("Aggregate name cannot be empty.");
+    }
+
+    return new {{ aggregate_name }}(aggregateId, name);
+  }
+}

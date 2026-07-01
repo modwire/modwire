@@ -1,0 +1,14 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ php_namespace }}\Ports;
+
+use {{ php_namespace }}\Domain\{{ aggregate_name }};
+
+interface {{ repository_name }}
+{
+    public function save({{ aggregate_name }} $aggregate): void;
+
+    public function get(string $id): ?{{ aggregate_name }};
+}

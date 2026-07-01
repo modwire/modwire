@@ -1,0 +1,20 @@
+import { {{ aggregate_name }} } from "./domain";
+import { {{ repository_name }} } from "./ports";
+
+export class {{ command_name }} {
+  constructor(
+    public readonly aggregateId: string,
+    public readonly name: string,
+  ) {}
+}
+
+export class {{ service_name }} {
+  constructor(private readonly repository: {{ repository_name }}) {}
+
+  handle(command: {{ command_name }}): {{ aggregate_name }} {
+    const aggregate = {{ aggregate_name }}.create(command.aggregateId, command.name);
+    this.repository.save(aggregate);
+
+    return aggregate;
+  }
+}
