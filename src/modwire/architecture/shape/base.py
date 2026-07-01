@@ -14,7 +14,7 @@ class ShapeViolation(BaseModel):
     symbol_name: str = ""
 
 
-class RuleResolver(abc.ABC):
+class ShapeResolver(abc.ABC):
     @abc.abstractmethod
     def resolve(self, source_id: str, config: ShapeConfig) -> tuple[ShapeViolation, ...]:
         raise NotImplementedError

@@ -69,23 +69,7 @@ class TagMatcher:
         scope: bool = True,
         exclude: tuple[str, ...] = (),
     ) -> TagMatch | None:
-        path = normalize_source_id(self.language, node_id)
-        for ignored in (*self.exclusions.get(pattern, ()), *exclude):
-            for normalized_ignored in normalized_patterns(self.language, ignored, self.config):
-                if pattern_regex(normalized_ignored, True).match(path):
-                    return None
-        for normalized in normalized_patterns(self.language, pattern, self.config):
-            match = pattern_regex(normalized, scope).match(path)
-            if match is not None:
-                return TagMatch(
-                    name=name or pattern,
-                    pattern=pattern,
-                    matched_path=match.group(0),
-                    captured_path=match.group(1),
-                    is_wildcard="*" in normalized or "?" in normalized,
-                    wildcard_values=tuple(match.groups()[1:]),
-                )
-        return None
+        pass
 
     def first_match(
         self,
@@ -109,24 +93,6 @@ class TagMatcher:
             for tag in self.tags
             if (match := self.match_tag_rule(node_id, tag)) is not None
         )
-
-    def map_code_map(self, code_map) -> TagMap:
-        return TagMap(
-            {
-                source_id: self.tags_for(source_id)
-                for source_id in source_files(code_map)
-            }
-        )
-
-    def display_path(self, node_id: str) -> str:
-        path = normalize_source_id(self.language, node_id)
-        architecture_root = normalize_source_id(
-            self.language,
-            getattr(self.config, "architecture_root", "") or "",
-        ).strip("/")
-        if architecture_root and path.startswith(f"{architecture_root}/"):
-            return path[len(architecture_root) + 1 :]
-        return path
 
     def match_tag_rule(self, node_id: str, tag, *, scope: bool = True) -> TagMatch | None:
         return self.match_pattern(

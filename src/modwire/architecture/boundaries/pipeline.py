@@ -5,12 +5,12 @@ from pydantic import BaseModel, ConfigDict
 
 from ..config import ArchitectureConfig
 from .matching import TagMatcher
-from .base import FlowAnalysisContext, FlowViolation
+from .base import FlowContext, FlowViolation
 
 
 class FlowPipelineStepInterface(ABC):
     @abstractmethod
-    def run( self, code_map: QueryableCodeMap, config: ArchitectureConfig) -> FlowReport:
+    def run(self, code_map: QueryableCodeMap, config: ArchitectureConfig) -> FlowReport:
         raise NotImplementedError
 
 
@@ -22,7 +22,7 @@ class FlowReport(BaseModel):
 
 
 class FlowPipelineStep(FlowPipelineStepInterface):
-    def run( self, code_map: QueryableCodeMap, config: ArchitectureConfig) -> FlowReport:
+    def run(self, code_map: QueryableCodeMap, config: ArchitectureConfig) -> FlowReport:
         matcher = TagMatcher(config)
         violations: list[FlowViolation] = []
         analyzer_names = config.boundaries.flow.analyzers
@@ -31,7 +31,7 @@ class FlowPipelineStep(FlowPipelineStepInterface):
             for realm in flow_realms(config.boundaries.flow):
                 violations.extend(
                     analyzer.analyze(
-                        FlowAnalysisContext(
+                        FlowContext(
                             code_map=code_map,
                             tags=matcher,
                             realm=realm,

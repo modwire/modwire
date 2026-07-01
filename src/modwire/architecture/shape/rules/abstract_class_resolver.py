@@ -1,7 +1,7 @@
-from ..base import RuleResolver, ShapeViolation
+from ..base import ShapeResolver, ShapeViolation
 from ..config import ShapeConfig
 
 
-class AbstractClassResolver(RuleResolver):
+class AbstractClassResolver(ShapeResolver):
     def resolve(self, source_id: str, config: ShapeConfig) -> tuple[ShapeViolation, ...]:
         return ()

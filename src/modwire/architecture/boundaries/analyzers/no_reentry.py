@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from ..base import FlowAnalysisContext, FlowAnalyzer, FlowViolation
+from ..base import FlowContext, FlowAnalyzer, FlowViolation
 
 
 class NoReentryFlowAnalyzer(FlowAnalyzer):
     name: str = "no-reentry"
     title: str = "No Re-Entry Violations"
 
-    def analyze(self, context: FlowAnalysisContext) -> tuple[FlowViolation, ...]:
+    def analyze(self, context: FlowContext) -> tuple[FlowViolation, ...]:
         if not context.realm.module_tag:
             return ()
 
@@ -22,7 +22,7 @@ class NoReentryFlowAnalyzer(FlowAnalyzer):
             )
         return self.dedupe(violations)
 
-    def roots(self, context: FlowAnalysisContext) -> tuple[str, ...]:
+    def roots(self, context: FlowContext) -> tuple[str, ...]:
         roots = tuple(
             source_id
             for source_id in context.code_map.source_ids()
@@ -34,7 +34,7 @@ class NoReentryFlowAnalyzer(FlowAnalyzer):
 
     def walk_dependencies(
         self,
-        context: FlowAnalysisContext,
+        context: FlowContext,
         source_id: str,
         path: tuple[str, ...],
         exited_modules: frozenset[str],

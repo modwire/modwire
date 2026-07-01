@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from ..base import FlowAnalysisContext, FlowAnalyzer, FlowViolation
+from ..base import FlowContext, FlowAnalyzer, FlowViolation
 
 
 class NoCyclesFlowAnalyzer(FlowAnalyzer):
     name: str = "no-cycles"
     title: str = "Cycle Violations"
 
-    def analyze(self, context: FlowAnalysisContext) -> tuple[FlowViolation, ...]:
+    def analyze(self, context: FlowContext) -> tuple[FlowViolation, ...]:
         if not context.realm.module_tag:
             return ()
 
@@ -27,7 +27,7 @@ class NoCyclesFlowAnalyzer(FlowAnalyzer):
 
     def module_adjacency(
         self,
-        context: FlowAnalysisContext,
+        context: FlowContext,
     ) -> dict[str, set[str]]:
         adjacency: dict[str, set[str]] = {}
         for dependency in context.code_map.dependency_edges().all():
@@ -40,7 +40,7 @@ class NoCyclesFlowAnalyzer(FlowAnalyzer):
 
     def walk_modules(
         self,
-        context: FlowAnalysisContext,
+        context: FlowContext,
         adjacency: dict[str, set[str]],
         module: str,
         path: tuple[str, ...],
@@ -49,7 +49,7 @@ class NoCyclesFlowAnalyzer(FlowAnalyzer):
     ) -> None:
         for target in sorted(adjacency.get(module, ())):
             if target in path:
-                cycle = (*path[path.index(target) :], target)
+                cycle = (*path[path.index(target):], target)
                 canonical = self.canonical_cycle(cycle)
                 if canonical in emitted:
                     continue

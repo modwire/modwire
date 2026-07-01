@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from ..base import FlowAnalysisContext, FlowAnalyzer, FlowViolation
+from ..base import FlowContext, FlowAnalyzer, FlowViolation
 
 
 class BackwardFlowAnalyzer(FlowAnalyzer):
     name: str = "backward-flow"
     title: str = "Backward Flow Violations"
 
-    def analyze(self, context: FlowAnalysisContext) -> tuple[FlowViolation, ...]:
+    def analyze(self, context: FlowContext) -> tuple[FlowViolation, ...]:
         layers = context.realm.layers
         if not layers:
             return ()
