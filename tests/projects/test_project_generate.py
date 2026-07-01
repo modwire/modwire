@@ -96,7 +96,11 @@ def test_generate_project_uses_python_fastapi_ddd_uv_profile(tmp_path: Path) -> 
     assert authority["layout"]["generated_clients"] == (
         "src/acme/infrastructure/clients/generated"
     )
+    assert "add_context" in authority["operations"]
+    assert "add_module" in authority["operations"]
     assert "add_crud_resource" in authority["operations"]
+    assert "remove_module" in authority["operations"]
+    assert "remove_context" in authority["operations"]
 
     pyproject = (output_root / "pyproject.toml").read_text(encoding="utf-8")
     assert '"fastapi[standard]"' in pyproject

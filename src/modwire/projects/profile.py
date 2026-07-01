@@ -26,6 +26,28 @@ class ProjectLayout(BaseModel):
         )
 
 
+class ProjectModuleLayout(BaseModel):
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+
+    context_root: str
+    module_root: str
+    context_marker_roots: tuple[str, ...] = ()
+    scaffold_output_roots: dict[str, str] = Field(default_factory=dict)
+    package_markers: dict[str, tuple[str, ...]] = Field(default_factory=dict)
+
+    def resolve(self, module_mount: str) -> "ProjectModuleLayout":
+        return ProjectModuleLayout(
+            context_root=self.context_root.replace("{module_mount}", module_mount),
+            module_root=self.module_root.replace("{module_mount}", module_mount),
+            context_marker_roots=tuple(
+                marker_root.replace("{module_mount}", module_mount)
+                for marker_root in self.context_marker_roots
+            ),
+            scaffold_output_roots=dict(self.scaffold_output_roots),
+            package_markers=dict(self.package_markers),
+        )
+
+
 class ProjectToolchain(BaseModel):
     model_config = ConfigDict(frozen=True, from_attributes=True)
 
@@ -46,9 +68,11 @@ class ProjectProfile(BaseModel):
     module_scaffolding: str
     toolchain: ProjectToolchain
     layout: ProjectLayout
+    module_layout: ProjectModuleLayout
     operations: tuple[str, ...] = ()
 
     def resolved_authority(self, project_name: str, package_name: str) -> dict[str, object]:
+        layout = self.layout.resolve(package_name)
         return {
             "project_name": project_name,
             "package_name": package_name,
@@ -62,7 +86,10 @@ class ProjectProfile(BaseModel):
             "dependencies": list(self.toolchain.dependencies),
             "dev_dependencies": list(self.toolchain.dev_dependencies),
             "scripts": dict(self.toolchain.scripts),
-            "layout": self.layout.resolve(package_name).model_dump(mode="json"),
+            "layout": layout.model_dump(mode="json"),
+            "module_layout": self.module_layout.resolve(
+                layout.module_mount,
+            ).model_dump(mode="json"),
             "operations": list(self.operations),
         }
 
@@ -107,10 +134,29 @@ PYTHON_FASTAPI_DDD_UV = ProjectProfile(
         openapi="openapi",
         tests="tests",
     ),
+    module_layout=ProjectModuleLayout(
+        context_root="{module_mount}/bounded_contexts/{context_name}",
+        module_root="{module_mount}/bounded_contexts/{context_name}/{module_name}",
+        context_marker_roots=(
+            "{module_mount}/bounded_contexts",
+            "{module_mount}/bounded_contexts/{context_name}",
+        ),
+        scaffold_output_roots={
+            "python": "python",
+            "typescript": "typescript",
+            "php": "php",
+        },
+        package_markers={
+            "python": ("__init__.py",),
+        },
+    ),
     operations=(
+        "add_context",
         "add_module",
         "add_crud_resource",
         "add_use_case",
+        "remove_module",
+        "remove_context",
         "remove_resource",
         "add_openapi_client",
     ),
@@ -133,6 +179,7 @@ def get_project_profile(name: str) -> ProjectProfile:
 __all__ = [
     "PROJECT_PROFILES",
     "ProjectLayout",
+    "ProjectModuleLayout",
     "ProjectProfile",
     "ProjectToolchain",
     "get_project_profile",
