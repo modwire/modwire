@@ -12,3 +12,5 @@ class ArchitectureRoot:
 
     def load_map(self, code_map: QueryableCodeMap) -> ArchitectureMap:
         return ArchitectureMapLoader(self.config).load(code_map)
+    
+

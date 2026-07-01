@@ -23,7 +23,7 @@ class ImportResolver(ShapeResolver):
                     ShapeViolation(
                         source_id=source_id,
                         rule_name="allow_import_aliases",
-                        actual=True,
+                        actual=False,
                         limit=False,
                         symbol_kind="import",
                         symbol_name=source_import.normalized_path,
@@ -45,7 +45,7 @@ class ImportResolver(ShapeResolver):
                     ShapeViolation(
                         source_id=source_id,
                         rule_name="require_joined_imports",
-                        actual=False,
+                        actual=True,
                         limit=True,
                         symbol_kind="import",
                         symbol_name=source_import.join_key,

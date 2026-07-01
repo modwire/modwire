@@ -11,15 +11,6 @@ from .reports.exports import ExportsReporter, UnusedExport, UnusedExportInsight
 from .reports.hotspots import DependencyHotspot, HotspotsReport, HotspotsReporter
 
 
-DEFAULT_REPORTERS = (
-    "clusters",
-    "hotspots",
-    "coherence",
-    "callables",
-    "unused-exports",
-)
-
-
 class InsightReport(BaseModel):
     model_config = ConfigDict(frozen=True, from_attributes=True)
 
@@ -63,10 +54,9 @@ class InsightReporterCatalog:
 class InsightPipelineStep(InsightPipelineStepInterface):
     def __init__(
         self,
-        catalog: InsightReporterCatalog | None = None,
-        reporters: tuple[str, ...] = DEFAULT_REPORTERS,
+        reporters: tuple[str, ...],
     ):
-        self.catalog = catalog or InsightReporterCatalog()
+        self.catalog = InsightReporterCatalog()
         self.reporters = reporters
 
     def run(self, architecture_map: ArchitectureMap) -> InsightReport:
