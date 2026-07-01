@@ -63,7 +63,7 @@ class ShapeResolverCatalog:
 class ShapePipelineStep(ShapePipelineStepInterface):
     def __init__(
         self,
-        resolvers: tuple[str, ...]
+        resolvers: tuple[str, ...],
     ):
         self.catalog = ShapeResolverCatalog()
         self.resolvers = resolvers

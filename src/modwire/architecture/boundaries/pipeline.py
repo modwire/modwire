@@ -41,6 +41,9 @@ class FlowAnalyzerCatalog:
             known = ", ".join(sorted(self._analyzers))
             raise ValueError(f"Unknown flow analyzer {name!r}. Known analyzers: {known}") from exc
 
+    def names(self) -> tuple[str, ...]:
+        return tuple(self._analyzers)
+
 
 class FlowRealmSelector:
     def select(self, flow: FlowRules) -> tuple[FlowRealm, ...]:
@@ -71,9 +74,21 @@ class FlowPipelineStep(FlowPipelineStepInterface):
         self.realm_selector = realm_selector or FlowRealmSelector()
 
     def run(self, architecture_map: ArchitectureMap) -> FlowReport:
+        return self.run_analyzers(
+            architecture_map,
+            architecture_map.config.boundaries.flow.analyzers,
+        )
+
+    def run_all(self, architecture_map: ArchitectureMap) -> FlowReport:
+        return self.run_analyzers(architecture_map, self.catalog.names())
+
+    def run_analyzers(
+        self,
+        architecture_map: ArchitectureMap,
+        analyzer_names: tuple[str, ...],
+    ) -> FlowReport:
         violations: list[FlowViolation] = []
         flow = architecture_map.config.boundaries.flow
-        analyzer_names = flow.analyzers
         for analyzer_name in analyzer_names:
             analyzer = self.catalog.analyzer(analyzer_name)
             for realm in self.realm_selector.select(flow):

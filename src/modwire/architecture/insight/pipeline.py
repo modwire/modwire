@@ -50,6 +50,9 @@ class InsightReporterCatalog:
                 f"Unknown insight reporter {name!r}. Known reporters: {known}"
             ) from exc
 
+    def names(self) -> tuple[str, ...]:
+        return tuple(self._reporters)
+
 
 class InsightPipelineStep(InsightPipelineStepInterface):
     def __init__(
@@ -82,7 +85,6 @@ class InsightPipelineStep(InsightPipelineStepInterface):
 
 
 __all__ = [
-    "DEFAULT_REPORTERS",
     "InsightPipelineStep",
     "InsightPipelineStepInterface",
     "InsightReport",
