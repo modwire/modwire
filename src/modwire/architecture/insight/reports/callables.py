@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
-from ..map import ArchitectureMap
+from ...boundaries import ArchitectureMap
 from ..base import InsightReporter
 
 

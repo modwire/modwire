@@ -1,22 +1,23 @@
 from __future__ import annotations
 
-from ..base import FlowContext, FlowAnalyzer, FlowViolation
+from ..base import FlowAnalyzer, FlowViolation
+from ..map import ArchitectureMap
 
 
 class NoCyclesFlowAnalyzer(FlowAnalyzer):
     name: str = "no-cycles"
     title: str = "Cycle Violations"
 
-    def analyze(self, context: FlowContext) -> tuple[FlowViolation, ...]:
-        if not context.realm.module_tag:
+    def analyze(self, architecture_map: ArchitectureMap) -> tuple[FlowViolation, ...]:
+        if not architecture_map.config.boundaries.flow.module_tag:
             return ()
 
-        adjacency = self.module_adjacency(context)
+        adjacency = self.module_adjacency(architecture_map)
         emitted: set[tuple[str, ...]] = set()
         violations: list[FlowViolation] = []
         for module in sorted(adjacency):
             self.walk_modules(
-                context=context,
+                architecture_map=architecture_map,
                 adjacency=adjacency,
                 module=module,
                 path=(module,),
@@ -27,12 +28,12 @@ class NoCyclesFlowAnalyzer(FlowAnalyzer):
 
     def module_adjacency(
         self,
-        context: FlowContext,
+        architecture_map: ArchitectureMap,
     ) -> dict[str, set[str]]:
         adjacency: dict[str, set[str]] = {}
-        for dependency in context.code_map.dependency_edges().all():
-            source = self.module_for(context, dependency.edge.from_id)
-            target = self.module_for(context, dependency.edge.to_id)
+        for dependency in architecture_map.code_map.dependency_edges().all():
+            source = self.module_for(architecture_map, dependency.edge.from_id)
+            target = self.module_for(architecture_map, dependency.edge.to_id)
             if not source or not target or source == target:
                 continue
             adjacency.setdefault(source, set()).add(target)
@@ -40,7 +41,7 @@ class NoCyclesFlowAnalyzer(FlowAnalyzer):
 
     def walk_modules(
         self,
-        context: FlowContext,
+        architecture_map: ArchitectureMap,
         adjacency: dict[str, set[str]],
         module: str,
         path: tuple[str, ...],
@@ -59,14 +60,14 @@ class NoCyclesFlowAnalyzer(FlowAnalyzer):
                         violation_type=self.name,
                         path=canonical,
                         violation_index=len(canonical) - 1,
-                        rule_name=self.rule_name(context),
+                        rule_name=self.rule_name(architecture_map),
                         message="module cycle detected",
                     )
                 )
                 continue
 
             self.walk_modules(
-                context=context,
+                architecture_map=architecture_map,
                 adjacency=adjacency,
                 module=target,
                 path=(*path, target),

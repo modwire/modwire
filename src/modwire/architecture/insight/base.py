@@ -1,6 +1,6 @@
 import abc
 
-from ...map import ArchitectureMap
+from ..boundaries import ArchitectureMap
 
 
 class InsightReporter(abc.ABC):

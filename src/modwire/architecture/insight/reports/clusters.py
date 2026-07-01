@@ -1,7 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
-from ...config import ArchitectureMap
-from modwire_extraction.code import QueryableCodeMap
+from ...boundaries import ArchitectureMap
 
 from ..base import InsightReporter
 
@@ -18,5 +17,5 @@ class ArchitectureCluster(BaseModel):
 
 
 class ClustersReporter(InsightReporter):
-    def collect(self, architecture_map: ArchitectureMap, code_map: QueryableCodeMap) -> None:
+    def collect(self, architecture_map: ArchitectureMap) -> None:
         ...
