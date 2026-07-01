@@ -32,7 +32,6 @@ class FlowPipelineStep(FlowPipelineStepInterface):
                 violations.extend(
                     analyzer.analyze(
                         FlowContext(
-                            code_map=code_map,
                             tags=matcher,
                             realm=realm,
                             config=config,

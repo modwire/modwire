@@ -28,8 +28,8 @@ class TagMap(BaseModel):
 
 class TagMatcher:
     def __init__(self, config: ArchitectureConfig):
-        self.boundaries = config.boundaries
         self.language = config.language
+        self.boundaries = config.boundaries
         self.tags = self.boundaries.tags
 
     def match(self, node_id: str, name: str, *, scope: bool = True) -> TagMatch | None:
