@@ -1,0 +1,29 @@
+{
+  "name": "{{ project_name | lower | replace(' ', '-') | replace('_', '-') }}/service",
+  "type": "project",
+  "require": {
+{% for dependency in dependencies %}
+    "{{ dependency.split(':', 1)[0] }}": "{{ dependency.split(':', 1)[1] if ':' in dependency else '*' }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+  },
+  "require-dev": {
+{% for dependency in dev_dependencies %}
+    "{{ dependency }}": "*"{% if not loop.last %},{% endif %}
+{% endfor %}
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "App\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "lint": "php-cs-fixer fix --dry-run --diff",
+    "typecheck": "phpstan analyse src"
+  }
+}

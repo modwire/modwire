@@ -163,8 +163,143 @@ PYTHON_FASTAPI_DDD_UV = ProjectProfile(
 )
 
 
+TYPESCRIPT_NESTJS_DDD_PNPM = ProjectProfile(
+    name="typescript-nestjs-ddd-pnpm",
+    architecture="ddd_context",
+    module_scaffolding="ddd_context",
+    toolchain=ProjectToolchain(
+        language="typescript",
+        language_version="5",
+        package_manager="pnpm",
+        framework="nestjs",
+        dependencies=(
+            "@nestjs/common",
+            "@nestjs/core",
+            "@nestjs/platform-express",
+            "reflect-metadata",
+            "rxjs",
+        ),
+        dev_dependencies=(
+            "@nestjs/cli",
+            "@nestjs/testing",
+            "@types/jest",
+            "@types/node",
+            "jest",
+            "prettier",
+            "ts-jest",
+            "ts-node",
+            "typescript",
+        ),
+        scripts={
+            "dev": "nest start --watch",
+            "build": "nest build",
+            "test": "jest",
+            "lint": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+            "openapi-client": (
+                "openapi-generator-cli generate -i openapi/openapi.yaml "
+                "-g typescript-fetch -o src/infrastructure/clients/generated"
+            ),
+        },
+    ),
+    layout=ProjectLayout(
+        package_root="src",
+        cli="src/main.ts",
+        http_router="src/app.module.ts",
+        module_mount="src",
+        generated_clients="src/infrastructure/clients/generated",
+        openapi="openapi",
+        tests="test",
+    ),
+    module_layout=ProjectModuleLayout(
+        context_root="{module_mount}/bounded_contexts/{context_name}",
+        module_root="{module_mount}/bounded_contexts/{context_name}/{module_name}",
+        scaffold_output_roots={
+            "typescript": "typescript",
+        },
+    ),
+    operations=(
+        "add_context",
+        "add_module",
+        "add_crud_resource",
+        "add_use_case",
+        "remove_module",
+        "remove_context",
+        "remove_resource",
+        "add_openapi_client",
+    ),
+)
+
+
+PHP_SYMFONY_DDD_COMPOSER = ProjectProfile(
+    name="php-symfony-ddd-composer",
+    architecture="ddd_context",
+    module_scaffolding="ddd_context",
+    toolchain=ProjectToolchain(
+        language="php",
+        language_version="8.2",
+        package_manager="composer",
+        framework="symfony",
+        dependencies=(
+            "php:^8.2",
+            "symfony/console",
+            "symfony/dotenv",
+            "symfony/framework-bundle",
+            "symfony/runtime",
+            "symfony/serializer",
+            "symfony/validator",
+            "symfony/yaml",
+        ),
+        dev_dependencies=(
+            "phpunit/phpunit",
+            "friendsofphp/php-cs-fixer",
+            "phpstan/phpstan",
+        ),
+        scripts={
+            "dev": "symfony server:start",
+            "test": "phpunit",
+            "lint": "php-cs-fixer fix --dry-run --diff",
+            "typecheck": "phpstan analyse src",
+            "openapi-client": (
+                "openapi-generator-cli generate -i openapi/openapi.yaml "
+                "-g php -o src/Infrastructure/Clients/Generated"
+            ),
+        },
+    ),
+    layout=ProjectLayout(
+        package_root="src",
+        cli="bin/console",
+        http_router="config/routes.yaml",
+        module_mount="src",
+        generated_clients="src/Infrastructure/Clients/Generated",
+        openapi="openapi",
+        tests="tests",
+    ),
+    module_layout=ProjectModuleLayout(
+        context_root="{module_mount}/BoundedContexts/{context_class_name}",
+        module_root=(
+            "{module_mount}/BoundedContexts/{context_class_name}/{module_class_name}"
+        ),
+        scaffold_output_roots={
+            "php": "php/src",
+        },
+    ),
+    operations=(
+        "add_context",
+        "add_module",
+        "add_crud_resource",
+        "add_use_case",
+        "remove_module",
+        "remove_context",
+        "remove_resource",
+        "add_openapi_client",
+    ),
+)
+
+
 PROJECT_PROFILES: dict[str, ProjectProfile] = {
     PYTHON_FASTAPI_DDD_UV.name: PYTHON_FASTAPI_DDD_UV,
+    TYPESCRIPT_NESTJS_DDD_PNPM.name: TYPESCRIPT_NESTJS_DDD_PNPM,
+    PHP_SYMFONY_DDD_COMPOSER.name: PHP_SYMFONY_DDD_COMPOSER,
 }
 
 

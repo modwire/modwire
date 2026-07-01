@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -172,7 +173,7 @@ def _context_path(
     return _path_from_pattern(
         project_root,
         authority.module_layout["context_root"],
-        context_name=context_name,
+        _path_values(context_name=context_name),
     )
 
 
@@ -185,8 +186,7 @@ def _module_path(
     return _path_from_pattern(
         project_root,
         authority.module_layout["module_root"],
-        context_name=context_name,
-        module_name=module_name,
+        _path_values(context_name=context_name, module_name=module_name),
     )
 
 
@@ -213,7 +213,11 @@ def _context_marker_roots(
     context_name: str,
 ) -> tuple[Path, ...]:
     return tuple(
-        _path_from_pattern(project_root, marker_root, context_name=context_name)
+        _path_from_pattern(
+            project_root,
+            marker_root,
+            _path_values(context_name=context_name),
+        )
         for marker_root in authority.module_layout.get("context_marker_roots", ())
     )
 
@@ -223,8 +227,29 @@ def _package_markers(authority: ProjectAuthority) -> tuple[str, ...]:
     return tuple(markers.get(authority.language, ()))
 
 
-def _path_from_pattern(project_root: Path, pattern: str, **values: str) -> Path:
+def _path_from_pattern(
+    project_root: Path,
+    pattern: str,
+    values: dict[str, str],
+) -> Path:
     return project_root / pattern.format(**values)
+
+
+def _path_values(context_name: str, module_name: str = "") -> dict[str, str]:
+    return {
+        "context_name": context_name,
+        "context_class_name": _pascal_case(context_name),
+        "module_name": module_name,
+        "module_class_name": _pascal_case(module_name),
+    }
+
+
+def _pascal_case(value: str) -> str:
+    return "".join(
+        part[:1].upper() + part[1:]
+        for part in re.split(r"[^0-9A-Za-z]+", value)
+        if part
+    )
 
 
 def _copy_tree(source_root: Path, target_root: Path, *, overwrite: bool) -> tuple[str, ...]:
@@ -260,4 +285,3 @@ def _has_module_children(context_path: Path) -> bool:
 
 def _relative(root: Path, path: Path) -> str:
     return str(path.relative_to(root))
-

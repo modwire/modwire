@@ -123,6 +123,12 @@ The generated project includes `.modwire/project.json`, which records the
 resolved profile, layout, dependencies, module scaffolding, and operation names
 for later project-aware automation.
 
+Bundled project profiles currently include:
+
+- `python-fastapi-ddd-uv`
+- `typescript-nestjs-ddd-pnpm`
+- `php-symfony-ddd-composer`
+
 ## Configuration
 
 Boundary tags classify source IDs. Flow rules then use those tags to detect

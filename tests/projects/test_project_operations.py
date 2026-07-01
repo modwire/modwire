@@ -46,22 +46,43 @@ def test_project_operations_add_module_reuses_ddd_context_scaffolding(
     assert not (tmp_path / "src/acme/php").exists()
 
 
-def test_project_operations_add_module_uses_authority_language_adapter(
+def test_project_operations_add_module_uses_typescript_profile(
     tmp_path: Path,
 ) -> None:
-    generate_project("acme", tmp_path)
-    _write_authority(tmp_path, {"language": "typescript"})
+    generate_project("acme", tmp_path, profile="typescript-nestjs-ddd-pnpm")
     project = open_project(tmp_path)
 
     project.add_context("commerce")
     plan = project.add_module("billing", context_name="commerce")
 
     assert plan.operation == "add_module"
-    module_root = tmp_path / "src/acme/bounded_contexts/commerce/billing"
+    module_root = tmp_path / "src/bounded_contexts/commerce/billing"
     assert (module_root / "domain/aggregates/BillingAggregate.ts").is_file()
     assert (module_root / "application/use_cases/CreateBilling.ts").is_file()
     assert (module_root / "interface/http/BillingController.ts").is_file()
-    assert not (tmp_path / "src/acme/bounded_contexts/__init__.py").exists()
+    assert not (tmp_path / "src/bounded_contexts/__init__.py").exists()
+    assert not (module_root / "domain/aggregates/billingaggregate.py").exists()
+
+
+def test_project_operations_add_module_uses_php_profile(tmp_path: Path) -> None:
+    generate_project("acme", tmp_path, profile="php-symfony-ddd-composer")
+    project = open_project(tmp_path)
+
+    project.add_context("commerce")
+    plan = project.add_module("billing", context_name="commerce")
+
+    assert plan.operation == "add_module"
+    module_root = tmp_path / "src/BoundedContexts/Commerce/Billing"
+    assert (module_root / "Domain/Aggregates/BillingAggregate.php").is_file()
+    assert (module_root / "Application/UseCases/CreateBilling.php").is_file()
+    assert (module_root / "Interface/Http/BillingController.php").is_file()
+    context_names = {
+        context_path.name
+        for context_path in (tmp_path / "src/BoundedContexts").iterdir()
+        if context_path.is_dir()
+    }
+    assert "Commerce" in context_names
+    assert "commerce" not in context_names
     assert not (module_root / "domain/aggregates/billingaggregate.py").exists()
 
 

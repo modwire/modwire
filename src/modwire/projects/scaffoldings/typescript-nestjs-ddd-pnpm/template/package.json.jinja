@@ -1,0 +1,22 @@
+{
+  "name": "{{ project_name | lower | replace(' ', '-') | replace('_', '-') }}",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "lint": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "test": "jest",
+    "openapi-client": "openapi-generator-cli generate -i openapi/openapi.yaml -g typescript-fetch -o src/infrastructure/clients/generated"
+  },
+  "dependencies": {
+{% for dependency in dependencies %}
+    "{{ dependency }}": "*"{% if not loop.last %},{% endif %}
+{% endfor %}
+  },
+  "devDependencies": {
+{% for dependency in dev_dependencies %}
+    "{{ dependency }}": "*"{% if not loop.last %},{% endif %}
+{% endfor %}
+  }
+}

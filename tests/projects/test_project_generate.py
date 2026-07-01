@@ -47,12 +47,25 @@ def test_generate_project_raises_for_missing_template(tmp_path: Path) -> None:
         generate_project("acme", tmp_path / "generated", tmp_path / "missing")
 
 
-def test_get_project_profile_returns_builtin_profile() -> None:
-    profile = get_project_profile("python-fastapi-ddd-uv")
+@pytest.mark.parametrize(
+    ("profile_name", "language", "package_manager", "framework"),
+    [
+        ("python-fastapi-ddd-uv", "python", "uv", "fastapi"),
+        ("typescript-nestjs-ddd-pnpm", "typescript", "pnpm", "nestjs"),
+        ("php-symfony-ddd-composer", "php", "composer", "symfony"),
+    ],
+)
+def test_get_project_profile_returns_builtin_profiles(
+    profile_name: str,
+    language: str,
+    package_manager: str,
+    framework: str,
+) -> None:
+    profile = get_project_profile(profile_name)
 
-    assert profile.toolchain.language == "python"
-    assert profile.toolchain.package_manager == "uv"
-    assert profile.toolchain.framework == "fastapi"
+    assert profile.toolchain.language == language
+    assert profile.toolchain.package_manager == package_manager
+    assert profile.toolchain.framework == framework
     assert profile.module_scaffolding == "ddd_context"
 
 
@@ -131,3 +144,82 @@ def test_generate_project_normalizes_package_name(tmp_path: Path) -> None:
         "src/acme_billing_api/interface/http/router.py"
     )
     assert authority["layout"]["module_mount"] == "src/acme_billing_api"
+
+
+def test_generate_project_uses_typescript_nestjs_ddd_pnpm_profile(
+    tmp_path: Path,
+) -> None:
+    output_root = tmp_path / "generated"
+
+    generate_project("acme", output_root, profile="typescript-nestjs-ddd-pnpm")
+
+    expected_files = [
+        "package.json",
+        "tsconfig.json",
+        "nest-cli.json",
+        ".modwire/project.json",
+        "src/main.ts",
+        "src/app.module.ts",
+        "src/infrastructure/clients/generated/.gitkeep",
+        "openapi/.gitkeep",
+        "test/app.spec.ts",
+    ]
+
+    for expected_file in expected_files:
+        assert (output_root / expected_file).is_file()
+
+    assert not (output_root / "src/bounded_contexts").exists()
+
+    authority = json.loads(
+        (output_root / ".modwire/project.json").read_text(encoding="utf-8")
+    )
+    assert authority["profile"] == "typescript-nestjs-ddd-pnpm"
+    assert authority["language"] == "typescript"
+    assert authority["package_manager"] == "pnpm"
+    assert authority["framework"] == "nestjs"
+    assert authority["layout"]["module_mount"] == "src"
+    assert authority["module_layout"]["scaffold_output_roots"] == {
+        "typescript": "typescript"
+    }
+
+    package_json = (output_root / "package.json").read_text(encoding="utf-8")
+    assert '"@nestjs/common": "*"' in package_json
+    assert '"typescript": "*"' in package_json
+
+
+def test_generate_project_uses_php_symfony_ddd_composer_profile(
+    tmp_path: Path,
+) -> None:
+    output_root = tmp_path / "generated"
+
+    generate_project("acme", output_root, profile="php-symfony-ddd-composer")
+
+    expected_files = [
+        "composer.json",
+        ".modwire/project.json",
+        "bin/console",
+        "config/routes.yaml",
+        "src/Kernel.php",
+        "src/Infrastructure/Clients/Generated/.gitkeep",
+        "openapi/.gitkeep",
+        "tests/KernelTest.php",
+    ]
+
+    for expected_file in expected_files:
+        assert (output_root / expected_file).is_file()
+
+    assert not (output_root / "src/BoundedContexts").exists()
+
+    authority = json.loads(
+        (output_root / ".modwire/project.json").read_text(encoding="utf-8")
+    )
+    assert authority["profile"] == "php-symfony-ddd-composer"
+    assert authority["language"] == "php"
+    assert authority["package_manager"] == "composer"
+    assert authority["framework"] == "symfony"
+    assert authority["layout"]["module_mount"] == "src"
+    assert authority["module_layout"]["scaffold_output_roots"] == {"php": "php/src"}
+
+    composer_json = (output_root / "composer.json").read_text(encoding="utf-8")
+    assert '"symfony/framework-bundle": "*"' in composer_json
+    assert '"php": "^8.2"' in composer_json
