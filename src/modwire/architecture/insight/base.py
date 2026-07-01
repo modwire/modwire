@@ -1,9 +1,14 @@
 import abc
 
+from pydantic import BaseModel
+
 from ..boundaries.map import ArchitectureMap
 
 
-class InsightReporter(abc.ABC):
+class InsightReporter(BaseModel, abc.ABC):
+    name: str
+    title: str
+
     @abc.abstractmethod
-    def collect(self, architecture_map: ArchitectureMap) -> None:
+    def collect(self, architecture_map: ArchitectureMap) -> BaseModel:
         raise NotImplementedError

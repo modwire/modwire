@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from ...boundaries.map import ArchitectureMap
 
@@ -6,12 +6,52 @@ from ..base import InsightReporter
 
 
 class DependencyHotspot(BaseModel):
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+
     source_id: str
     incoming_count: int
     outgoing_count: int
     pressure_score: int
 
 
+class HotspotsReport(BaseModel):
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+
+    hotspots: tuple[DependencyHotspot, ...] = ()
+
+
 class HotspotsReporter(InsightReporter):
-    def collect(self, architecture_map: ArchitectureMap) -> None:
-        ...
+    name: str = "hotspots"
+    title: str = "Dependency Hotspots"
+
+    def collect(self, architecture_map: ArchitectureMap) -> HotspotsReport:
+        hotspots = tuple(
+            sorted(
+                (
+                    self.hotspot_for(architecture_map, source_id)
+                    for source_id in architecture_map.code_map.source_ids()
+                ),
+                key=lambda hotspot: (
+                    -hotspot.pressure_score,
+                    hotspot.source_id,
+                ),
+            )
+        )
+        return HotspotsReport(hotspots=hotspots)
+
+    def hotspot_for(
+        self,
+        architecture_map: ArchitectureMap,
+        source_id: str,
+    ) -> DependencyHotspot:
+        incoming_count = architecture_map.code_map.incoming_dependencies(source_id).count()
+        outgoing_count = architecture_map.code_map.outgoing_dependencies(source_id).count()
+        return DependencyHotspot(
+            source_id=source_id,
+            incoming_count=incoming_count,
+            outgoing_count=outgoing_count,
+            pressure_score=incoming_count + outgoing_count,
+        )
+
+
+__all__ = ["DependencyHotspot", "HotspotsReport", "HotspotsReporter"]
