@@ -1,7 +1,9 @@
 # modwire
 
-`modwire` maps architecture boundaries and evaluates policies over code maps produced by
-[`modwire-extraction`](https://github.com/9orky/modwire-extraction).
+`modwire` turns code maps from
+[`modwire-extraction`](https://github.com/9orky/modwire-extraction) into
+architecture reports: boundary maps, dependency-flow violations, shape-policy
+violations, and architecture insights.
 
 ## Installation
 
@@ -14,89 +16,111 @@ python -m pip install modwire
 ```python
 from pathlib import Path
 
-from modwire_extraction import ModwireExtraction
 from modwire.architecture import (
-    ArchitectureBoundaryRule,
     ArchitectureConfig,
-    ArchitecturePolicyEvaluator,
-    ArchitectureRules,
-    ArchitectureTagRule,
+    ArchitectureReportRunner,
+    BoundariesConfig,
+    FlowRealm,
+    FlowRules,
+    ShapeConfig,
+    TagRule,
 )
+from modwire_extraction import ModwireExtraction
 
 code_map = ModwireExtraction(Path("src")).generate_map("python")
+
 config = ArchitectureConfig(
     language="python",
-    architecture_root="src",
-    rules=ArchitectureRules(
+    boundaries=BoundariesConfig(
         tags=(
-            ArchitectureTagRule(name="ui", match="features/*/ui"),
-            ArchitectureTagRule(name="domain", match="features/*/domain"),
+            TagRule(name="module", match="features/*"),
+            TagRule(name="ui", match="features/*/ui"),
+            TagRule(name="domain", match="features/*/domain"),
         ),
-        boundaries=(
-            ArchitectureBoundaryRule(
-                source="features/*/ui",
-                disallow=("features/*/domain",),
+        flow=FlowRules(
+            module_tag="module",
+            realms=(
+                FlowRealm(
+                    name="feature",
+                    layers=("domain", "ui"),
+                ),
             ),
         ),
     ),
+    shape=ShapeConfig(
+        max_functions_per_file=8,
+        max_methods_per_class=12,
+        allow_import_aliases=False,
+    ),
 )
 
-violations = ArchitecturePolicyEvaluator().evaluate(
-    code_map.dependency_graph,
-    config,
-)
-print([violation.to_dict() for violation in violations])
+report = ArchitectureReportRunner(config).run(code_map)
+
+print(report.map.modules)
+print(report.violations.flow.violations)
+print(report.violations.shape.violations)
+print(report.insights.hotspots[:5])
 ```
 
-## Architecture Mapping
+## Report Sections
+
+`ArchitectureReportRunner` returns a typed `ArchitectureReport` with three
+top-level sections:
+
+- `map`: normalized module and layer groupings plus unknown files
+- `violations`: dependency-flow and shape-policy violations
+- `insights`: clusters, hotspots, dependency coherence, callable graph, and
+  unused exports
+
+Reports are Pydantic models, so they can be serialized with `model_dump()` or
+`model_dump_json()`.
 
 ```python
-from modwire.architecture import coherence_summary, find_hotspots, map_code
-
-architecture_map = map_code(code_map, config)
-hotspots = find_hotspots(code_map, limit=5)
-coherence = coherence_summary(code_map)
-
-print(architecture_map.unknown_files)
-print(hotspots)
-print(coherence.external_dependencies)
+payload = report.model_dump(mode="json")
 ```
 
-## Shape Policy
+## Configuration
+
+Boundary tags classify source IDs. Flow rules then use those tags to detect
+backward dependencies, module cycles, and module re-entry.
 
 ```python
-from modwire import ShapePolicyEvaluator, evaluate_shape
+from modwire.architecture import BoundariesConfig, FlowRules, TagRule
 
-violations = evaluate_shape(
-    code_map,
-    {
-        "max_functions_per_file": 5,
-        "max_methods_per_class": 10,
-        "allow_import_aliases": False,
-        "require_joined_imports": True,
-    },
+boundaries = BoundariesConfig(
+    tags=(
+        TagRule(name="module", match="features/*"),
+        TagRule(name="api", match="features/*/api"),
+        TagRule(name="domain", match="features/*/domain"),
+    ),
+    flow=FlowRules(
+        module_tag="module",
+        layers=("domain", "api"),
+    ),
 )
-
-same_result = ShapePolicyEvaluator().evaluate(code_map, {})
-print([violation.to_dict() for violation in violations])
-print(same_result)
 ```
 
-## Reports
+Shape limits are disabled with `-1` and enabled with non-negative integers.
 
 ```python
-from modwire import (
-    find_unused_exports,
-    render_callable_report,
-    structured_callable_report,
+from modwire.architecture import ShapeConfig
+
+shape = ShapeConfig(
+    max_classes_per_file=3,
+    max_function_lines=40,
+    require_joined_imports=True,
 )
-
-print(render_callable_report(code_map))
-print(structured_callable_report(code_map))
-
-unused = find_unused_exports(code_map.extraction)
-print([(export.source_id, export.name) for export in unused])
 ```
+
+## Migration
+
+The current API is intentionally OOP-first. Older helper functions such as
+`evaluate_shape`, `render_callable_report`, `structured_callable_report`,
+`find_unused_exports`, `map_code`, `find_hotspots`, and
+`coherence_summary` have been replaced by `ArchitectureReportRunner`.
+
+See [CHANGELOG.md](CHANGELOG.md) before publishing or upgrading across the next
+major release.
 
 ## Development
 
@@ -107,7 +131,8 @@ set used before pull requests and releases.
 
 Feature requests and bug reports are tracked through GitHub Issues:
 
-- Open a feature request for architecture analyzers, output formats, or integrations.
+- Open a feature request for architecture analyzers, output formats, or
+  integrations.
 - Open a bug report for incorrect architecture violations, graph output, shape
   reports, callable reports, unused export reports, packaging problems, or
   documentation mismatches.

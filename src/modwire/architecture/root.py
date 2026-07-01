@@ -1,4 +1,4 @@
-from modwire_extraction.code import QueryableCodeMap
+from modwire_extraction.code import CodeMap, QueryableCodeMap
 
 from .boundaries.map import ArchitectureMap, ArchitectureMapLoader
 from .config import ArchitectureConfig
@@ -14,5 +14,5 @@ class ArchitectureRoot:
     def load_map(self, code_map: QueryableCodeMap) -> ArchitectureMap:
         return ArchitectureMapLoader(self.config).load(code_map)
 
-    def report(self, code_map: QueryableCodeMap) -> ArchitectureReport:
+    def report(self, code_map: CodeMap | QueryableCodeMap) -> ArchitectureReport:
         return ArchitectureReportRunner(self.config).run(code_map)

@@ -1,3 +1,4 @@
+from .boundaries.config import BoundariesConfig, FlowRealm, FlowRules, TagRule
 from .config import ArchitectureConfig
 from .report import (
     ArchitectureGroup,
@@ -7,6 +8,7 @@ from .report import (
     ArchitectureViolationReport,
 )
 from .root import ArchitectureRoot
+from .shape.config import ShapeConfig
 
 __all__ = [
     "ArchitectureConfig",
@@ -16,4 +18,9 @@ __all__ = [
     "ArchitectureReportRunner",
     "ArchitectureRoot",
     "ArchitectureViolationReport",
+    "BoundariesConfig",
+    "FlowRealm",
+    "FlowRules",
+    "ShapeConfig",
+    "TagRule",
 ]

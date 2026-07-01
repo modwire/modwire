@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 
-from modwire_extraction.code import QueryableCodeMap
+from modwire_extraction.code import CodeMap, QueryableCodeMap
 
 from .boundaries.map import ArchitectureMap, ArchitectureMapLoader
 from .boundaries.pipeline import FlowPipelineStep, FlowReport
@@ -57,8 +57,10 @@ class ArchitectureReportRunner:
     def __init__(self, config: ArchitectureConfig):
         self.config = config
 
-    def run(self, code_map: QueryableCodeMap) -> ArchitectureReport:
-        architecture_map = ArchitectureMapLoader(self.config).load(code_map)
+    def run(self, code_map: CodeMap | QueryableCodeMap) -> ArchitectureReport:
+        architecture_map = ArchitectureMapLoader(self.config).load(
+            self.queryable_code_map(code_map)
+        )
         return self.run_map(architecture_map)
 
     def run_map(self, architecture_map: ArchitectureMap) -> ArchitectureReport:
@@ -81,6 +83,14 @@ class ArchitectureReportRunner:
 
     def insight_reporters(self) -> tuple[str, ...]:
         return InsightReporterCatalog().names()
+
+    def queryable_code_map(
+        self,
+        code_map: CodeMap | QueryableCodeMap,
+    ) -> QueryableCodeMap:
+        if isinstance(code_map, QueryableCodeMap):
+            return code_map
+        return QueryableCodeMap(code_map)
 
 
 __all__ = [

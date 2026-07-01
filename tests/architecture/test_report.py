@@ -1,14 +1,12 @@
 from modwire.architecture import (
     ArchitectureConfig,
     ArchitectureReportRunner,
-)
-from modwire.architecture.boundaries.config import (
     BoundariesConfig,
     FlowRealm,
     FlowRules,
+    ShapeConfig,
     TagRule,
 )
-from modwire.architecture.shape.config import ShapeConfig
 from modwire_extraction.code import CodeMap, QueryableCodeMap
 from modwire_extraction.dependency.graph import DependencyGraph
 from modwire_extraction.extractors.languages.base import SourceExtraction
@@ -18,7 +16,7 @@ from modwire_extraction.extractors.source import SourceFile, SourceFunction
 def test_architecture_report_runner_returns_full_report():
     graph = DependencyGraph()
     graph.add_edge("features/billing/ui/view", "features/billing/domain/model")
-    code_map = queryable_code_map(
+    code_map = code_map_from(
         {
             "features/billing/ui/view": source_file(functions=(source_function(),)),
             "features/billing/domain/model": source_file(),
@@ -72,16 +70,21 @@ def queryable_code_map(
     source_files: dict[str, SourceFile],
     graph: DependencyGraph,
 ) -> QueryableCodeMap:
-    return QueryableCodeMap(
-        CodeMap(
-            language="python",
-            extraction=SourceExtraction(
-                files=source_files,
-                files_found=len(source_files),
-                files_excluded=0,
-            ),
-            dependency_graph=graph,
-        )
+    return QueryableCodeMap(code_map_from(source_files, graph))
+
+
+def code_map_from(
+    source_files: dict[str, SourceFile],
+    graph: DependencyGraph,
+) -> CodeMap:
+    return CodeMap(
+        language="python",
+        extraction=SourceExtraction(
+            files=source_files,
+            files_found=len(source_files),
+            files_excluded=0,
+        ),
+        dependency_graph=graph,
     )
 
 

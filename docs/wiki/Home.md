@@ -5,8 +5,9 @@ produced by `modwire-extraction`.
 
 ## Start Here
 
-- README examples cover architecture policies, architecture insights, shape
-  policies, callable reports, and unused export checks.
+- README examples cover the OOP architecture report runner, including boundary
+  maps, flow violations, shape violations, callable insights, hotspots, and
+  unused export checks.
 - [Reporting bugs](Reporting-bugs.md)
 - [Requesting features](Requesting-features.md)
 - [Development checks](Development-checks.md)
@@ -21,4 +22,4 @@ produced by `modwire-extraction`.
 ## Code Maps
 
 Use `modwire-extraction` to produce `CodeMap` objects. Pass those maps into
-Modwire's architecture, shape, callable, and unused-export APIs.
+`ArchitectureReportRunner` to produce a full architecture report.

@@ -3,10 +3,10 @@
 Run these checks before opening a pull request:
 
 ```bash
-uv run ruff check
-uv run pytest
-uv run python -m build --outdir dist
-uv run twine check dist/*
+uv run ruff check .
+uv run --with pytest python -m pytest
+uv run --with build python -m build --outdir dist
+uv run --with twine python -m twine check dist/*
 ```
 
 This page is the canonical local-check list; README and contributor guidance
