@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 
-@dataclass(frozen=True)
-class CoherenceSummary:
+class CoherenceSummary(BaseModel):
     roots: tuple[str, ...]
     leaves: tuple[str, ...]
     isolated: tuple[str, ...]

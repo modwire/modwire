@@ -1,15 +1,9 @@
-from __future__ import annotations
-
-from dataclasses import dataclass
-
-from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
-
-from ..definitions import ImportCrossingType
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class ShapeConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-
+    
     max_classes_per_file: int = -1
     max_interfaces_per_file: int = -1
     max_types_per_file: int = -1
@@ -24,7 +18,7 @@ class ShapeConfig(BaseModel):
     allow_optional_method_args: bool = True
     allow_optional_class_properties: bool = True
     allow_import_aliases: bool = False
-    allowed_import_crossing_types: tuple[ImportCrossingType, ...] = ("module",)
+    allowed_import_crossing_types: tuple[str, ...] = ("module",)
     require_joined_imports: bool = False
 
     @field_validator(
@@ -46,48 +40,6 @@ class ShapeConfig(BaseModel):
         return limit
 
 
-@dataclass(frozen=True)
 class ShapeConfigIssue:
     field: str
     message: str
-
-    def to_dict(self) -> dict[str, str]:
-        return {
-            "field": self.field,
-            "message": self.message,
-        }
-
-
-class ShapeConfigError(ValueError):
-    def __init__(self, issues: tuple[ShapeConfigIssue, ...]):
-        self.issues = issues
-        super().__init__("Invalid shape config")
-
-    def to_dict(self) -> dict[str, object]:
-        return {
-            "error": "invalid_shape_config",
-            "issues": [issue.to_dict() for issue in self.issues],
-        }
-
-
-def validate_shape_config(config) -> ShapeConfig:
-    try:
-        return ShapeConfig.model_validate(config)
-    except ValidationError as error:
-        raise ShapeConfigError(
-            tuple(
-                ShapeConfigIssue(
-                    field=".".join(str(part) for part in issue["loc"]),
-                    message=str(issue["msg"]),
-                )
-                for issue in error.errors()
-            )
-        ) from error
-
-
-__all__ = [
-    "ShapeConfig",
-    "ShapeConfigError",
-    "ShapeConfigIssue",
-    "validate_shape_config",
-]

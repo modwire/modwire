@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 
-@dataclass(frozen=True)
-class DependencyHotspot:
+class DependencyHotspot(BaseModel):
     source_id: str
     incoming_count: int
     outgoing_count: int
