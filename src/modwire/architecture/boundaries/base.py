@@ -1,12 +1,8 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 
 from pydantic import BaseModel, ConfigDict
 
-from ..config import ArchitectureConfig
-from .config import FlowRealm
-from .matching import TagMatcher
+from .map import ArchitectureMap
 
 
 EDGE_RULE_TYPE = "edge-rule"
@@ -32,16 +28,9 @@ class FlowViolation(BaseModel):
     message: str
 
 
-class FlowContext:
-    # code_map: QueryableCodeMap
-    tags: TagMatcher
-    realm: FlowRealm
-    config: ArchitectureConfig
-
-
 class FlowAnalyzerInterface(ABC):
     @abstractmethod
-    def analyze(self, context: FlowContext) -> tuple[FlowViolation, ...]:
+    def analyze(self, architecture_map: ArchitectureMap) -> tuple[FlowViolation, ...]:
         raise NotImplementedError
 
 
@@ -50,12 +39,12 @@ class FlowAnalyzer(BaseModel, FlowAnalyzerInterface):
     title: str
 
     @abstractmethod
-    def analyze(self, context: FlowContext) -> tuple[FlowViolation, ...]:
+    def analyze(self, architecture_map: ArchitectureMap) -> tuple[FlowViolation, ...]:
         raise NotImplementedError
 
-    def rule_name(self, context: FlowContext) -> str:
-        if context.realm.name:
-            return f"analyzer:{context.realm.name}:{self.name}"
+    def rule_name(self, architecture_map: ArchitectureMap) -> str:
+        if architecture_map.config.realm.name:
+            return f"analyzer:{architecture_map.config.realm.name}:{self.name}"
         return f"analyzer:{self.name}"
 
     def dedupe(self, violations: list[FlowViolation]) -> tuple[FlowViolation, ...]:

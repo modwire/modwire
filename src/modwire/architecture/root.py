@@ -1,4 +1,5 @@
-from .config import ArchitectureConfig, ArchitectureMap
+from .config import ArchitectureConfig
+from ..architecture.boundaries import ArchitectureMap
 
 
 class ArchitectureRoot:
