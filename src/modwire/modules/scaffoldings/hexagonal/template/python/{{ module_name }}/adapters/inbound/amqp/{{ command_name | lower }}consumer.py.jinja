@@ -1,0 +1,17 @@
+from __future__ import annotations
+
+from ....ports.inbound.{{ command_name | lower }} import {{ command_name }}
+from ....ports.inbound.{{ service_name | lower }} import {{ service_name }}Port
+
+
+class {{ command_name }}Consumer:
+    def __init__(self, service: {{ service_name }}Port) -> None:
+        self._service = service
+
+    def consume(self, message: dict[str, str]) -> None:
+        self._service.handle(
+            {{ command_name }}(
+                aggregate_id=message["aggregate_id"],
+                name=message["name"],
+            )
+        )

@@ -1,0 +1,15 @@
+from __future__ import annotations
+
+from ...domain.models.{{ aggregate_name | lower }} import {{ aggregate_name }}
+from ...ports.inbound.{{ command_name | lower }} import {{ command_name }}
+from ...ports.outbound.{{ repository_name | lower }} import {{ repository_name }}
+
+
+class {{ service_name }}:
+    def __init__(self, repository: {{ repository_name }}) -> None:
+        self._repository = repository
+
+    def handle(self, command: {{ command_name }}) -> {{ aggregate_name }}:
+        aggregate = {{ aggregate_name }}.create(command.aggregate_id, command.name)
+        self._repository.save(aggregate)
+        return aggregate
