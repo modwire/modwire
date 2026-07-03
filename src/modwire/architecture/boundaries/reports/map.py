@@ -1,9 +1,14 @@
-from typing import ClassVar
+from __future__ import annotations
 
-from modwire.architecture.report import ReportCategory, ReportItem
+from typing import TYPE_CHECKING, ClassVar
+
 from modwire.shared import ModwireBaseModel
 
-from ..map import ArchitectureMap
+from ...report import ReportCategory, ReportItem
+
+
+if TYPE_CHECKING:
+    from ..map import ArchitectureMap
 
 
 class ArchitectureGroup(ModwireBaseModel):
@@ -22,9 +27,10 @@ class ArchitectureMapReport(ReportItem):
     layers: tuple[ArchitectureGroup, ...] = ()
     unknown_files: tuple[str, ...] = ()
 
-    @classmethod
-    def from_map(cls, architecture_map: ArchitectureMap) -> "ArchitectureMapReport":
-        return cls(
+
+class ArchitectureMapReportCollector:
+    def collect(self, architecture_map: ArchitectureMap) -> ArchitectureMapReport:
+        return ArchitectureMapReport(
             modules=tuple(
                 ArchitectureGroup(name=name, source_ids=source_ids)
                 for name, source_ids in sorted(architecture_map.modules.items())

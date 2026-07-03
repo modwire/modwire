@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from modwire_extraction.code import QueryableCodeMap
 
-from ..config import ArchitectureConfig
-
 from .config import FlowRealm
 from .tags import TagMatcher, TagMatch, TagMap
+
+
+if TYPE_CHECKING:
+    from ..config import ArchitectureConfig
 
 
 class ArchitectureMap:

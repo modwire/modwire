@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, ClassVar
 
-from modwire.architecture.report import ReportCategory, ReportItem
 from modwire.shared import ModwireBaseModel
 
-from ...boundaries.map import ArchitectureMap
+from ...report import ReportCategory, ReportItem
 
 
 if TYPE_CHECKING:
+    from ...boundaries import ArchitectureMap
     from ..base import ShapeResolver
 
 

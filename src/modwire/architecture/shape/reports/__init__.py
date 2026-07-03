@@ -1,7 +1,6 @@
 from .violations import (
     ShapeReport,
     ShapeReportCollector,
-    ShapeResolverCatalog,
     ShapeViolation,
 )
 
@@ -9,6 +8,5 @@ from .violations import (
 __all__ = [
     "ShapeReport",
     "ShapeReportCollector",
-    "ShapeResolverCatalog",
     "ShapeViolation",
 ]

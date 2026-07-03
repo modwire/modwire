@@ -1,7 +1,13 @@
-import re
+from __future__ import annotations
 
-from ...config import ArchitectureConfig
+import re
+from typing import TYPE_CHECKING
+
 from .tag_map import TagMatch
+
+
+if TYPE_CHECKING:
+    from ...config import ArchitectureConfig
 
 
 class TagMatcher:

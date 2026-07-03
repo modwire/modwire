@@ -1,16 +1,20 @@
-from typing import ClassVar
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, ClassVar
 
 from pydantic import BaseModel, Field
 
-from modwire.architecture.report import ReportCategory, ReportSection
-
-from ...boundaries.map import ArchitectureMap
+from ...report import ReportCategory, ReportSection
 from ..base import InsightReporter
 from .callables import CallablesReport, CallablesReporter
 from .clusters import ClustersReport, ClustersReporter
 from .coherence import CoherenceReport, CoherenceReporter
 from .exports import ExportsReport, ExportsReporter
 from .hotspots import HotspotsReport, HotspotsReporter
+
+
+if TYPE_CHECKING:
+    from ...boundaries import ArchitectureMap
 
 
 class InsightReport(ReportSection):

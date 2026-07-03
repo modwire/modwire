@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import abc
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from ..boundaries.map import ArchitectureMap
+
+if TYPE_CHECKING:
+    from ..boundaries import ArchitectureMap
 
 
 class InsightReporter(abc.ABC):

@@ -1,7 +1,8 @@
-from typing import ClassVar
+from __future__ import annotations
 
-from modwire.architecture.report import ReportCategory, ReportItem
+from typing import TYPE_CHECKING, ClassVar
 
+from ...report import ReportCategory, ReportItem
 from ..analyzers import (
     BackwardFlowAnalyzer,
     NoCyclesFlowAnalyzer,
@@ -9,7 +10,10 @@ from ..analyzers import (
 )
 from ..base import FlowAnalyzer, FlowViolation
 from ..config import FlowRealm, FlowRules
-from ..map import ArchitectureMap
+
+
+if TYPE_CHECKING:
+    from ..map import ArchitectureMap
 
 
 class FlowReport(ReportItem):

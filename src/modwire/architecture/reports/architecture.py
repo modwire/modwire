@@ -1,24 +1,33 @@
-from typing import ClassVar
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, ClassVar
 
 from pydantic import Field
 
 from modwire_extraction.code import CodeMap, QueryableCodeMap
 
-from modwire.architecture.report import ReportCategory, ReportSection
-
-from ..boundaries.map import ArchitectureMap, ArchitectureMapLoader
-from ..boundaries.reports.flow import FlowReport, FlowReportCollector
-from ..boundaries.reports.map import ArchitectureMapReport
+from ..boundaries import ArchitectureMapLoader
+from ..boundaries.reports import (
+    ArchitectureMapReport,
+    ArchitectureMapReportCollector,
+    FlowReport,
+    FlowReportCollector,
+)
 from ..config import ArchitectureConfig
-from ..insight.reports.report import (
+from ..insight.reports import (
     InsightReport,
     InsightReportCollector,
     InsightReporterCatalog,
 )
-from ..shape.reports.violations import (
+from ..shape.reports import (
     ShapeReport,
     ShapeReportCollector,
 )
+from ..report import ReportCategory, ReportSection
+
+
+if TYPE_CHECKING:
+    from ..boundaries import ArchitectureMap
 
 
 class ArchitectureViolationReport(ReportSection):
@@ -71,7 +80,7 @@ class ArchitectureReportRunner:
             self.insight_reporters(),
         )
         return ArchitectureReport(
-            map=ArchitectureMapReport.from_map(architecture_map),
+            map=ArchitectureMapReportCollector().collect(architecture_map),
             violations=ArchitectureViolationReport(
                 flow=flow_report,
                 shape=shape_report,

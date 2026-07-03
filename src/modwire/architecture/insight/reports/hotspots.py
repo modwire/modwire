@@ -1,11 +1,16 @@
-from typing import ClassVar
+from __future__ import annotations
 
-from modwire.architecture.report import ReportCategory, ReportItem
+from typing import TYPE_CHECKING, ClassVar
+
 from modwire.shared import ModwireBaseModel
 
-from ...boundaries.map import ArchitectureMap
+from ...report import ReportCategory, ReportItem
 
 from ..base import InsightReporter
+
+
+if TYPE_CHECKING:
+    from ...boundaries import ArchitectureMap
 
 
 class HotspotsReportItem(ModwireBaseModel):

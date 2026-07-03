@@ -1,17 +1,13 @@
 from .flow import (
-    FlowAnalyzerCatalog,
-    FlowRealmSelector,
     FlowReport,
     FlowReportCollector,
 )
-from .map import ArchitectureGroup, ArchitectureMapReport
+from .map import ArchitectureMapReport, ArchitectureMapReportCollector
 
 
 __all__ = [
-    "ArchitectureGroup",
     "ArchitectureMapReport",
-    "FlowAnalyzerCatalog",
-    "FlowRealmSelector",
+    "ArchitectureMapReportCollector",
     "FlowReport",
     "FlowReportCollector",
 ]
