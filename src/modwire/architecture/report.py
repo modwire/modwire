@@ -1,9 +1,17 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, Generic, Protocol, TypeVar
 
 from modwire.shared import ModwireBaseModel
+
+
+ReportResult = TypeVar("ReportResult", covariant=True)
+
+
+class ReportCollector(Protocol, Generic[ReportResult]):
+    def collect(self, architecture_map: object) -> ReportResult:
+        ...
 
 
 class ReportCategory(StrEnum):
@@ -69,6 +77,7 @@ class ReportItem(ReportNode):
 
 __all__ = [
     "ReportCategory",
+    "ReportCollector",
     "ReportItem",
     "ReportMetadata",
     "ReportNode",

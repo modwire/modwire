@@ -4,11 +4,13 @@ from .architecture import (
     ArchitectureReportRunner,
     ArchitectureViolationReport,
 )
+from .collector import ArchitectureReportCollector
 
 
 __all__ = [
     "ArchitectureMapReport",
     "ArchitectureReport",
+    "ArchitectureReportCollector",
     "ArchitectureReportRunner",
     "ArchitectureViolationReport",
 ]

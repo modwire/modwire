@@ -7,27 +7,16 @@ from pydantic import Field
 from modwire_extraction.code import CodeMap, QueryableCodeMap
 
 from ..boundaries import ArchitectureMapLoader
-from ..boundaries.reports import (
-    ArchitectureMapReport,
-    ArchitectureMapReportCollector,
-    FlowReport,
-    FlowReportCollector,
-)
+from ..boundaries.reports import ArchitectureMapReport, FlowReport
 from ..config import ArchitectureConfig
-from ..insight.reports import (
-    InsightReport,
-    InsightReportCollector,
-    InsightReporterCatalog,
-)
-from ..shape.reports import (
-    ShapeReport,
-    ShapeReportCollector,
-)
-from ..report import ReportCategory, ReportSection
+from ..insight.reports import InsightReport
+from ..shape.reports import ShapeReport
+from ..report import ReportCategory, ReportCollector, ReportSection
 
 
 if TYPE_CHECKING:
     from ..boundaries import ArchitectureMap
+    from .collector import ArchitectureReportCollector
 
 
 class ArchitectureViolationReport(ReportSection):
@@ -60,8 +49,13 @@ class ArchitectureReport(ReportSection):
 
 
 class ArchitectureReportRunner:
-    def __init__(self, config: ArchitectureConfig):
+    def __init__(
+        self,
+        config: ArchitectureConfig,
+        report_collector: ReportCollector[ArchitectureReport] | None = None,
+    ):
         self.config = config
+        self.report_collector = report_collector or self.default_report_collector()
 
     def run(self, code_map: CodeMap | QueryableCodeMap) -> ArchitectureReport:
         architecture_map = ArchitectureMapLoader(self.config).load(
@@ -70,29 +64,12 @@ class ArchitectureReportRunner:
         return self.run_map(architecture_map)
 
     def run_map(self, architecture_map: ArchitectureMap) -> ArchitectureReport:
-        flow_report = FlowReportCollector().collect_all(architecture_map)
-        shape_report = ShapeReportCollector().collect(
-            architecture_map,
-            self.shape_resolvers(),
-        )
-        insight_report = InsightReportCollector().collect(
-            architecture_map,
-            self.insight_reporters(),
-        )
-        return ArchitectureReport(
-            map=ArchitectureMapReportCollector().collect(architecture_map),
-            violations=ArchitectureViolationReport(
-                flow=flow_report,
-                shape=shape_report,
-            ),
-            insights=insight_report,
-        )
+        return self.report_collector.collect(architecture_map)
 
-    def shape_resolvers(self) -> tuple[str, ...]:
-        return ("file", "import", "symbol")
+    def default_report_collector(self) -> ArchitectureReportCollector:
+        from .collector import ArchitectureReportCollector
 
-    def insight_reporters(self) -> tuple[str, ...]:
-        return InsightReporterCatalog().names()
+        return ArchitectureReportCollector()
 
     def queryable_code_map(
         self,

@@ -77,17 +77,17 @@ class ShapeResolverCatalog:
 
 
 class ShapeReportCollector:
-    def __init__(self, catalog: ShapeResolverCatalog | None = None):
-        self.catalog = catalog or ShapeResolverCatalog()
-
-    def collect(
+    def __init__(
         self,
-        architecture_map: ArchitectureMap,
         resolver_names: tuple[str, ...],
-    ) -> ShapeReport:
+    ):
+        self.resolver_names = resolver_names
+        self.catalog = ShapeResolverCatalog()
+
+    def collect(self, architecture_map: ArchitectureMap) -> ShapeReport:
         violations: list[ShapeViolation] = []
         config = architecture_map.config.shape
-        for resolver_name in resolver_names:
+        for resolver_name in self.resolver_names:
             resolver = self.catalog.resolver(resolver_name)
             for source_file in architecture_map.code_map.source_files().all():
                 violations.extend(
@@ -99,5 +99,5 @@ class ShapeReportCollector:
                 )
         return ShapeReport(
             violations=tuple(violations),
-            resolvers=resolver_names,
+            resolvers=self.resolver_names,
         )

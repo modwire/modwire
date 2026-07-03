@@ -73,20 +73,14 @@ class FlowAnalyzerCatalog:
 class FlowReportCollector:
     def __init__(
         self,
-        catalog: FlowAnalyzerCatalog | None = None,
-        realm_selector: FlowRealmSelector | None = None,
+        analyzer_names: tuple[str, ...] = (),
     ):
-        self.catalog = catalog or FlowAnalyzerCatalog()
-        self.realm_selector = realm_selector or FlowRealmSelector()
+        self.analyzer_names = analyzer_names
+        self.catalog = FlowAnalyzerCatalog()
+        self.realm_selector = FlowRealmSelector()
 
-    def collect_all(self, architecture_map: ArchitectureMap) -> FlowReport:
-        return self.collect(architecture_map, self.catalog.names())
-
-    def collect(
-        self,
-        architecture_map: ArchitectureMap,
-        analyzer_names: tuple[str, ...],
-    ) -> FlowReport:
+    def collect(self, architecture_map: ArchitectureMap) -> FlowReport:
+        analyzer_names = self.analyzer_names or self.catalog.names()
         violations: list[FlowViolation] = []
         flow = architecture_map.config.boundaries.flow
         for analyzer_name in analyzer_names:

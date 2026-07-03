@@ -74,19 +74,15 @@ class InsightReportFieldMap:
 class InsightReportCollector:
     def __init__(
         self,
-        catalog: InsightReporterCatalog | None = None,
-        field_map: InsightReportFieldMap | None = None,
-    ):
-        self.catalog = catalog or InsightReporterCatalog()
-        self.field_map = field_map or InsightReportFieldMap()
-
-    def collect(
-        self,
-        architecture_map: ArchitectureMap,
         reporter_names: tuple[str, ...],
-    ) -> InsightReport:
+    ):
+        self.reporter_names = reporter_names
+        self.catalog = InsightReporterCatalog()
+        self.field_map = InsightReportFieldMap()
+
+    def collect(self, architecture_map: ArchitectureMap) -> InsightReport:
         payload: dict[str, BaseModel] = {}
-        for reporter_name in reporter_names:
+        for reporter_name in self.reporter_names:
             reporter = self.catalog.reporter(reporter_name)
             payload[self.field_map.field_for(reporter.name)] = reporter.collect(
                 architecture_map
