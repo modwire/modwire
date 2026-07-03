@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 
 from ..base import FlowViolation
 from ..map import ArchitectureMap
+from ..reports import FlowRealmSelector, FlowReport
 
 from .catalog import FlowAnalyzerCatalog
-from .report import FlowRealmSelector, FlowReport
 
 
 class FlowPipelineStepInterface(ABC):

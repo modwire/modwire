@@ -1,5 +1,4 @@
 from .architecture import (
-    ArchitectureGroup,
     ArchitectureMapReport,
     ArchitectureReport,
     ArchitectureReportRunner,
@@ -8,7 +7,6 @@ from .architecture import (
 
 
 __all__ = [
-    "ArchitectureGroup",
     "ArchitectureMapReport",
     "ArchitectureReport",
     "ArchitectureReportRunner",

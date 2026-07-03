@@ -5,7 +5,8 @@ from modwire_extraction.code import CodeMap, QueryableCodeMap
 from modwire.shared import ModwireBaseModel
 
 from ..boundaries.map import ArchitectureMap, ArchitectureMapLoader
-from ..boundaries.pipeline.step import FlowPipelineStep, FlowReport
+from ..boundaries.pipeline.step import FlowPipelineStep
+from ..boundaries.reports import ArchitectureMapReport, FlowReport
 from ..config import ArchitectureConfig
 from ..insight.pipeline.step import (
     InsightPipelineStep,
@@ -14,31 +15,6 @@ from ..insight.pipeline.step import (
 )
 from ..shape.pipeline.report import ShapeReport
 from ..shape.pipeline.step import ShapePipelineStep
-
-
-class ArchitectureGroup(ModwireBaseModel):
-    name: str
-    source_ids: tuple[str, ...]
-
-
-class ArchitectureMapReport(ModwireBaseModel):
-    modules: tuple[ArchitectureGroup, ...] = ()
-    layers: tuple[ArchitectureGroup, ...] = ()
-    unknown_files: tuple[str, ...] = ()
-
-    @classmethod
-    def from_map(cls, architecture_map: ArchitectureMap) -> "ArchitectureMapReport":
-        return cls(
-            modules=tuple(
-                ArchitectureGroup(name=name, source_ids=source_ids)
-                for name, source_ids in sorted(architecture_map.modules.items())
-            ),
-            layers=tuple(
-                ArchitectureGroup(name=name, source_ids=source_ids)
-                for name, source_ids in sorted(architecture_map.layers.items())
-            ),
-            unknown_files=architecture_map.unknown_files,
-        )
 
 
 class ArchitectureViolationReport(ModwireBaseModel):
@@ -93,7 +69,6 @@ class ArchitectureReportRunner:
 
 
 __all__ = [
-    "ArchitectureGroup",
     "ArchitectureMapReport",
     "ArchitectureReport",
     "ArchitectureReportRunner",
