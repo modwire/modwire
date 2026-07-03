@@ -1,102 +1,76 @@
-from pydantic import BaseModel, ConfigDict, Field
+from __future__ import annotations
 
-from modwire_extraction.code import CodeMap, QueryableCodeMap
+from enum import StrEnum
+from typing import ClassVar
 
-from .boundaries.map import ArchitectureMap, ArchitectureMapLoader
-from .boundaries.pipeline.step import FlowPipelineStep, FlowReport
-from .config import ArchitectureConfig
-from .insight.pipeline.step import InsightPipelineStep, InsightReport, InsightReporterCatalog
-from .shape.pipeline import ShapePipelineStep, ShapeReport
+from modwire.shared import ModwireBaseModel
 
 
-class ArchitectureGroup(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
+class ReportCategory(StrEnum):
+    ROOT = "root"
+    MAP = "map"
+    VIOLATIONS = "violations"
+    FLOW = "flow"
+    SHAPE = "shape"
+    INSIGHTS = "insights"
+    INSIGHT = "insight"
+    ITEM = "item"
 
-    name: str
-    source_ids: tuple[str, ...]
+
+class ReportMetadata(ModwireBaseModel):
+    id: str
+    title: str
+    category: ReportCategory
+    model: str
+    path: str
+    order: int
+    children: tuple["ReportMetadata", ...] = ()
 
 
-class ArchitectureMapReport(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
-    modules: tuple[ArchitectureGroup, ...] = ()
-    layers: tuple[ArchitectureGroup, ...] = ()
-    unknown_files: tuple[str, ...] = ()
+class ReportNode(ModwireBaseModel):
+    report_id: ClassVar[str]
+    report_title: ClassVar[str]
+    report_category: ClassVar[ReportCategory]
+    report_path: ClassVar[str] = ""
+    report_order: ClassVar[int] = 100
+    report_children: ClassVar[tuple[type["ReportNode"], ...]] = ()
 
     @classmethod
-    def from_map(cls, architecture_map: ArchitectureMap) -> "ArchitectureMapReport":
-        return cls(
-            modules=tuple(
-                ArchitectureGroup(name=name, source_ids=source_ids)
-                for name, source_ids in sorted(architecture_map.modules.items())
-            ),
-            layers=tuple(
-                ArchitectureGroup(name=name, source_ids=source_ids)
-                for name, source_ids in sorted(architecture_map.layers.items())
-            ),
-            unknown_files=architecture_map.unknown_files,
+    def report_slug(cls) -> str:
+        return cls.report_id.rsplit(".", 1)[-1]
+
+    @classmethod
+    def report_metadata(cls) -> ReportMetadata:
+        children = tuple(
+            child.report_metadata()
+            for child in sorted(
+                cls.report_children,
+                key=lambda child: (child.report_order, child.report_id),
+            )
+        )
+        return ReportMetadata(
+            id=cls.report_id,
+            title=cls.report_title,
+            category=cls.report_category,
+            model=f"{cls.__module__}.{cls.__qualname__}",
+            path=cls.report_path or cls.report_id,
+            order=cls.report_order,
+            children=children,
         )
 
 
-class ArchitectureViolationReport(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
-    flow: FlowReport = Field(default_factory=FlowReport)
-    shape: ShapeReport = Field(default_factory=ShapeReport)
+class ReportSection(ReportNode):
+    ...
 
 
-class ArchitectureReport(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
-    map: ArchitectureMapReport
-    violations: ArchitectureViolationReport
-    insights: InsightReport = Field(default_factory=InsightReport)
-
-
-class ArchitectureReportRunner:
-    def __init__(self, config: ArchitectureConfig):
-        self.config = config
-
-    def run(self, code_map: CodeMap | QueryableCodeMap) -> ArchitectureReport:
-        architecture_map = ArchitectureMapLoader(self.config).load(
-            self.queryable_code_map(code_map)
-        )
-        return self.run_map(architecture_map)
-
-    def run_map(self, architecture_map: ArchitectureMap) -> ArchitectureReport:
-        flow_report = FlowPipelineStep().run_all(architecture_map)
-        shape_report = ShapePipelineStep(self.shape_resolvers()).run(architecture_map)
-        insight_report = InsightPipelineStep(self.insight_reporters()).run(
-            architecture_map
-        )
-        return ArchitectureReport(
-            map=ArchitectureMapReport.from_map(architecture_map),
-            violations=ArchitectureViolationReport(
-                flow=flow_report,
-                shape=shape_report,
-            ),
-            insights=insight_report,
-        )
-
-    def shape_resolvers(self) -> tuple[str, ...]:
-        return ("file", "import", "symbol")
-
-    def insight_reporters(self) -> tuple[str, ...]:
-        return InsightReporterCatalog().names()
-
-    def queryable_code_map(
-        self,
-        code_map: CodeMap | QueryableCodeMap,
-    ) -> QueryableCodeMap:
-        if isinstance(code_map, QueryableCodeMap):
-            return code_map
-        return QueryableCodeMap(code_map)
+class ReportItem(ReportNode):
+    report_category: ClassVar[ReportCategory] = ReportCategory.ITEM
 
 
 __all__ = [
-    "ArchitectureGroup",
-    "ArchitectureMapReport",
-    "ArchitectureReport",
-    "ArchitectureReportRunner",
-    "ArchitectureViolationReport",
+    "ReportCategory",
+    "ReportItem",
+    "ReportMetadata",
+    "ReportNode",
+    "ReportSection",
 ]
