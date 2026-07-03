@@ -1,9 +1,0 @@
-import { {{ aggregate_name }}ValidationError } from "../exceptions/{{ aggregate_name }}ValidationError";
-
-export class {{ value_object_name }} {
-  constructor(public readonly value: string) {
-    if (!value) {
-      throw new {{ aggregate_name }}ValidationError("Name cannot be empty");
-    }
-  }
-}

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from ..boundaries.map import ArchitectureMap
 
 
-class InsightReporter(BaseModel, abc.ABC):
+class InsightReporter(abc.ABC):
     name: str
     title: str
 

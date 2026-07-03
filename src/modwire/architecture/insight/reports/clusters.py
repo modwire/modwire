@@ -1,13 +1,11 @@
-from pydantic import BaseModel, ConfigDict
+from modwire.shared import ModwireBaseModel
 
 from ...boundaries.map import ArchitectureMap
 
 from ..base import InsightReporter
 
 
-class ArchitectureCluster(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
+class ClustersReportItem(ModwireBaseModel):
     name: str
     files: tuple[str, ...]
     incoming_count: int
@@ -16,10 +14,8 @@ class ArchitectureCluster(BaseModel):
     top_files: tuple[str, ...]
 
 
-class ClustersReport(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
-    clusters: tuple[ArchitectureCluster, ...] = ()
+class ClustersReport(ModwireBaseModel):
+    clusters: tuple[ClustersReportItem, ...] = ()
 
 
 class ClustersReporter(InsightReporter):
@@ -34,13 +30,13 @@ class ClustersReporter(InsightReporter):
         for source_id in source_ids:
             file_sets.setdefault(self.cluster_name(source_id), []).append(source_id)
 
-        clusters: list[ArchitectureCluster] = []
+        clusters: list[ClustersReportItem] = []
         for name, files in sorted(file_sets.items()):
             file_tuple = tuple(sorted(files))
             incoming_count = self.incoming_count(architecture_map, file_tuple)
             outgoing_count = self.outgoing_count(architecture_map, file_tuple)
             clusters.append(
-                ArchitectureCluster(
+                ClustersReportItem(
                     name=name,
                     files=file_tuple,
                     incoming_count=incoming_count,
@@ -114,6 +110,3 @@ class ClustersReporter(InsightReporter):
             architecture_map.code_map.incoming_dependencies(source_id).count()
             + architecture_map.code_map.outgoing_dependencies(source_id).count()
         )
-
-
-__all__ = ["ArchitectureCluster", "ClustersReport", "ClustersReporter"]

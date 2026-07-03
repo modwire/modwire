@@ -1,13 +1,11 @@
-from pydantic import BaseModel, ConfigDict
+from modwire.shared import ModwireBaseModel
 
 from ...boundaries.map import ArchitectureMap
 
 from ..base import InsightReporter
 
 
-class CoherenceSummary(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
+class CoherenceReport(ModwireBaseModel):
     roots: tuple[str, ...] = ()
     leaves: tuple[str, ...] = ()
     isolated: tuple[str, ...] = ()
@@ -18,7 +16,7 @@ class CoherenceReporter(InsightReporter):
     name: str = "coherence"
     title: str = "Dependency Coherence"
 
-    def collect(self, architecture_map: ArchitectureMap) -> CoherenceSummary:
+    def collect(self, architecture_map: ArchitectureMap) -> CoherenceReport:
         source_ids = set(architecture_map.code_map.source_ids())
         roots: list[str] = []
         leaves: list[str] = []
@@ -45,12 +43,9 @@ class CoherenceReporter(InsightReporter):
             if edge_result.edge.to_id not in source_ids
         )
 
-        return CoherenceSummary(
+        return CoherenceReport(
             roots=tuple(roots),
             leaves=tuple(leaves),
             isolated=tuple(isolated),
             external_dependencies=tuple(sorted(external_dependencies)),
         )
-
-
-__all__ = ["CoherenceReporter", "CoherenceSummary"]

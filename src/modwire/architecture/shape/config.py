@@ -1,9 +1,9 @@
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import field_validator
+
+from modwire.shared import ModwireConfig
 
 
-class ShapeConfig(BaseModel):
-    model_config = ConfigDict(frozen=True)
-    
+class ShapeConfig(ModwireConfig):
     max_classes_per_file: int = -1
     max_interfaces_per_file: int = -1
     max_types_per_file: int = -1
@@ -38,8 +38,3 @@ class ShapeConfig(BaseModel):
         if limit < -1:
             raise ValueError("Limit must be -1 or a non-negative integer")
         return limit
-
-
-class ShapeConfigIssue:
-    field: str
-    message: str

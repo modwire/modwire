@@ -7,7 +7,6 @@ from .tag_map import TagMatch
 class TagMatcher:
     def __init__(self, config: ArchitectureConfig):
         self.language = config.language
-        self.root = config.root
         self.boundaries = config.boundaries
         self.tags = self.boundaries.tags
 
@@ -111,14 +110,7 @@ class TagMatcher:
         return any(tag.name == name for tag in self.tags)
 
     def normalize_path(self, value: str) -> str:
-        normalized = value.replace("\\", "/").strip("/")
-        root = self.normalize_root()
-        if root and normalized.startswith(f"{root}/"):
-            return normalized.removeprefix(f"{root}/")
-        return normalized
-
-    def normalize_root(self) -> str:
-        return self.root.replace("\\", "/").strip("/")
+        return value.replace("\\", "/").strip("/")
 
     def compile_pattern(self, pattern: str, *, scope: bool) -> re.Pattern[str]:
         parts = pattern.split("/")

@@ -5,9 +5,7 @@ from modwire_extraction.code import QueryableCodeMap
 from ..config import ArchitectureConfig
 
 from .config import FlowRealm
-from .tags.matcher import TagMatcher
-from .tags.tag_map import TagMatch
-from .tags.tag_map import TagMap
+from .tags import TagMatcher, TagMatch, TagMap
 
 
 class ArchitectureMap:

@@ -1,22 +1,22 @@
-from .callables import CallableReport, CallableReportEntry, CallablesReporter
-from .clusters import ArchitectureCluster, ClustersReport, ClustersReporter
-from .coherence import CoherenceReporter, CoherenceSummary
-from .exports import ExportsReporter, UnusedExport, UnusedExportInsight
-from .hotspots import DependencyHotspot, HotspotsReport, HotspotsReporter
+from .callables import CallablesReport, CallableReportEntry, CallablesReporter
+from .clusters import ClustersReportItem, ClustersReport, ClustersReporter
+from .coherence import CoherenceReporter, CoherenceReport
+from .exports import ExportsReporter, ExportsReportItem, ExportsReport
+from .hotspots import HotspotsReportItem, HotspotsReport, HotspotsReporter
 
 __all__ = [
-    "ArchitectureCluster",
-    "CallableReport",
+    "ClustersReportItem",
+    "CallablesReport",
     "CallableReportEntry",
     "CallablesReporter",
     "ClustersReport",
     "ClustersReporter",
     "CoherenceReporter",
-    "CoherenceSummary",
-    "DependencyHotspot",
+    "CoherenceReport",
+    "HotspotsReportItem",
     "ExportsReporter",
     "HotspotsReport",
     "HotspotsReporter",
-    "UnusedExport",
-    "UnusedExportInsight",
+    "ExportsReportItem",
+    "ExportsReport",
 ]

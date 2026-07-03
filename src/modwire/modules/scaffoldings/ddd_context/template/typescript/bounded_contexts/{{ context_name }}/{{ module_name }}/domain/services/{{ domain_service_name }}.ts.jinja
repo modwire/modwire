@@ -1,7 +1,0 @@
-import { {{ aggregate_name }} } from "../aggregates/{{ aggregate_name }}";
-
-export class {{ domain_service_name }} {
-  create(aggregateId: string, name: string): {{ aggregate_name }} {
-    return {{ aggregate_name }}.create(aggregateId, name);
-  }
-}

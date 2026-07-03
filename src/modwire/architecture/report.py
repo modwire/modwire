@@ -3,9 +3,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from modwire_extraction.code import CodeMap, QueryableCodeMap
 
 from .boundaries.map import ArchitectureMap, ArchitectureMapLoader
-from .boundaries.pipeline import FlowPipelineStep, FlowReport
+from .boundaries.pipeline.step import FlowPipelineStep, FlowReport
 from .config import ArchitectureConfig
-from .insight.pipeline import InsightPipelineStep, InsightReport, InsightReporterCatalog
+from .insight.pipeline.step import InsightPipelineStep, InsightReport, InsightReporterCatalog
 from .shape.pipeline import ShapePipelineStep, ShapeReport
 
 

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from pydantic import BaseModel, ConfigDict
+from modwire.shared import ModwireBaseModel
 
 from .map import ArchitectureMap
 
@@ -8,9 +8,7 @@ from .map import ArchitectureMap
 EDGE_RULE_TYPE = "edge-rule"
 
 
-class EdgeRuleViolation(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
+class EdgeRuleViolation(ModwireBaseModel):
     source_id: str
     target_id: str
     source_pattern: str
@@ -18,9 +16,7 @@ class EdgeRuleViolation(BaseModel):
     rule_name: str
 
 
-class FlowViolation(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
+class FlowViolation(ModwireBaseModel):
     violation_type: str
     path: tuple[str, ...]
     violation_index: int
@@ -43,7 +39,7 @@ class FlowAnalyzerInterface(ABC):
         raise NotImplementedError
 
 
-class FlowAnalyzer(BaseModel, FlowAnalyzerInterface):
+class FlowAnalyzer(FlowAnalyzerInterface):
     name: str
     title: str
 

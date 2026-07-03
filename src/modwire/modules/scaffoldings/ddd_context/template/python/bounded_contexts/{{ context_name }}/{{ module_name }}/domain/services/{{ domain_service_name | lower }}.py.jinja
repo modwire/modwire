@@ -1,8 +1,0 @@
-from __future__ import annotations
-
-from ..aggregates.{{ aggregate_name | lower }} import {{ aggregate_name }}
-
-
-class {{ domain_service_name }}:
-    def create(self, aggregate_id: str, name: str) -> {{ aggregate_name }}:
-        return {{ aggregate_name }}.create(aggregate_id, name)

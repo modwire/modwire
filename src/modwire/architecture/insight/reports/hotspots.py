@@ -1,23 +1,19 @@
-from pydantic import BaseModel, ConfigDict
+from modwire.shared import ModwireBaseModel
 
 from ...boundaries.map import ArchitectureMap
 
 from ..base import InsightReporter
 
 
-class DependencyHotspot(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
+class HotspotsReportItem(ModwireBaseModel):
     source_id: str
     incoming_count: int
     outgoing_count: int
     pressure_score: int
 
 
-class HotspotsReport(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
-    hotspots: tuple[DependencyHotspot, ...] = ()
+class HotspotsReport(ModwireBaseModel):
+    hotspots: tuple[HotspotsReportItem, ...] = ()
 
 
 class HotspotsReporter(InsightReporter):
@@ -43,15 +39,12 @@ class HotspotsReporter(InsightReporter):
         self,
         architecture_map: ArchitectureMap,
         source_id: str,
-    ) -> DependencyHotspot:
+    ) -> HotspotsReportItem:
         incoming_count = architecture_map.code_map.incoming_dependencies(source_id).count()
         outgoing_count = architecture_map.code_map.outgoing_dependencies(source_id).count()
-        return DependencyHotspot(
+        return HotspotsReportItem(
             source_id=source_id,
             incoming_count=incoming_count,
             outgoing_count=outgoing_count,
             pressure_score=incoming_count + outgoing_count,
         )
-
-
-__all__ = ["DependencyHotspot", "HotspotsReport", "HotspotsReporter"]

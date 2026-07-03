@@ -12,11 +12,19 @@
 - Bundled `clean` and `ddd_context` module scaffoldings alongside the existing
   `layered` and `hexagonal` scaffoldings.
 - Python, TypeScript, and PHP outputs for bundled DDD context module generation.
+- `scripts/smoke_fleet.py`, which generates one three-service system across the
+  bundled Python, TypeScript, and PHP profiles and returns per-service smoke
+  responses.
 
 ### Changed
 
 - README project-generation documentation now covers project-aware operations and
   the currently bundled project profiles.
+- README development documentation now includes the smoke-fleet command.
+- Python scaffold filenames now use snake_case names such as
+  `accounts_repository.py` and `in_memory_accounts_repository.py`.
+- Generated Python project and module scaffoldings no longer emit `__init__.py`
+  marker files.
 
 ## 3.0.0
 

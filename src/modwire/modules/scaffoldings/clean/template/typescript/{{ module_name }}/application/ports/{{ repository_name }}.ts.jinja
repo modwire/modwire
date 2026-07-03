@@ -1,6 +1,0 @@
-import { {{ entity_name }} } from "../../domain/entities/{{ entity_name }}";
-
-export interface {{ repository_name }} {
-  save(entity: {{ entity_name }}): void;
-  get(entityId: string): {{ entity_name }} | undefined;
-}

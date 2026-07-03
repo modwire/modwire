@@ -1,23 +1,12 @@
 import abc
 
 from modwire_extraction.extractors.source import SourceFile
-from pydantic import BaseModel, ConfigDict
 
 from .config import ShapeConfig
+from .pipeline import ShapeViolation
 
 
-class ShapeViolation(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
-    source_id: str
-    rule_name: str
-    actual: int | str | bool
-    limit: int | str | bool
-    symbol_kind: str = ""
-    symbol_name: str = ""
-
-
-class ShapeResolver(BaseModel, abc.ABC):
+class ShapeResolver(abc.ABC):
     name: str
     title: str
 

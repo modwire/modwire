@@ -1,13 +1,11 @@
-from pydantic import BaseModel, ConfigDict
+from modwire.shared import ModwireBaseModel
 
 from ...boundaries.map import ArchitectureMap
 
 from ..base import InsightReporter
 
 
-class UnusedExport(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
+class ExportsReportItem(ModwireBaseModel):
     source_id: str
     name: str
     kind: str
@@ -15,20 +13,18 @@ class UnusedExport(BaseModel):
     reason: str
 
 
-class UnusedExportInsight(BaseModel):
-    model_config = ConfigDict(frozen=True, from_attributes=True)
-
-    unused_exports: tuple[UnusedExport, ...] = ()
+class ExportsReport(ModwireBaseModel):
+    unused_exports: tuple[ExportsReportItem, ...] = ()
 
 
 class ExportsReporter(InsightReporter):
     name: str = "unused-exports"
     title: str = "Unused Exports"
 
-    def collect(self, architecture_map: ArchitectureMap) -> UnusedExportInsight:
+    def collect(self, architecture_map: ArchitectureMap) -> ExportsReport:
         imported_names = self.imported_names(architecture_map)
         unused_exports = tuple(
-            UnusedExport(
+            ExportsReportItem(
                 source_id=export_result.source_id,
                 name=export.name,
                 kind=export.kind,
@@ -42,7 +38,7 @@ class ExportsReporter(InsightReporter):
             if (export := export_result.item).name not in imported_names
             and export.local_name not in imported_names
         )
-        return UnusedExportInsight(unused_exports=unused_exports)
+        return ExportsReport(unused_exports=unused_exports)
 
     def imported_names(self, architecture_map: ArchitectureMap) -> set[str]:
         imported_names: set[str] = set()
@@ -55,10 +51,3 @@ class ExportsReporter(InsightReporter):
                 if imported_symbol.alias:
                     imported_names.add(imported_symbol.alias)
         return imported_names
-
-
-__all__ = [
-    "ExportsReporter",
-    "UnusedExport",
-    "UnusedExportInsight",
-]

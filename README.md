@@ -101,8 +101,11 @@ generate_module(
 If no template path is provided, `generate_module` uses the bundled `layered`
 scaffolding. Pass `scaffolding="hexagonal"` for a pluggable domain/ports/adapters
 structure, `scaffolding="clean"` for a domain/application/infrastructure/interface
-module, or `scaffolding="ddd_context"` for a bounded-context module. Bundled
-scaffoldings are packaged with the distribution wheel.
+module, `scaffolding="ddd_context"` for a bounded-context module, or
+`scaffolding="crud_service"` for a CRUD-first service slice generated for
+Python, TypeScript, and PHP. The CRUD scaffold uses Copier YAML includes to keep
+shared questions separate from CRUD-specific questions. Bundled scaffoldings are
+packaged with the distribution wheel.
 
 ## Project Generation
 
@@ -197,6 +200,53 @@ major release.
 
 See [Development checks](docs/wiki/Development-checks.md) for the local command
 set used before pull requests and releases.
+
+To prove the CRUD services work as separate REST services with JWT auth, run:
+
+```bash
+make prove-crud-rest-flow
+```
+
+The proof generates independent `orders` Python, `warehouse` TypeScript, and
+`shipping` PHP services, starts each one as its own HTTP process, starts a
+separate `auth` HTTP process, and sends data from orders to warehouse to
+shipping over REST only. The command prints prefixed logs from every process and
+finishes with a `DELIVERED` response from shipping.
+
+The forge scaffold-family metadata models a noisier topology on top of that
+live proof: rotated `orders`, `warehouse`, `payment`, `shipping`, and `support`
+services; organic event-grown modules such as fraud screening and returns;
+listener-based event repair; duplicate events; and malformed payloads from
+external actors. It also emits `chaos-locustfile.py`, a Locust driver that can
+send randomized valid and malformed fulfillment traffic against the running
+REST proof services.
+
+To run the generated services under Locust with 50 concurrent users:
+
+```bash
+make locust
+```
+
+The job starts auth, orders, warehouse, and shipping proof services, then drives
+fulfillment, validation, quote, risk, event ingest/replay, return, support,
+catalog recommendation, audit passport, and database status endpoints with
+randomized traffic. The orders proof service persists CRUD rows, events,
+passports, risks, returns, support tickets, and catalog data in a local SQLite
+database under the generated `.modwire` directory.
+
+To stress contract evolution and listener-based repair, run:
+
+```bash
+uv run python -B scripts/smoke_ecommerce_realm.py --force --contract-drift
+```
+
+The contract-drift smoke first generates the realm, then evolves the shipping
+OpenAPI contract, regenerates shipping clients in the orders projects, attaches
+a new shipping delivery listener, and reruns fulfillment through the evolved
+client operation. The final confirmation must include `delivered_at`,
+`carrier_tracking_url`, and `status: DELIVERED`. It also writes and executes
+small generated-code smoke files for TypeScript and PHP, so the drift check
+fails unless those generated shipping clients and listeners run successfully too.
 
 ## Contributing
 
