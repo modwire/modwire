@@ -1,0 +1,23 @@
+_min_copier_version: "9.0.0"
+_templates_suffix: ".jinja"
+_subdirectory: templates
+
+library_package:
+  type: str
+  default: composite_core
+  help: Importable package name for the reusable Composite pattern library.
+
+library_namespace:
+  type: str
+  default: CompositeCore
+  help: Namespace for the reusable Composite pattern library.
+
+component_name:
+  type: str
+  default: CompositeComponent
+  help: Base component abstraction name.
+
+composite_name:
+  type: str
+  default: CompositeNode
+  help: Composite container class name.

@@ -1,0 +1,12 @@
+import type { {{ component_name }} } from "./{{ component_name }}";
+
+export class {{ composite_name }} implements {{ component_name }} {
+  constructor(
+    public readonly key: string,
+    public readonly children: readonly {{ component_name }}[] = [],
+  ) {}
+
+  render(): string {
+    return this.children.map((child) => child.render()).join("\n");
+  }
+}

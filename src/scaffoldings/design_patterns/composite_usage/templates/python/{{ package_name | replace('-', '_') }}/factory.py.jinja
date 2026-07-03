@@ -1,0 +1,16 @@
+from __future__ import annotations
+
+from {{ library_package | replace('-', '_') }}.composite import {{ composite_name }}
+
+from .leaf import {{ leaf_name }}
+
+
+class {{ factory_name }}:
+    def build(self) -> {{ composite_name }}:
+        return {{ composite_name }}(
+            "root",
+            (
+                {{ leaf_name }}("intro", "Introduction"),
+                {{ leaf_name }}("body", "Composite content"),
+            ),
+        )

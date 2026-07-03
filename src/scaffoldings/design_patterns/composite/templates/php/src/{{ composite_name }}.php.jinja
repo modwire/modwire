@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ library_namespace }};
+
+final class {{ composite_name }} implements {{ component_name }}
+{
+    /**
+     * @param list<{{ component_name }}> $children
+     */
+    public function __construct(
+        private readonly string $key,
+        private readonly array $children = [],
+    ) {
+    }
+
+    public function key(): string
+    {
+        return $this->key;
+    }
+
+    /**
+     * @return list<{{ component_name }}>
+     */
+    public function children(): array
+    {
+        return $this->children;
+    }
+
+    public function render(): string
+    {
+        return implode("\n", array_map(
+            static fn ({{ component_name }} $child): string => $child->render(),
+            $this->children,
+        ));
+    }
+}

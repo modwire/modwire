@@ -1,0 +1,26 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ usage_namespace }};
+
+use {{ library_namespace }}\{{ component_name }};
+
+final class {{ leaf_name }} implements {{ component_name }}
+{
+    public function __construct(
+        private readonly string $key,
+        private readonly string $value,
+    ) {
+    }
+
+    public function key(): string
+    {
+        return $this->key;
+    }
+
+    public function render(): string
+    {
+        return $this->value;
+    }
+}

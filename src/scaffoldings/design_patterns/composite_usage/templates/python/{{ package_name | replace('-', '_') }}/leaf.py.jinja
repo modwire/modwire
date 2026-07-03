@@ -1,0 +1,16 @@
+from __future__ import annotations
+
+from {{ library_package | replace('-', '_') }}.component import {{ component_name }}
+
+
+class {{ leaf_name }}({{ component_name }}):
+    def __init__(self, key: str, value: str) -> None:
+        self._key = key
+        self.value = value
+
+    @property
+    def key(self) -> str:
+        return self._key
+
+    def render(self) -> str:
+        return self.value

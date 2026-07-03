@@ -1,0 +1,11 @@
+import { {{ composite_name }} } from "{{ library_package }}/{{ composite_name }}";
+import { {{ leaf_name }} } from "./{{ leaf_name }}";
+
+export class {{ factory_name }} {
+  build(): {{ composite_name }} {
+    return new {{ composite_name }}("root", [
+      new {{ leaf_name }}("intro", "Introduction"),
+      new {{ leaf_name }}("body", "Composite content"),
+    ]);
+  }
+}
