@@ -1,3 +1,6 @@
+from typing import ClassVar
+
+from modwire.architecture.report import ReportCategory, ReportItem
 from modwire.shared import ModwireBaseModel
 
 from ...boundaries.map import ArchitectureMap
@@ -12,7 +15,13 @@ class HotspotsReportItem(ModwireBaseModel):
     pressure_score: int
 
 
-class HotspotsReport(ModwireBaseModel):
+class HotspotsReport(ReportItem):
+    report_id: ClassVar[str] = "architecture.insights.hotspots"
+    report_title: ClassVar[str] = "Dependency Hotspots"
+    report_category: ClassVar[ReportCategory] = ReportCategory.INSIGHT
+    report_path: ClassVar[str] = "insights.hotspots"
+    report_order: ClassVar[int] = 20
+
     hotspots: tuple[HotspotsReportItem, ...] = ()
 
 

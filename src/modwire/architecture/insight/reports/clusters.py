@@ -1,3 +1,6 @@
+from typing import ClassVar
+
+from modwire.architecture.report import ReportCategory, ReportItem
 from modwire.shared import ModwireBaseModel
 
 from ...boundaries.map import ArchitectureMap
@@ -14,7 +17,13 @@ class ClustersReportItem(ModwireBaseModel):
     top_files: tuple[str, ...]
 
 
-class ClustersReport(ModwireBaseModel):
+class ClustersReport(ReportItem):
+    report_id: ClassVar[str] = "architecture.insights.clusters"
+    report_title: ClassVar[str] = "Dependency Clusters"
+    report_category: ClassVar[ReportCategory] = ReportCategory.INSIGHT
+    report_path: ClassVar[str] = "insights.clusters"
+    report_order: ClassVar[int] = 10
+
     clusters: tuple[ClustersReportItem, ...] = ()
 
 

@@ -1,3 +1,6 @@
+from typing import ClassVar
+
+from modwire.architecture.report import ReportCategory, ReportItem
 from modwire.shared import ModwireBaseModel
 
 from ...boundaries.map import ArchitectureMap
@@ -13,7 +16,13 @@ class ExportsReportItem(ModwireBaseModel):
     reason: str
 
 
-class ExportsReport(ModwireBaseModel):
+class ExportsReport(ReportItem):
+    report_id: ClassVar[str] = "architecture.insights.exports"
+    report_title: ClassVar[str] = "Unused Exports"
+    report_category: ClassVar[ReportCategory] = ReportCategory.INSIGHT
+    report_path: ClassVar[str] = "insights.exports"
+    report_order: ClassVar[int] = 50
+
     unused_exports: tuple[ExportsReportItem, ...] = ()
 
 

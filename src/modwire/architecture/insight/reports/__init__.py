@@ -3,6 +3,12 @@ from .clusters import ClustersReportItem, ClustersReport, ClustersReporter
 from .coherence import CoherenceReporter, CoherenceReport
 from .exports import ExportsReporter, ExportsReportItem, ExportsReport
 from .hotspots import HotspotsReportItem, HotspotsReport, HotspotsReporter
+from .report import (
+    InsightReport,
+    InsightReportCollector,
+    InsightReportFieldMap,
+    InsightReporterCatalog,
+)
 
 __all__ = [
     "ClustersReportItem",
@@ -19,4 +25,8 @@ __all__ = [
     "HotspotsReporter",
     "ExportsReportItem",
     "ExportsReport",
+    "InsightReport",
+    "InsightReportCollector",
+    "InsightReportFieldMap",
+    "InsightReporterCatalog",
 ]

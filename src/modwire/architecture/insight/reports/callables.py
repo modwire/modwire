@@ -1,3 +1,6 @@
+from typing import ClassVar
+
+from modwire.architecture.report import ReportCategory, ReportItem
 from modwire.shared import ModwireBaseModel
 
 from ...boundaries.map import ArchitectureMap
@@ -10,7 +13,13 @@ class CallableReportEntry(ModwireBaseModel):
     callers: tuple[str, ...]
 
 
-class CallablesReport(ModwireBaseModel):
+class CallablesReport(ReportItem):
+    report_id: ClassVar[str] = "architecture.insights.callables"
+    report_title: ClassVar[str] = "Callable Graph"
+    report_category: ClassVar[ReportCategory] = ReportCategory.INSIGHT
+    report_path: ClassVar[str] = "insights.callables"
+    report_order: ClassVar[int] = 40
+
     entries: tuple[CallableReportEntry, ...] = ()
 
 

@@ -1,28 +1,50 @@
+from typing import ClassVar
+
 from pydantic import Field
 
 from modwire_extraction.code import CodeMap, QueryableCodeMap
 
-from modwire.shared import ModwireBaseModel
+from modwire.architecture.report import ReportCategory, ReportSection
 
 from ..boundaries.map import ArchitectureMap, ArchitectureMapLoader
-from ..boundaries.pipeline.step import FlowPipelineStep
-from ..boundaries.reports import ArchitectureMapReport, FlowReport
+from ..boundaries.reports.flow import FlowReport, FlowReportCollector
+from ..boundaries.reports.map import ArchitectureMapReport
 from ..config import ArchitectureConfig
-from ..insight.pipeline.step import (
-    InsightPipelineStep,
+from ..insight.reports.report import (
     InsightReport,
+    InsightReportCollector,
     InsightReporterCatalog,
 )
-from ..shape.pipeline.report import ShapeReport
-from ..shape.pipeline.step import ShapePipelineStep
+from ..shape.reports.violations import (
+    ShapeReport,
+    ShapeReportCollector,
+)
 
 
-class ArchitectureViolationReport(ModwireBaseModel):
+class ArchitectureViolationReport(ReportSection):
+    report_id: ClassVar[str] = "architecture.violations"
+    report_title: ClassVar[str] = "Architecture Violations"
+    report_category: ClassVar[ReportCategory] = ReportCategory.VIOLATIONS
+    report_path: ClassVar[str] = "violations"
+    report_order: ClassVar[int] = 20
+    report_children: ClassVar = (FlowReport, ShapeReport)
+
     flow: FlowReport = Field(default_factory=FlowReport)
     shape: ShapeReport = Field(default_factory=ShapeReport)
 
 
-class ArchitectureReport(ModwireBaseModel):
+class ArchitectureReport(ReportSection):
+    report_id: ClassVar[str] = "architecture"
+    report_title: ClassVar[str] = "Architecture Report"
+    report_category: ClassVar[ReportCategory] = ReportCategory.ROOT
+    report_path: ClassVar[str] = ""
+    report_order: ClassVar[int] = 0
+    report_children: ClassVar = (
+        ArchitectureMapReport,
+        ArchitectureViolationReport,
+        InsightReport,
+    )
+
     map: ArchitectureMapReport
     violations: ArchitectureViolationReport
     insights: InsightReport = Field(default_factory=InsightReport)
@@ -39,10 +61,14 @@ class ArchitectureReportRunner:
         return self.run_map(architecture_map)
 
     def run_map(self, architecture_map: ArchitectureMap) -> ArchitectureReport:
-        flow_report = FlowPipelineStep().run_all(architecture_map)
-        shape_report = ShapePipelineStep(self.shape_resolvers()).run(architecture_map)
-        insight_report = InsightPipelineStep(self.insight_reporters()).run(
-            architecture_map
+        flow_report = FlowReportCollector().collect_all(architecture_map)
+        shape_report = ShapeReportCollector().collect(
+            architecture_map,
+            self.shape_resolvers(),
+        )
+        insight_report = InsightReportCollector().collect(
+            architecture_map,
+            self.insight_reporters(),
         )
         return ArchitectureReport(
             map=ArchitectureMapReport.from_map(architecture_map),
