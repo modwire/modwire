@@ -1,15 +1,12 @@
 import click
 
-from modwire.di import ModwireContainer, load_app
-
-from .app import LayersApplication
+from ..di import load_app
 
 
 @click.group()
 @click.pass_context
 def layers(ctx):
-    container: ModwireContainer = ctx.find_root().obj
-    ctx.obj = load_app(container, "layers")
+    ctx.obj = ctx.find_root().obj
 
 
 @layers.command()
@@ -17,27 +14,27 @@ def layers(ctx):
 @click.argument("layout")
 @click.argument("language")
 @click.pass_obj
-def scaffold(app: LayersApplication, name: str, layout: str, language: str, target: str):
-    pass
+def scaffold(container, name: str, layout: str, language: str, target: str):
+    app = load_app(container, "layers")
 
 @layers.command()
 @click.argument("name")
 @click.pass_obj
-def remove_layer(app: LayersApplication, name: str):
-    pass
-
-
-@layers.command()
-@click.argument("name")
-@click.argument("layer")
-@click.pass_obj
-def add_package(app: LayersApplication, name: str, layer: str):
-    pass
+def remove_layer(container, name: str):
+    app = load_app(container, "layers")
 
 
 @layers.command()
 @click.argument("name")
 @click.argument("layer")
 @click.pass_obj
-def remove_package(app: LayersApplication, name: str, layer: str):
-    pass
+def add_package(container, name: str, layer: str):
+    app = load_app(container, "layers")
+
+
+@layers.command()
+@click.argument("name")
+@click.argument("layer")
+@click.pass_obj
+def remove_package(container, name: str, layer: str):
+    app = load_app(container, "layers")

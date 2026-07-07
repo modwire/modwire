@@ -1,69 +1,67 @@
 import click
 
-from modwire.di import ModwireContainer, load_app
-
-from .app import ProjectsApplication
+from ..di import load_app
 
 
 @click.group()
 @click.pass_context
 def projects(ctx):
-    container: ModwireContainer = ctx.find_root().obj
-    ctx.obj = load_app(container, "projects")
+    ctx.obj = ctx.find_root().obj
 
 
 @projects.command()
 @click.argument("name")
 @click.argument("root")
 @click.pass_obj
-def init(app: ProjectsApplication, name: str, root: str):
-    pass
+def init(container, name: str, root: str):
+    app = load_app(container, "projects")
 
-
-@projects.command()
-@click.argument("names")
-@click.argument("group")
-@click.pass_obj
-def add_dependencies(app: ProjectsApplication, names: list[str], group: str):
-    pass
 
 
 @projects.command()
 @click.argument("names")
 @click.argument("group")
 @click.pass_obj
-def remove_dependencies(app: ProjectsApplication, names: list[str], group: str):
-    pass
+def add_dependencies(container, names: list[str], group: str):
+    app = load_app(container, "projects")
+
+
+@projects.command()
+@click.argument("names")
+@click.argument("group")
+@click.pass_obj
+def remove_dependencies(container, names: list[str], group: str):
+    app = load_app(container, "projects")
 
 
 @projects.command()
 @click.argument("name")
 @click.pass_obj
-def add_module(app: ProjectsApplication, name: str):
-    pass
+def add_module(container, name: str):
+    app = load_app(container, "projects")
 
 
 @projects.command()
 @click.argument("name")
 @click.pass_obj
-def remove_module(app: ProjectsApplication, name: str):
-    pass
+def remove_module(container, name: str):
+    app = load_app(container, "projects")
 
 
 @projects.command()
 @click.argument("name")
 @click.argument("module")
 @click.pass_obj
-def add_layer(app: ProjectsApplication, name: str, module: str):
-    pass
+def add_layer(container, name: str, module: str):
+    app = load_app(container, "projects")
 
 
 @projects.command()
 @click.argument("name")
 @click.argument("module")
 @click.pass_obj
-def remove_layer(app: ProjectsApplication, name: str, module: str):
-    pass
+def remove_layer(container, name: str, module: str):
+    app = load_app(container, "projects")
 
 
 @projects.command()
@@ -71,8 +69,8 @@ def remove_layer(app: ProjectsApplication, name: str, module: str):
 @click.argument("module")
 @click.argument("layer")
 @click.pass_obj
-def add_package(app: ProjectsApplication, name: str, module: str, layer: str):
-    pass
+def add_package(container, name: str, module: str, layer: str):
+    app = load_app(container, "projects")
 
 
 @projects.command()
@@ -80,5 +78,5 @@ def add_package(app: ProjectsApplication, name: str, module: str, layer: str):
 @click.argument("module")
 @click.argument("layer")
 @click.pass_obj
-def remove_package(app: ProjectsApplication, name: str, module: str, layer: str):
-    pass
+def remove_package(container, name: str, module: str, layer: str):
+    app = load_app(container, "projects")

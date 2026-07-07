@@ -4,16 +4,13 @@ import click
 
 from ..shared import cli_tools
 
-from ..di import ModwireContainer, load_app
-
-from .app import ScaffoldingApplication
+from ..di import load_app
 
 
 @click.group()
 @click.pass_context
 def scaffolding(ctx):
-    container: ModwireContainer = ctx.find_root().obj
-    ctx.obj = load_app(container, "scaffolding")
+    ctx.obj = ctx.find_root().obj
 
 
 @scaffolding.command()
@@ -22,10 +19,11 @@ def scaffolding(ctx):
 @click.option("--data", "data_items", multiple=True)
 @click.pass_obj
 def generate(
-    app: ScaffoldingApplication,
+    container,
     name: str,
     destination: Path,
     data_items: tuple[str, ...],
 ):
+    app = load_app(container, "scaffolding")
     app.generate(name, destination, cli_tools.parse_inputs(data_items))
     click.echo(f"Generated scaffold {name} at {destination}")

@@ -27,7 +27,9 @@ class ModwireGroup(click.Group):
 )
 @click.pass_context
 def cli(ctx, cwd: Path | None):
-    ctx.obj = ModwireContainer()
+    container = ModwireContainer()
+    container.cwd.override(cwd or Path.cwd())
+    ctx.obj = container
 
 
 cli.add_command(projects)

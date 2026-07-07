@@ -1,30 +1,27 @@
 import click
 
-from modwire.di import ModwireContainer, load_app
-
-from .app import ArchitectureApplication
+from ..di import load_app
 
 
 @click.group()
 @click.pass_context
 def architecture(ctx):
-    container: ModwireContainer = ctx.find_root().obj
-    ctx.obj = load_app(container, "architecture")
+    ctx.obj = ctx.find_root().obj
 
 
 @architecture.command()
 @click.pass_obj
-def boundaries(app: ArchitectureApplication):
-    ...
+def boundaries(container):
+    app = load_app(container, "architecture")
 
 
 @architecture.command()
 @click.pass_obj
-def insights(app: ArchitectureApplication):
-    ...
+def insights(container):
+    app = load_app(container, "architecture")
 
 
 @architecture.command()
 @click.pass_obj
-def shape(app: ArchitectureApplication):
-    ...
+def shape(container):
+    app = load_app(container, "architecture")
