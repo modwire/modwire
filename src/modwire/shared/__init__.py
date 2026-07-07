@@ -5,6 +5,10 @@ from .base import (
     ModwireApplication,
 )
 
+from .config import (
+    ConfigResolver,
+)
+
 from .scaffolding import (
     CodePackage,
     ScaffoldRepository,
@@ -17,6 +21,7 @@ __all__ = [
     "ModwireCLI",
     "ModwireConfig",
     "ModwireApplication",
+    "ConfigResolver",
     "CodePackage",
     "ScaffoldRepository",
     "Scaffold",

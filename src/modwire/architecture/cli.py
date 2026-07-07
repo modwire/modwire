@@ -1,17 +1,15 @@
 import click
 
-from modwire.shared import ModwireCLI
+from modwire.di import ModwireContainer, load_app
 
 from .app import ArchitectureApplication
-from .config import ArchitectureConfig
 
 
 @click.group()
 @click.pass_context
 def architecture(ctx):
-    modwire_cli: ModwireCLI = ctx.find_root().obj
-    config = modwire_cli.load_config("architecture", ArchitectureConfig, "yaml")
-    ctx.obj = ArchitectureApplication(config)
+    container: ModwireContainer = ctx.find_root().obj
+    ctx.obj = load_app(container, "architecture")
 
 
 @architecture.command()

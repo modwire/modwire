@@ -1,12 +1,15 @@
 import click
 
+from modwire.di import ModwireContainer, load_app
+
 from .app import ModulesApplication
 
 
 @click.group()
 @click.pass_context
 def modules(ctx):
-    ctx.obj = ModulesApplication()
+    container: ModwireContainer = ctx.find_root().obj
+    ctx.obj = load_app(container, "modules")
 
 
 @modules.command()

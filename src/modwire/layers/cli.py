@@ -1,12 +1,15 @@
 import click
 
+from modwire.di import ModwireContainer, load_app
+
 from .app import LayersApplication
 
 
 @click.group()
 @click.pass_context
 def layers(ctx):
-    ctx.obj = LayersApplication()
+    container: ModwireContainer = ctx.find_root().obj
+    ctx.obj = load_app(container, "layers")
 
 
 @layers.command()
