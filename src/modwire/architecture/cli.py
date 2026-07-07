@@ -1,6 +1,7 @@
 import click
 
 from .app import ArchitectureApplication
+from .config import ArchitectureConfig
 
 
 @click.group()

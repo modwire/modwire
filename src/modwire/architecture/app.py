@@ -1,6 +1,10 @@
 from modwire.shared import ModwireApplication
 
+from .config import ArchitectureConfig
+
 
 class ArchitectureApplication(ModwireApplication):
-    def run(self):
-        print("Running Modwire Architecture CLI...")
+    def __init__(self, config: ArchitectureConfig):
+        self.config = config
+
+    
