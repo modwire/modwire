@@ -2,13 +2,16 @@ from pathlib import Path
 
 import click
 
-from ..scaffolding import ScaffoldingApplication
+from modwire.di import ModwireContainer, load_app
+
+from .app import ScaffoldingApplication
 
 
 @click.group()
 @click.pass_context
 def scaffolding(ctx):
-    ctx.obj = ScaffoldingApplication(Path.cwd())
+    container: ModwireContainer = ctx.find_root().obj
+    ctx.obj = load_app(container, "scaffolding")
 
 
 @scaffolding.command()
@@ -22,5 +25,5 @@ def generate(
     destination: Path,
     data_items: tuple[str, ...],
 ):
-    app.generate_from_data_items(name, destination, data_items)
+    app.generate(name, destination, data_items)
     click.echo(f"Generated scaffold {name} at {destination}")

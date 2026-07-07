@@ -1,7 +1,7 @@
 import click
 
 from .glossary import glossary
-from .scaffolding import scaffolding
+from ...scaffolding.cli import scaffolding
 
 
 @click.group()

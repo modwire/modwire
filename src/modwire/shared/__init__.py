@@ -9,12 +9,6 @@ from .config import (
     ConfigResolver,
 )
 
-from .scaffolding import (
-    CodePackage,
-    ScaffoldRepository,
-    Scaffold,
-)
-
 
 __all__ = [
     "ModwireBaseModel",
@@ -22,7 +16,4 @@ __all__ = [
     "ModwireConfig",
     "ModwireApplication",
     "ConfigResolver",
-    "CodePackage",
-    "ScaffoldRepository",
-    "Scaffold",
 ]

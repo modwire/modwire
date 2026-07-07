@@ -8,8 +8,7 @@ from .projects.cli import projects
 from .modules.cli import modules
 from .layers.cli import layers
 from .architecture.cli import architecture
-
-from .shared.cli import tools
+from .scaffolding.cli import scaffolding
 
 
 class ModwireGroup(click.Group):
@@ -35,7 +34,7 @@ cli.add_command(projects)
 cli.add_command(modules)
 cli.add_command(layers)
 cli.add_command(architecture)
-cli.add_command(tools)
+cli.add_command(scaffolding)
 
 
 if __name__ == '__main__':

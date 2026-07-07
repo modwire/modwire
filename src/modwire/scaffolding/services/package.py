@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pydantic import field_validator
 
-from modwire.shared.base import ModwireBaseModel
+from modwire.shared import ModwireBaseModel
 
 
 class CodePackage(ModwireBaseModel):

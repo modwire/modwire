@@ -3,8 +3,7 @@ from tempfile import TemporaryDirectory
 
 from copier import run_copy
 
-from .constants import SCAFFOLD_TEMPLATES_DIRECTORY
-from .package import CodePackage, CodePackageWriter
+from .package import CodePackage
 
 
 class Scaffold:
@@ -12,7 +11,7 @@ class Scaffold:
         assert root.is_dir(), f"Path {root} is not a directory."
 
         manifest_file = root / "copier.yml"
-        templates_folder = root / SCAFFOLD_TEMPLATES_DIRECTORY
+        templates_folder = root / "templates"
 
         assert manifest_file.is_file(
         ), f"Manifest for copier: {manifest_file} does not exist."
@@ -24,6 +23,7 @@ class Scaffold:
     def build_package(self, **kwargs) -> CodePackage:
         with TemporaryDirectory() as temporary_directory:
             temporary_path = Path(temporary_directory)
+            
             run_copy(
                 str(self.root),
                 str(temporary_path),
@@ -32,16 +32,21 @@ class Scaffold:
                 overwrite=True,
                 quiet=True,
             )
-            return self._read_package(temporary_path)
 
-    def generate(self, destination: Path, **kwargs) -> None:
-        CodePackageWriter().write(self.build_package(**kwargs), destination)
+            files = {
+                path.relative_to(temporary_path).as_posix(): path.read_text(encoding="utf-8")
+                for path in temporary_path.rglob("*")
+                if path.is_file()
+            }
 
-    @staticmethod
-    def _read_package(root: Path) -> CodePackage:
-        files = {
-            path.relative_to(root).as_posix(): path.read_text(encoding="utf-8")
-            for path in root.rglob("*")
-            if path.is_file()
-        }
         return CodePackage(files=files)
+
+
+class ScaffoldGroup:
+    def __init__(self, root: Path):
+        assert root.is_dir(), f"Path {root} is not a directory."
+        self.root = root
+
+    def get_scaffolds(self) -> list[Scaffold]:
+        dirs = [d for d in self.root.glob("*") if d.is_dir()]
+        return [Scaffold(d) for d in dirs]
