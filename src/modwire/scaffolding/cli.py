@@ -2,7 +2,9 @@ from pathlib import Path
 
 import click
 
-from modwire.di import ModwireContainer, load_app
+from ..shared import cli_tools
+
+from ..di import ModwireContainer, load_app
 
 from .app import ScaffoldingApplication
 
@@ -25,5 +27,5 @@ def generate(
     destination: Path,
     data_items: tuple[str, ...],
 ):
-    app.generate(name, destination, data_items)
+    app.generate(name, destination, cli_tools.parse_inputs(data_items))
     click.echo(f"Generated scaffold {name} at {destination}")

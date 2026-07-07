@@ -9,6 +9,10 @@ from .config import (
     ConfigResolver,
 )
 
+from .cli import (
+    tools as cli_tools,
+)
+
 
 __all__ = [
     "ModwireBaseModel",
@@ -16,4 +20,5 @@ __all__ = [
     "ModwireConfig",
     "ModwireApplication",
     "ConfigResolver",
+    "cli_tools",
 ]

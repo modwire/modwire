@@ -2,7 +2,7 @@ import click
 
 from pathlib import Path
 
-from .shared.base import ModwireCLI
+from .di import ModwireContainer
 
 from .projects.cli import projects
 from .modules.cli import modules
@@ -27,7 +27,7 @@ class ModwireGroup(click.Group):
 )
 @click.pass_context
 def cli(ctx, cwd: Path | None):
-    ctx.obj = ModwireCLI(cwd or Path.cwd())
+    ctx.obj = ModwireContainer()
 
 
 cli.add_command(projects)

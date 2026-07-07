@@ -25,11 +25,11 @@ class ModwireContainer(containers.DeclarativeContainer):
 
 def load_app(container: ModwireContainer, name: str) -> Any:
     apps = {
-        "architecture": container.architecture.app,
-        "layers": container.layers.app,
-        "modules": container.modules.app,
-        "projects": container.projects.app,
-        "scaffolding": container.scaffolding.app,
+        "architecture": lambda: container.architecture.app(),
+        "layers": lambda: container.layers.app(),
+        "modules": lambda: container.modules.app(),
+        "projects": lambda: container.projects.app(),
+        "scaffolding": lambda: container.scaffolding.app(),
     }
 
     try:

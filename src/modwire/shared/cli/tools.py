@@ -1,14 +1,8 @@
-import click
-
-from .glossary import glossary
-from ...scaffolding.cli import scaffolding
-
-
-@click.group()
-@click.pass_context
-def tools(ctx):
-    pass
-
-
-tools.add_command(glossary)
-tools.add_command(scaffolding)
+def parse_inputs(items: tuple[str, ...]) -> dict[str, str]:
+    data = {}
+    for item in items:
+        key, separator, value = item.partition("=")
+        if not separator or not key:
+            raise ValueError(f"Invalid data item {item!r}. Expected key=value.")
+        data[key] = value
+    return data

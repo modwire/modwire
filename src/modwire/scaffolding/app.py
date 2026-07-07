@@ -14,9 +14,9 @@ class ScaffoldingApplication:
         self.writer = writer
 
     def build_package(self, scaffold_id: str, data: dict[str, str]) -> CodePackage:
-        group, name = scaffold_id.split(".")
+        group, name = scaffold_id.split(".", maxsplit=1)
         scaffold = self.repository.get_scaffold(group, name)
-        return scaffold.build_package(*data)
+        return scaffold.build_package(**data)
 
     def write_package(self, package: CodePackage, destination: Path):
         self.writer.write(package, destination)

@@ -12,7 +12,7 @@ class ScaffoldRepository:
         groups_dirs = [d for d in self.root_dir.glob("*") if d.is_dir()]
         return [ScaffoldGroup(d) for d in groups_dirs]
 
-    def get_scaffold(self, name: str, group: str) -> Scaffold:
+    def get_scaffold(self, group: str, name: str) -> Scaffold:
         scaffold_dir = self.root_dir / group / name
         return Scaffold(scaffold_dir)
 
