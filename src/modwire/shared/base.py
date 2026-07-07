@@ -1,9 +1,12 @@
 import abc
 from pathlib import Path
-from typing import Self
+from typing import Self, TypeVar, Literal
 
 from pydantic import BaseModel, ConfigDict
 from pydantic_yaml import parse_yaml_raw_as, to_yaml_str
+
+
+TConfig = TypeVar("TConfig", bound="ModwireConfig")
 
 
 class Modwire:
@@ -33,7 +36,15 @@ class ModwireConfig(ModwireBaseModel):
 
 
 class ModwireCLI(Modwire):
-    pass
+    def __init__(self, cwd: Path):
+        self.cwd = cwd.resolve()
+        self.dot_dir = self.cwd / ".modwire"
+    
+    def load_config(self, name: str, config_type: type[TConfig], fmt: Literal["yaml", "json"]) -> TConfig:
+        file_path = self.dot_dir / f"{name}.{fmt}"
+        if fmt == "yaml":
+            return config_type.load_yaml(file_path)
+        return config_type.load_json(file_path)
 
 
 class ModwireApplication(abc.ABC, Modwire):

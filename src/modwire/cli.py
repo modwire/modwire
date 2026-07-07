@@ -1,5 +1,7 @@
 import click
 
+from pathlib import Path
+
 from .shared.base import ModwireCLI
 
 from .projects.cli import projects
@@ -19,9 +21,14 @@ class ModwireGroup(click.Group):
 
 
 @click.group(cls=ModwireGroup)
+@click.option(
+    "--cwd",
+    type=click.Path(path_type=Path, file_okay=False, dir_okay=True),
+    default=None,
+)
 @click.pass_context
-def cli(ctx):
-    ctx.obj = ModwireCLI()
+def cli(ctx, cwd: Path | None):
+    ctx.obj = ModwireCLI(cwd or Path.cwd())
 
 
 cli.add_command(projects)

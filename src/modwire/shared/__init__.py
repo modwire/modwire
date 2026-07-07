@@ -1,4 +1,10 @@
-from .base import ModwireBaseModel, ModwireConfig, ModwireApplication
+from .base import (
+    ModwireBaseModel, 
+    ModwireCLI,
+    ModwireConfig, 
+    ModwireApplication,
+)
+
 from .scaffolding import (
     CodePackage,
     ScaffoldRepository,
@@ -8,6 +14,7 @@ from .scaffolding import (
 
 __all__ = [
     "ModwireBaseModel",
+    "ModwireCLI",
     "ModwireConfig",
     "ModwireApplication",
     "CodePackage",
