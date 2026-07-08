@@ -1,10 +1,16 @@
-from ..base import FlowAnalyzer, FlowViolation
-from ..map import ArchitectureMap
+from ...map import ArchitectureMap
+from ..base import FlowViolation, FlowAnalyzerInterface
+from .analyzer_base import BaseFlowAnalyzer
 
 
-class NoReentryFlowAnalyzer(FlowAnalyzer):
-    name: str = "no-reentry"
-    title: str = "No Re-Entry Violations"
+class NoReentryFlowAnalyzer(FlowAnalyzerInterface, BaseFlowAnalyzer):
+    @property
+    def name(self) -> str:
+        return "no-reentry"
+
+    @property
+    def title(self) -> str:
+        return "No Re-Entry Violations"
 
     def analyze(self, architecture_map: ArchitectureMap) -> tuple[FlowViolation, ...]:
         if not architecture_map.realm.module_tag:
@@ -67,6 +73,3 @@ class NoReentryFlowAnalyzer(FlowAnalyzer):
                     exited_modules=next_exited,
                     violations=violations,
                 )
-
-
-__all__ = ["NoReentryFlowAnalyzer"]

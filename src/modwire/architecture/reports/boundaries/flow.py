@@ -1,17 +1,17 @@
 from typing import TYPE_CHECKING, ClassVar
 
-from ...report import ReportCategory, ReportItem
-from ..analyzers import (
+from ..base import ReportCategory, ReportItem
+from ...boundaries.analyzers import (
     BackwardFlowAnalyzer,
     NoCyclesFlowAnalyzer,
     NoReentryFlowAnalyzer,
 )
-from ..base import FlowAnalyzer, FlowViolation
-from ..config import FlowRealm, FlowRules
+from ...boundaries.base import BaseFlowAnalyzer, FlowViolation
+from ...boundaries.config import FlowRealm, FlowRules
 
 
 if TYPE_CHECKING:
-    from ..map import ArchitectureMap
+    from ...map.map import ArchitectureMap
 
 
 class FlowReport(ReportItem):
@@ -55,7 +55,7 @@ class FlowAnalyzerCatalog:
             )
         }
 
-    def analyzer(self, name: str) -> FlowAnalyzer:
+    def analyzer(self, name: str) -> BaseFlowAnalyzer:
         try:
             return self._analyzers[name]
         except KeyError as exc:
@@ -84,7 +84,8 @@ class FlowReportCollector:
         for analyzer_name in analyzer_names:
             analyzer = self.catalog.analyzer(analyzer_name)
             for realm in self.realm_selector.select(flow):
-                violations.extend(analyzer.analyze(architecture_map.with_realm(realm)))
+                violations.extend(analyzer.analyze(
+                    architecture_map.with_realm(realm)))
         return FlowReport(
             violations=tuple(violations),
             analyzers=analyzer_names,

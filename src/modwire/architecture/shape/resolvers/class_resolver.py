@@ -7,13 +7,18 @@ from modwire_extraction.extractors.source import (
     SourceType,
 )
 
-from ..base import ShapeResolver, ShapeViolation
+from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
 from ..config import ShapeConfig
 
 
-class ClassResolver(ShapeResolver):
-    name: str = "class"
-    title: str = "Class Shape"
+class ClassResolver(ShapeResolverInterface, BaseShapeResolver):
+    @property
+    def name(self) -> str:
+        return "class"
+
+    @property
+    def title(self) -> str:
+        return "Class Shape"
 
     def resolve(
         self,
@@ -84,6 +89,7 @@ class ClassResolver(ShapeResolver):
             )
 
         return tuple(violation for violation in violations if violation is not None)
+
 
 
 __all__ = ["ClassResolver"]

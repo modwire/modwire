@@ -1,6 +1,6 @@
 from modwire_extraction.extractors.source import SourceFile
 
-from ..base import ShapeResolver, ShapeViolation
+from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
 from ..config import ShapeConfig
 from .abstract_class_resolver import AbstractClassResolver
 from .callable_resolver import CallableResolver
@@ -9,9 +9,14 @@ from .property_resolver import PropertyResolver
 from .signature_resolver import SignatureResolver
 
 
-class SymbolResolver(ShapeResolver):
-    name: str = "symbol"
-    title: str = "Symbol Shape"
+class SymbolResolver(ShapeResolverInterface, BaseShapeResolver):
+    @property
+    def name(self) -> str:
+        return "symbol"
+
+    @property
+    def title(self) -> str:
+        return "Symbol Shape"
 
     def resolve(
         self,
@@ -29,6 +34,3 @@ class SymbolResolver(ShapeResolver):
         ):
             violations.extend(resolver.resolve(source_id, source_file, config))
         return tuple(violations)
-
-
-__all__ = ["SymbolResolver"]

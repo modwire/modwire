@@ -1,12 +1,17 @@
 from modwire_extraction.extractors.source import SourceClassProperty, SourceFile
 
-from ..base import ShapeResolver, ShapeViolation
+from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
 from ..config import ShapeConfig
 
 
-class PropertyResolver(ShapeResolver):
-    name: str = "property"
-    title: str = "Property Shape"
+class PropertyResolver(ShapeResolverInterface, BaseShapeResolver):
+    @property
+    def name(self) -> str:
+        return "property"
+
+    @property
+    def title(self) -> str:
+        return "Property Shape"
 
     def resolve(
         self,
@@ -76,6 +81,3 @@ class PropertyResolver(ShapeResolver):
             for property_ in properties
             if property_.is_optional
         )
-
-
-__all__ = ["PropertyResolver"]

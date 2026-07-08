@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING, ClassVar
 
 from modwire.shared import ModwireBaseModel
 
-from ...report import ReportCategory, ReportItem
+from ..base import ReportCategory, ReportItem
 
 
 if TYPE_CHECKING:
-    from ..map import ArchitectureMap
+    from ...map.map import ArchitectureMap
 
 
 class ArchitectureGroup(ModwireBaseModel):

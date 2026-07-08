@@ -4,13 +4,18 @@ from modwire_extraction.extractors.source import (
     SourceFunction,
 )
 
-from ..base import ShapeResolver, ShapeViolation
+from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
 from ..config import ShapeConfig
 
 
-class CallableResolver(ShapeResolver):
-    name: str = "callable"
-    title: str = "Callable Shape"
+class CallableResolver(ShapeResolverInterface, BaseShapeResolver):
+    @property
+    def name(self) -> str:
+        return "callable"
+
+    @property
+    def title(self) -> str:
+        return "Callable Shape"
 
     def resolve(
         self,
@@ -124,6 +129,3 @@ class CallableResolver(ShapeResolver):
                 )
             )
         return tuple(violation for violation in violations if violation is not None)
-
-
-__all__ = ["CallableResolver"]

@@ -3,12 +3,19 @@ import abc
 from modwire_extraction.extractors.source import SourceFile
 
 from .config import ShapeConfig
-from .reports import ShapeViolation
+from ..reports.shape import ShapeViolation
 
 
-class ShapeResolver(abc.ABC):
-    name: str
-    title: str
+class ShapeResolverInterface(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def title(self) -> str:
+        raise NotImplementedError
 
     @abc.abstractmethod
     def resolve(
@@ -19,6 +26,8 @@ class ShapeResolver(abc.ABC):
     ) -> tuple[ShapeViolation, ...]:
         raise NotImplementedError
 
+
+class BaseShapeResolver:
     def limit_violation(
         self,
         *,

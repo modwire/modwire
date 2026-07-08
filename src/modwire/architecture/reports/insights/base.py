@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 
 if TYPE_CHECKING:
-    from ..boundaries import ArchitectureMap
+    from ...boundaries import ArchitectureMap
 
 
 class InsightReporter(abc.ABC):

@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING, ClassVar
 
 from pydantic import BaseModel, Field
 
-from ...report import ReportCategory, ReportSection
-from ..base import InsightReporter
+from ..base import ReportCategory, ReportSection
+from .base import InsightReporter
 from .callables import CallablesReport, CallablesReporter
 from .clusters import ClustersReport, ClustersReporter
 from .coherence import CoherenceReport, CoherenceReporter

@@ -1,12 +1,17 @@
 from modwire_extraction.extractors.source import SourceFile
 
-from ..base import ShapeResolver, ShapeViolation
+from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
 from ..config import ShapeConfig
 
 
-class ImportResolver(ShapeResolver):
-    name: str = "import"
-    title: str = "Import Shape"
+class ImportResolver(ShapeResolverInterface, BaseShapeResolver):
+    @property
+    def name(self) -> str:
+        return "import"
+
+    @property
+    def title(self) -> str:
+        return "Import Shape"
 
     def resolve(
         self,
@@ -53,6 +58,3 @@ class ImportResolver(ShapeResolver):
                 )
 
         return tuple(violations)
-
-
-__all__ = ["ImportResolver"]

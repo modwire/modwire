@@ -1,12 +1,17 @@
 from modwire_extraction.extractors.source import SourceFile, SourceSignature
 
-from ..base import ShapeResolver, ShapeViolation
+from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
 from ..config import ShapeConfig
 
 
-class SignatureResolver(ShapeResolver):
-    name: str = "signature"
-    title: str = "Signature Shape"
+class SignatureResolver(ShapeResolverInterface, BaseShapeResolver):
+    @property
+    def name(self) -> str:
+        return "signature"
+
+    @property
+    def title(self) -> str:
+        return "Signature Shape"
 
     def resolve(
         self,
@@ -70,6 +75,3 @@ class SignatureResolver(ShapeResolver):
                 )
             )
         return tuple(violation for violation in violations if violation is not None)
-
-
-__all__ = ["SignatureResolver"]

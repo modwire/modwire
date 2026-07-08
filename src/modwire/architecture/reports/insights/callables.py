@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING, ClassVar
 
 from modwire.shared import ModwireBaseModel
 
-from ...report import ReportCategory, ReportItem
-from ..base import InsightReporter
+from ..base import ReportCategory, ReportItem
+from .base import InsightReporter
 
 
 if TYPE_CHECKING:

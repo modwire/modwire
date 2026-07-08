@@ -1,8 +1,10 @@
 from .config import BoundariesConfig
-from .map import ArchitectureMap, ArchitectureMapLoader
+from .di import BoundariesContainer
+from .tags import TagMatcher
+
 
 __all__ = [
-    "ArchitectureMap",
-    "ArchitectureMapLoader",
     "BoundariesConfig",
+    "BoundariesContainer",
+    "TagMatcher",
 ]

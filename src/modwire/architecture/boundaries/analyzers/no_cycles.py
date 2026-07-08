@@ -1,10 +1,16 @@
-from ..base import FlowAnalyzer, FlowViolation
-from ..map import ArchitectureMap
+from ...map import ArchitectureMap
+from ..base import FlowViolation, FlowAnalyzerInterface
+from .analyzer_base import BaseFlowAnalyzer
 
 
-class NoCyclesFlowAnalyzer(FlowAnalyzer):
-    name: str = "no-cycles"
-    title: str = "Cycle Violations"
+class NoCyclesFlowAnalyzer(FlowAnalyzerInterface, BaseFlowAnalyzer):
+    @property
+    def name(self) -> str:
+        return "no-cycles"
+
+    @property
+    def title(self) -> str:
+        return "Cycle Violations"
 
     def analyze(self, architecture_map: ArchitectureMap) -> tuple[FlowViolation, ...]:
         if not architecture_map.realm.module_tag:
@@ -81,6 +87,3 @@ class NoCyclesFlowAnalyzer(FlowAnalyzer):
         )
         first = min(rotations)
         return (*first, first[0])
-
-
-__all__ = ["NoCyclesFlowAnalyzer"]

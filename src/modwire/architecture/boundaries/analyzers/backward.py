@@ -1,10 +1,16 @@
-from ..base import FlowAnalyzer, FlowViolation
-from ..map import ArchitectureMap
+from ...map import ArchitectureMap
+from ..base import FlowViolation, FlowAnalyzerInterface
+from .analyzer_base import BaseFlowAnalyzer
 
 
-class BackwardFlowAnalyzer(FlowAnalyzer):
-    name: str = "backward-flow"
-    title: str = "Backward Flow Violations"
+class BackwardFlowAnalyzer(FlowAnalyzerInterface, BaseFlowAnalyzer):
+    @property
+    def name(self) -> str:
+        return "backward-flow"
+
+    @property
+    def title(self) -> str:
+        return "Backward Flow Violations"
 
     def analyze(self, architecture_map: ArchitectureMap) -> tuple[FlowViolation, ...]:
         layers = architecture_map.realm.layers
@@ -31,3 +37,4 @@ class BackwardFlowAnalyzer(FlowAnalyzer):
                     )
                 )
         return self.dedupe(violations)
+

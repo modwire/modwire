@@ -2,12 +2,12 @@ from typing import TYPE_CHECKING, ClassVar
 
 from modwire.shared import ModwireBaseModel
 
-from ...report import ReportCategory, ReportItem
+from ..base import ReportCategory, ReportItem
 
 
 if TYPE_CHECKING:
     from ...boundaries import ArchitectureMap
-    from ..base import ShapeResolver
+    from ...shape.base import ShapeResolverInterface
 
 
 class ShapeViolation(ModwireBaseModel):
@@ -37,7 +37,7 @@ class ShapeResolverCatalog:
             for resolver in self.default_resolvers()
         }
 
-    def resolver(self, name: str) -> "ShapeResolver":
+    def resolver(self, name: str) -> "ShapeResolverInterface":
         try:
             return self._resolvers[name]
         except KeyError as exc:
@@ -50,8 +50,8 @@ class ShapeResolverCatalog:
         return tuple(self._resolvers)
 
     @classmethod
-    def default_resolvers(cls) -> tuple["ShapeResolver", ...]:
-        from ..rules import (
+    def default_resolvers(cls) -> tuple["ShapeResolverInterface", ...]:
+        from ...shape.resolvers import (
             AbstractClassResolver,
             CallableResolver,
             ClassResolver,

@@ -1,10 +1,8 @@
-from .backward import BackwardFlowAnalyzer
-from .no_cycles import NoCyclesFlowAnalyzer
-from .no_reentry import NoReentryFlowAnalyzer
+from .catalog import FlowAnalyzerCatalog
+from .di import FlowAnalyzersContainer
 
 
 __all__ = [
-    "BackwardFlowAnalyzer",
-    "NoCyclesFlowAnalyzer",
-    "NoReentryFlowAnalyzer",
+    "FlowAnalyzersContainer",
+    "FlowAnalyzerCatalog",
 ]

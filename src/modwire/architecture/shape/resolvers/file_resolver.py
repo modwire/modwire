@@ -1,12 +1,17 @@
 from modwire_extraction.extractors.source import SourceFile
 
-from ..base import ShapeResolver, ShapeViolation
+from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
 from ..config import ShapeConfig
 
 
-class FileResolver(ShapeResolver):
-    name: str = "file"
-    title: str = "File Shape"
+class FileResolver(ShapeResolverInterface, BaseShapeResolver):
+    @property
+    def name(self) -> str:
+        return "file"
+
+    @property
+    def title(self) -> str:
+        return "File Shape"
 
     def resolve(
         self,
@@ -52,6 +57,3 @@ class FileResolver(ShapeResolver):
             ),
         ]
         return tuple(violation for violation in violations if violation is not None)
-
-
-__all__ = ["FileResolver"]
