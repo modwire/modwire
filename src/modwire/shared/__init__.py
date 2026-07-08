@@ -10,6 +10,8 @@ from .config import (
 
 from .cli import parse_inputs
 
+from . import code
+
 
 __all__ = [
     "ModwireBaseModel",
@@ -17,4 +19,5 @@ __all__ = [
     "ModwireApplication",
     "ConfigResolver",
     "parse_inputs",
+    "code",
 ]

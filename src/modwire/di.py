@@ -3,6 +3,8 @@ from typing import Any
 
 from dependency_injector import containers, providers
 
+from .shared.di import SharedContainer
+
 from .architecture.di import ArchitectureContainer
 from .glossary.di import GlossaryContainer
 from .layers.di import LayersContainer
@@ -17,6 +19,7 @@ class ModwireContainer(containers.DeclarativeContainer):
     cwd = providers.Dependency(instance_of=Path)
     config_resolver = providers.Singleton(ConfigResolver, root=cwd)
 
+    shared = providers.Container(SharedContainer)
     architecture = providers.Container(ArchitectureContainer, config_resolver=config_resolver)
     glossary = providers.Container(GlossaryContainer, cwd=cwd)
     layers = providers.Container(LayersContainer, config_resolver=config_resolver)
