@@ -1,18 +1,17 @@
-from wireup import injectable
+from typing import Annotated
 
-from modwire.shared import ModwireBaseApplication, config
+from wireup import injectable, Inject
+
+from modwire.shared import config
 
 
 @injectable(lifetime="transient")
-class ProjectsApplication(ModwireBaseApplication):
+class ProjectsApplication:
     def __init__(
         self,
-        config: config.ProjectsConfig
+        config: Annotated[config.ProjectsConfig, Inject(config="projects")],
     ):
         self.config = config
-
-    def run(self):
-        print("Running Modwire Projects...")
 
     def init(self, name: str, language: str, package_manager: str):
         pass

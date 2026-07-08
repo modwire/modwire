@@ -1,6 +1,8 @@
-from wireup import injectable
+from typing import Annotated
 
-from modwire.shared import ModwireBaseApplication, config
+from wireup import Inject, injectable
+
+from modwire.shared import config
 
 from .boundaries.analyzer import BoundariesFlowAnalyzer
 from .map.loader import ArchitectureMapLoader
@@ -8,10 +10,10 @@ from .shape.resolvers.catalog import ShapeResolverCatalog
 
 
 @injectable(lifetime="transient")
-class ArchitectureApplication(ModwireBaseApplication):
+class ArchitectureApplication:
     def __init__(
         self,
-        config: config.ArchitectureConfig,
+        config: Annotated[config.ArchitectureConfig, Inject(config="architecture")],
         map_loader: ArchitectureMapLoader,
         flow_analyzer: BoundariesFlowAnalyzer,
         shape_catalog: ShapeResolverCatalog,

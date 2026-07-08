@@ -1,5 +1,7 @@
 from typing import Literal
 
+from pydantic import Field
+
 from .base import ModwireBaseConfig
 
 
@@ -15,4 +17,4 @@ class ModuleLayer(ModwireBaseConfig):
 
 
 class ModulesConfig(ModwireBaseConfig):
-    modules: list[ModuleLayer]
+    modules: list[ModuleLayer] = Field(default_factory=list)

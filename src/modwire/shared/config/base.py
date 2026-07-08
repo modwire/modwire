@@ -1,5 +1,5 @@
-from .. import ModwireBaseModel
+from ..base import ModwireBaseModel
 
 
 class ModwireBaseConfig(ModwireBaseModel):
-    ...
+    pass

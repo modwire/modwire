@@ -1,12 +1,17 @@
-from wireup import injectable
+from typing import Annotated
 
-from modwire.shared import ModwireBaseApplication
+from wireup import injectable, Inject
+
+from modwire.shared import config
 
 
 @injectable(lifetime="transient")
-class LayersApplication(ModwireBaseApplication):
-    def run(self):
-        print("Running Modwire Layers CLI...")
+class LayersApplication:
+    def __init__(
+        self,
+        config: Annotated[config.LayersConfig, Inject(config="layers")],
+    ):
+        self.config = config
 
     def scaffold(self, name: str, layout: str, language: str):
         pass
