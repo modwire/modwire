@@ -1,7 +1,8 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from pydantic import BaseModel, Field
 
+from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportSection
 from .base import InsightReporter
 from .callables import CallablesReport, CallablesReporter
@@ -9,10 +10,6 @@ from .clusters import ClustersReport, ClustersReporter
 from .coherence import CoherenceReport, CoherenceReporter
 from .exports import ExportsReport, ExportsReporter
 from .hotspots import HotspotsReport, HotspotsReporter
-
-
-if TYPE_CHECKING:
-    from ...map import ArchitectureMap
 
 
 class InsightReport(ReportSection):
@@ -79,7 +76,7 @@ class InsightReportCollector:
         self.reporter_names = reporter_names
         self.field_map = InsightReportFieldMap()
 
-    def collect(self, architecture_map: "ArchitectureMap") -> InsightReport:
+    def collect(self, architecture_map: ArchitectureMap) -> InsightReport:
         payload: dict[str, BaseModel] = {}
         for reporter_name in self.reporter_names or self.catalog.names():
             reporter = self.catalog.reporter(reporter_name)

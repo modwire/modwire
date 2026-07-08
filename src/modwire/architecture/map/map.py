@@ -1,3 +1,5 @@
+from typing import Self
+
 from modwire_extraction.code import QueryableCodeMap
 
 from ..config import ArchitectureConfig
@@ -35,7 +37,7 @@ class ArchitectureMap:
         self.layers = layers
         self.unknown_files = unknown_files
 
-    def with_realm(self, realm: FlowRealm) -> "ArchitectureMap":
+    def with_realm(self, realm: FlowRealm) -> Self:
         return ArchitectureMap(
             config=self.config,
             code_map=self.code_map,
@@ -45,6 +47,5 @@ class ArchitectureMap:
             unknown_files=self.unknown_files,
             realm=realm,
         )
-
 
 

@@ -1,23 +1,10 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
-from modwire.shared import ModwireBaseModel
-
+from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
+from ..base import ShapeViolation
 from ..config import ShapeConfig
-
-
-if TYPE_CHECKING:
-    from ...map import ArchitectureMap
-    from ..resolvers import ShapeResolverCatalog
-
-
-class ShapeViolation(ModwireBaseModel):
-    source_id: str
-    rule_name: str
-    actual: int | str | bool
-    limit: int | str | bool
-    symbol_kind: str = ""
-    symbol_name: str = ""
+from ..resolvers import ShapeResolverCatalog
 
 
 class ShapeReport(ReportItem):
@@ -35,12 +22,12 @@ class ShapeReportCollector:
     def __init__(
         self,
         config: ShapeConfig,
-        catalog: "ShapeResolverCatalog",
+        catalog: ShapeResolverCatalog,
     ):
         self.config = config
         self.catalog = catalog
 
-    def collect(self, architecture_map: "ArchitectureMap") -> ShapeReport:
+    def collect(self, architecture_map: ArchitectureMap) -> ShapeReport:
         resolver_names = self.catalog.names()
         violations: list[ShapeViolation] = []
         for resolver_name in resolver_names:

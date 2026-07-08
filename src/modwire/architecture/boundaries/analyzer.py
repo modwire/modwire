@@ -1,4 +1,4 @@
-from ..map import ArchitectureMap
+from ..map.map import ArchitectureMap
 
 from .analyzers import FlowAnalyzerCatalog
 from .base import FlowViolation

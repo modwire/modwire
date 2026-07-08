@@ -1,11 +1,8 @@
 import abc
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-
-if TYPE_CHECKING:
-    from ...map import ArchitectureMap
+from ...map.map import ArchitectureMap
 
 
 class InsightReporter(abc.ABC):
@@ -13,5 +10,5 @@ class InsightReporter(abc.ABC):
     title: str
 
     @abc.abstractmethod
-    def collect(self, architecture_map: "ArchitectureMap") -> BaseModel:
+    def collect(self, architecture_map: ArchitectureMap) -> BaseModel:
         raise NotImplementedError

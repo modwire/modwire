@@ -1,11 +1,8 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
+from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
 from .base import InsightReporter
-
-
-if TYPE_CHECKING:
-    from ...map import ArchitectureMap
 
 
 class CoherenceReport(ReportItem):
@@ -25,7 +22,7 @@ class CoherenceReporter(InsightReporter):
     name: str = "coherence"
     title: str = "Dependency Coherence"
 
-    def collect(self, architecture_map: "ArchitectureMap") -> CoherenceReport:
+    def collect(self, architecture_map: ArchitectureMap) -> CoherenceReport:
         source_ids = set(architecture_map.code_map.source_ids())
         roots: list[str] = []
         leaves: list[str] = []

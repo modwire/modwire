@@ -1,13 +1,10 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from modwire.shared import ModwireBaseModel
 
+from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
 from .base import InsightReporter
-
-
-if TYPE_CHECKING:
-    from ...map import ArchitectureMap
 
 
 class CallableReportEntry(ModwireBaseModel):
@@ -30,7 +27,7 @@ class CallablesReporter(InsightReporter):
     name: str = "callables"
     title: str = "Callable Graph"
 
-    def collect(self, architecture_map: "ArchitectureMap") -> CallablesReport:
+    def collect(self, architecture_map: ArchitectureMap) -> CallablesReport:
         calls_by_source: dict[str, list[str]] = {}
         callers_by_target: dict[str, list[str]] = {}
 

@@ -2,10 +2,10 @@ from dependency_injector import containers, providers
 
 from modwire.shared import ConfigResolver
 
-from .boundaries import BoundariesContainer
-from .insights import InsightsContainer
-from .map import MapContainer
-from .shape import ShapeContainer
+from .boundaries.di import BoundariesContainer
+from .insights.di import InsightsContainer
+from .map.di import MapContainer
+from .shape.di import ShapeContainer
 
 from .app import ArchitectureApplication
 from .config import ArchitectureConfigResolver

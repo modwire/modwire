@@ -1,12 +1,9 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from modwire.shared import ModwireBaseModel
 
+from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
-
-
-if TYPE_CHECKING:
-    from ...map import ArchitectureMap
 
 
 class ArchitectureGroup(ModwireBaseModel):
@@ -27,7 +24,7 @@ class ArchitectureMapReport(ReportItem):
 
 
 class ArchitectureMapReportCollector:
-    def collect(self, architecture_map: "ArchitectureMap") -> ArchitectureMapReport:
+    def collect(self, architecture_map: ArchitectureMap) -> ArchitectureMapReport:
         return ArchitectureMapReport(
             modules=tuple(
                 ArchitectureGroup(name=name, source_ids=source_ids)

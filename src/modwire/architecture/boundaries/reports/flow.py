@@ -1,12 +1,9 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
+from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
 from ..base import FlowViolation
-from ..flow import BoundariesFlowAnalyzer
-
-
-if TYPE_CHECKING:
-    from ...map import ArchitectureMap
+from ..analyzer import BoundariesFlowAnalyzer
 
 
 class FlowReport(ReportItem):
@@ -24,7 +21,7 @@ class FlowReportCollector:
     def __init__(self, flow_analyzer: BoundariesFlowAnalyzer):
         self.flow_analyzer = flow_analyzer
 
-    def collect(self, architecture_map: "ArchitectureMap") -> FlowReport:
+    def collect(self, architecture_map: ArchitectureMap) -> FlowReport:
         return FlowReport(
             violations=self.flow_analyzer.analyze(architecture_map),
             analyzers=self.flow_analyzer.analyzer_names(),

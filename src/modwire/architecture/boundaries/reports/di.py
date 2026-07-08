@@ -1,6 +1,7 @@
 from dependency_injector import containers, providers
 
-from ..flow import BoundariesFlowAnalyzer
+from ..analyzer import BoundariesFlowAnalyzer
+
 from .flow import FlowReportCollector
 from .map import ArchitectureMapReportCollector
 

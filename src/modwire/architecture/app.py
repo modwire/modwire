@@ -1,7 +1,7 @@
 from modwire.shared import ModwireApplication
 
 from .config import ArchitectureConfigResolver
-from .map import ArchitectureMapLoader
+from .map.loader import ArchitectureMapLoader
 
 
 class ArchitectureApplication(ModwireApplication):

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from modwire.shared import ModwireBaseModel
 
-from ..map import ArchitectureMap
+from ..map.map import ArchitectureMap
 
 
 EDGE_RULE_TYPE = "edge-rule"

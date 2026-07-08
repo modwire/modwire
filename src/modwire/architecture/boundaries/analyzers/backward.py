@@ -1,4 +1,4 @@
-from ...map import ArchitectureMap
+from ...map.map import ArchitectureMap
 from ..base import FlowViolation, FlowAnalyzerInterface
 from .analyzer_base import BaseFlowAnalyzer
 
@@ -37,4 +37,3 @@ class BackwardFlowAnalyzer(FlowAnalyzerInterface, BaseFlowAnalyzer):
                     )
                 )
         return self.dedupe(violations)
-

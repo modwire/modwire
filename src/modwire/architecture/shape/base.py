@@ -1,9 +1,18 @@
 import abc
 
 from modwire_extraction.extractors.source import SourceFile
+from modwire.shared import ModwireBaseModel
 
 from .config import ShapeConfig
-from .reports import ShapeViolation
+
+
+class ShapeViolation(ModwireBaseModel):
+    source_id: str
+    rule_name: str
+    actual: int | str | bool
+    limit: int | str | bool
+    symbol_kind: str = ""
+    symbol_name: str = ""
 
 
 class ShapeResolverInterface(abc.ABC):

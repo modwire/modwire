@@ -2,8 +2,8 @@ from pydantic import Field
 
 from modwire.shared import ModwireConfig, ConfigResolver
 
-from .boundaries import BoundariesConfig
-from .shape import ShapeConfig
+from .boundaries.config import BoundariesConfig
+from .shape.config import ShapeConfig
 
 
 class ArchitectureConfig(ModwireConfig):
