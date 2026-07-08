@@ -1,4 +1,10 @@
-from .architecture import ArchitectureConfig, BoundariesConfig, FlowRealm, FlowRules
+from .architecture import (
+    ArchitectureConfig,
+    BoundariesConfig,
+    FlowRealm,
+    FlowRules,
+    TagRule,
+)
 from .layers import LayersConfig
 from .modules import ModulesConfig
 from .modwire import ModwireConfig
@@ -18,4 +24,5 @@ __all__ = [
     "ProjectsConfig",
     "ScaffoldingConfig",
     "ShapeConfig",
+    "TagRule",
 ]

@@ -1,7 +1,25 @@
-import modwire
 import wireup
 
+import modwire.architecture
+import modwire.glossary
+import modwire.layers
+import modwire.modules
+import modwire.projects
+import modwire.scaffolding
+import modwire.shared
+
 from modwire.shared import config
+
+injectables = [
+    modwire.architecture,
+    modwire.glossary,
+    modwire.layers,
+    modwire.modules,
+    modwire.projects,
+    modwire.scaffolding,
+    modwire.shared,
+]
+
 
 class ModwireApplication:
     def __init__(
@@ -31,7 +49,7 @@ class ModwireApplication:
 
         self.config = resolved_config
         self.container = wireup.create_sync_container(
-            injectables=[modwire],
+            injectables=injectables,
             config=resolved_config.as_wireup_config(),
         )
 

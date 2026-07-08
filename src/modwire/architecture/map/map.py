@@ -1,8 +1,8 @@
-from typing import Self
-
 from modwire_extraction.code import QueryableCodeMap
 
 from modwire.shared import config
+
+from ..boundaries.tags import TagMap
 
 
 class ArchitectureMap:
@@ -33,5 +33,4 @@ class ArchitectureMap:
         self.modules = modules
         self.layers = layers
         self.unknown_files = unknown_files
-
 

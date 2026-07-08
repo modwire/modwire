@@ -1,4 +1,6 @@
-from wireup import injectable
+from typing import Annotated
+
+from wireup import Inject, injectable
 
 from modwire.shared import config
 
@@ -33,11 +35,13 @@ class FlowRealmSelector:
 class BoundariesFlowAnalyzer:
     def __init__(
         self,
-        config: config.BoundariesConfig,
+        architecture_config: Annotated[
+            config.ArchitectureConfig, Inject(config="architecture")
+        ],
         catalog: FlowAnalyzerCatalog,
         realm_selector: FlowRealmSelector,
     ):
-        self.config = config
+        self.config = architecture_config.boundaries
         self.catalog = catalog
         self.realm_selector = realm_selector
 

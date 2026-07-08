@@ -1,7 +1,7 @@
 import re
 from collections.abc import Iterable, Callable
 
-from ..config import BoundariesConfig, TagRule
+from modwire.shared.config import BoundariesConfig, TagRule
 from .tag_map import TagMap, TagMatch
 
 

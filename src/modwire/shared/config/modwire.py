@@ -11,8 +11,8 @@ from .scaffolding import ScaffoldingConfig
 
 
 class ModwireConfig(ModwireBaseConfig):
-    architecture: ArchitectureConfig = Field(default_factory=ArchitectureConfig)
-    projects: ProjectsConfig = Field(default_factory=ProjectsConfig)
+    architecture: ArchitectureConfig | None = None
+    projects: ProjectsConfig | None = None
     scaffolding: ScaffoldingConfig = Field(default_factory=ScaffoldingConfig)
     modules: ModulesConfig = Field(default_factory=ModulesConfig)
     layers: LayersConfig = Field(default_factory=LayersConfig)

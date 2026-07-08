@@ -1,6 +1,6 @@
 from modwire_extraction.code import QueryableCodeMap
 
-from ..boundaries.config import FlowRealm
+from modwire.shared.config import FlowRealm
 from ..boundaries.tags import TagMap
 
 

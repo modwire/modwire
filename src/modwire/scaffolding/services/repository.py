@@ -1,16 +1,22 @@
 from pathlib import Path
+from typing import Annotated
 
-from wireup import injectable
+from wireup import Inject, injectable
 
-from modwire.shared import ConfigResolver
+from modwire.shared import config
 
 from .scaffold import Scaffold, ScaffoldGroup
 
 
 @injectable(lifetime="transient")
 class ScaffoldRepository:
-    def __init__(self, config_resolver: ConfigResolver):
-        self.config = config_resolver.scaffolding()
+    def __init__(
+        self,
+        scaffolding_config: Annotated[
+            config.ScaffoldingConfig, Inject(config="scaffolding")
+        ],
+    ):
+        self.config = scaffolding_config
         self.root_dirs = (
             self.config.scaffolds_root,
             Path(__file__).resolve().parents[3] / "scaffoldings",

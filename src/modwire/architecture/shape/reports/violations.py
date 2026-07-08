@@ -1,6 +1,8 @@
-from wireup import injectable
+from typing import Annotated
 
-from modwire.shared import ConfigResolver
+from wireup import Inject, injectable
+
+from modwire.shared import config
 
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
@@ -23,10 +25,12 @@ class ShapeReport(ReportItem):
 class ShapeReportCollector:
     def __init__(
         self,
-        config_resolver: ConfigResolver,
+        architecture_config: Annotated[
+            config.ArchitectureConfig, Inject(config="architecture")
+        ],
         catalog: ShapeResolverCatalog,
     ):
-        self.config = config_resolver.architecture().shape
+        self.config = architecture_config.shape
         self.catalog = catalog
 
     def collect(self, architecture_map: ArchitectureMap) -> ShapeReport:

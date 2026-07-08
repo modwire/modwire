@@ -1,4 +1,4 @@
-from .config import BoundariesConfig
+from modwire.shared.config import BoundariesConfig
 
 
 __all__ = [
