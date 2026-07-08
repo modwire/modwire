@@ -28,11 +28,7 @@ class ModwireBaseModel(BaseModel):
         return cls.model_validate_json(Path(path).read_text(encoding="utf-8"))
 
 
-class ModwireConfig(ModwireBaseModel):
-    ...
-
-
-class ModwireApplication(abc.ABC, Modwire):
+class ModwireBaseApplication(abc.ABC, Modwire):
     @abc.abstractmethod
     def run(self):
         pass

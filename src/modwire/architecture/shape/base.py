@@ -3,7 +3,7 @@ import abc
 from modwire_extraction.extractors.source import SourceFile
 from modwire.shared import ModwireBaseModel
 
-from .config import ShapeConfig
+from ...shared.config.shape import ShapeConfig
 
 
 class ShapeViolation(ModwireBaseModel):

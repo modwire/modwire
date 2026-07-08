@@ -1,18 +1,18 @@
 from typing import Literal
 
-from modwire.shared import ModwireConfig
+from .base import ModwireBaseConfig
 
 
-class ModuleLayout(ModwireConfig):
+class ModuleLayout(ModwireBaseConfig):
     name: str
     context_root: str
     module_root: str
 
 
-class ModuleLayer(ModwireConfig):
+class ModuleLayer(ModwireBaseConfig):
     name: str
     form: Literal["file", "package"]
 
 
-class ModulesConfig(ModwireConfig):
+class ModulesConfig(ModwireBaseConfig):
     modules: list[ModuleLayer]

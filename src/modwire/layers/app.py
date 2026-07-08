@@ -1,10 +1,10 @@
 from wireup import injectable
 
-from modwire.shared import ModwireApplication
+from modwire.shared import ModwireBaseApplication
 
 
 @injectable(lifetime="transient")
-class LayersApplication(ModwireApplication):
+class LayersApplication(ModwireBaseApplication):
     def run(self):
         print("Running Modwire Layers CLI...")
 

@@ -1,20 +1,19 @@
 from wireup import injectable
 
-from modwire.shared import ConfigResolver
+from modwire.shared import config
 
 from ..map.map import ArchitectureMap
 
 from .analyzers import FlowAnalyzerCatalog
 from .base import FlowViolation
-from .config import FlowRealm, FlowRules
 
 
 @injectable
 class FlowRealmSelector:
-    def select(self, flow: FlowRules) -> tuple[FlowRealm, ...]:
+    def select(self, flow: config.FlowRules) -> tuple[config.FlowRealm, ...]:
         if flow.realms:
             return tuple(
-                FlowRealm(
+                config.FlowRealm(
                     name=realm.name,
                     module_tag=realm.module_tag or flow.module_tag,
                     layers=realm.layers or flow.layers,
@@ -23,7 +22,7 @@ class FlowRealmSelector:
             )
 
         return (
-            FlowRealm(
+            config.FlowRealm(
                 module_tag=flow.module_tag,
                 layers=flow.layers,
             ),
@@ -34,11 +33,11 @@ class FlowRealmSelector:
 class BoundariesFlowAnalyzer:
     def __init__(
         self,
-        config_resolver: ConfigResolver,
+        config: config.BoundariesConfig,
         catalog: FlowAnalyzerCatalog,
         realm_selector: FlowRealmSelector,
     ):
-        self.config = config_resolver.architecture().boundaries
+        self.config = config
         self.catalog = catalog
         self.realm_selector = realm_selector
 

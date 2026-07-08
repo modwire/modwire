@@ -1,30 +1,30 @@
 from typing import Literal
 
-from modwire.shared import ModwireConfig
+from .base import ModwireBaseConfig
 
 
-class Argument(ModwireConfig):
+class Argument(ModwireBaseConfig):
     name: str
     type: str
 
 
-class Symbol(ModwireConfig):
+class Symbol(ModwireBaseConfig):
     name: str
     role: Literal["class", "function", "variable"]
     arguments: tuple[Argument, ...] = ()
 
 
-class Component(ModwireConfig):
+class Component(ModwireBaseConfig):
     name: str
     symbols: tuple[Symbol, ...] = ()
 
 
-class Layer(ModwireConfig):
+class Layer(ModwireBaseConfig):
     name: str
     layout: Literal["file", "package"]
     language: Literal["python", "php", "typescript"]
     components: tuple[Component, ...] = ()
 
 
-class LayersConfig(ModwireConfig):
+class LayersConfig(ModwireBaseConfig):
     layers: list[Layer]

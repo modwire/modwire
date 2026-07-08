@@ -1,9 +1,9 @@
 from pydantic import field_validator
 
-from modwire.shared import ModwireConfig
+from .base import ModwireBaseConfig
 
 
-class ShapeConfig(ModwireConfig):
+class ShapeConfig(ModwireBaseConfig):
     max_classes_per_file: int = -1
     max_interfaces_per_file: int = -1
     max_types_per_file: int = -1

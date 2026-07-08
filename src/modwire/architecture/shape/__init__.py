@@ -1,5 +1,5 @@
 from .base import ShapeViolation
-from .config import ShapeConfig
+from ...shared.config.shape import ShapeConfig
 
 
 __all__ = [

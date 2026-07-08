@@ -5,7 +5,7 @@ from modwire_extraction.extractors.source import (
 )
 
 from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
-from ..config import ShapeConfig
+from ....shared.config.shape import ShapeConfig
 
 
 class CallableResolver(ShapeResolverInterface, BaseShapeResolver):

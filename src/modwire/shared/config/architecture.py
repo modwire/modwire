@@ -1,35 +1,44 @@
 from pydantic import Field
 
-from modwire.shared import ModwireConfig
+from .base import ModwireBaseConfig
+
+from .shape import ShapeConfig
 
 
-class TagRule(ModwireConfig):
+class TagRule(ModwireBaseConfig):
     name: str
     match: str
     excluded_patterns: tuple[str, ...] = ()
 
 
-class FlowRealm(ModwireConfig):
+class FlowRealm(ModwireBaseConfig):
     name: str = ""
     module_tag: str = ""
     layers: tuple[str, ...] = ()
 
 
-class FlowRules(ModwireConfig):
+class FlowRules(ModwireBaseConfig):
     layers: tuple[str, ...] = ()
     module_tag: str = ""
     realms: tuple[FlowRealm, ...] = ()
     analyzers: tuple[str, ...] = ()
 
 
-class BoundaryRule(ModwireConfig):
+class BoundaryRule(ModwireBaseConfig):
     source: str
     disallow: tuple[str, ...] = ()
     allow: tuple[str, ...] = ()
     allow_same_match: bool = False
 
 
-class BoundariesConfig(ModwireConfig):
+class BoundariesConfig(ModwireBaseConfig):
     tags: tuple[TagRule, ...] = ()
     rules: tuple[BoundaryRule, ...] = ()
     flow: FlowRules = Field(default_factory=FlowRules)
+
+
+class ArchitectureConfig(ModwireBaseConfig):
+    language: str
+    exclusions: tuple[str, ...] = ()
+    boundaries: BoundariesConfig = Field(default_factory=BoundariesConfig)
+    shape: ShapeConfig = Field(default_factory=ShapeConfig)

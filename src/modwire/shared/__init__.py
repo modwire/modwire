@@ -1,7 +1,7 @@
 from .base import (
-    ModwireBaseModel, 
-    ModwireConfig, 
-    ModwireApplication,
+    ModwireBaseModel,
+    ModwireBaseConfig,
+    ModwireBaseApplication,
 )
 
 from .config import (
@@ -15,8 +15,8 @@ from . import code
 
 __all__ = [
     "ModwireBaseModel",
-    "ModwireConfig",
-    "ModwireApplication",
+    "ModwireBaseConfig",
+    "ModwireBaseApplication",
     "ConfigResolver",
     "parse_inputs",
     "code",

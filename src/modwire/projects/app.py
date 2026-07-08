@@ -1,12 +1,15 @@
 from wireup import injectable
 
-from modwire.shared import ConfigResolver, ModwireApplication
+from modwire.shared import ModwireBaseApplication, config
 
 
 @injectable(lifetime="transient")
-class ProjectsApplication(ModwireApplication):
-    def __init__(self, config_resolver: ConfigResolver):
-        self.config = config_resolver.projects()
+class ProjectsApplication(ModwireBaseApplication):
+    def __init__(
+        self,
+        config: config.ProjectsConfig
+    ):
+        self.config = config
 
     def run(self):
         print("Running Modwire Projects...")

@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from modwire.shared import ModwireConfig
+from .base import ModwireBaseConfig
 
 
-class ScaffoldingConfig(ModwireConfig):
+class ScaffoldingConfig(ModwireBaseConfig):
     scaffolds_root: Path
     template_dir: str = "templates"
