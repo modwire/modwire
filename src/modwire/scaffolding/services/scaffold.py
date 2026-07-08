@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 
 from copier import run_copy
 
-from modwire.shared import code
+from modwire.shared.code import package
 
 
 class Scaffold:
@@ -24,7 +24,7 @@ class Scaffold:
     def scaffold_id(self) -> str:
         return f"{self.root.parent.name}/{self.root.name}"
 
-    def build_package(self, **kwargs) -> code.CodePackage:
+    def build_package(self, **kwargs) -> package.CodePackage:
         with TemporaryDirectory() as temporary_directory:
             temporary_path = Path(temporary_directory)
             
@@ -43,7 +43,7 @@ class Scaffold:
                 if path.is_file()
             }
 
-        return code.CodePackage(files=files)
+        return package.CodePackage(files=files)
 
 
 class ScaffoldGroup:

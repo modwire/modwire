@@ -8,7 +8,6 @@ from ..boundaries.tags import TagMap
 
 
 class ArchitectureMap:
-    config: ArchitectureConfig
     realm: FlowRealm
     code_map: QueryableCodeMap
     tag_map: TagMap
