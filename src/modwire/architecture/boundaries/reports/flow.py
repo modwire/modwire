@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, ClassVar
 
-from ...reports.base import ReportCategory, ReportItem
+from ...base import ReportCategory, ReportItem
 from ..base import FlowViolation
 from ..flow import BoundariesFlowAnalyzer
 

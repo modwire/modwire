@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from pydantic import BaseModel, Field
 
-from ...reports.base import ReportCategory, ReportSection
+from ...base import ReportCategory, ReportSection
 from .base import InsightReporter
 from .callables import CallablesReport, CallablesReporter
 from .clusters import ClustersReport, ClustersReporter
