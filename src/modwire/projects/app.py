@@ -1,7 +1,12 @@
 from modwire.shared import ModwireApplication
 
+from .config import ProjectsConfig
+
 
 class ProjectsApplication(ModwireApplication):
+    def __init__(self, config: ProjectsConfig):
+        self.config = config
+
     def run(self):
         print("Running Modwire Projects...")
 

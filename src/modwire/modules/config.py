@@ -1,6 +1,6 @@
 from typing import Literal
 
-from modwire.shared import ModwireConfig, ConfigResolver
+from modwire.shared import ModwireConfig
 
 
 class ModuleLayout(ModwireConfig):
@@ -16,15 +16,3 @@ class ModuleLayer(ModwireConfig):
 
 class ModulesConfig(ModwireConfig):
     modules: list[ModuleLayer]
-
-
-class ModulesConfigResolver:
-    def __init__(self, config_resolver: ConfigResolver):
-        self.config_resolver = config_resolver
-
-    def resolve(self) -> ModulesConfig:
-        return self.config_resolver.load(
-            "modules",
-            ModulesConfig,
-            "yaml",
-        )

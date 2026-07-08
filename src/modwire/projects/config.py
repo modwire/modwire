@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from modwire.shared import ModwireConfig, ConfigResolver
+from modwire.shared import ModwireConfig
 
 
 class ProjectLayout(ModwireConfig):
@@ -25,15 +25,3 @@ class ProjectsConfig(ModwireConfig):
     name: str
     stack: ProjectStack
     layout: ProjectLayout
-
-
-class ProjectsConfigResolver:
-    def __init__(self, config_resolver: ConfigResolver):
-        self.config_resolver = config_resolver
-
-    def resolve(self) -> ProjectsConfig:
-        return self.config_resolver.load(
-            "projects",
-            ProjectsConfig,
-            "yaml",
-        )
