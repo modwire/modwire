@@ -7,6 +7,7 @@ from .modules.cli import modules
 from .layers.cli import layers
 from .architecture.cli import architecture
 from .scaffolding.cli import scaffolding
+from .app import application, container
 
 
 class ModwireGroup(click.Group):
@@ -17,20 +18,23 @@ class ModwireGroup(click.Group):
             raise click.ClickException(str(error)) from error
 
 
-@click.group(cls=ModwireGroup)
+@click.group(cls=ModwireGroup, invoke_without_command=True, no_args_is_help=False)
 @click.pass_context
 def cli(ctx):
     ctx.obj = container
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        ctx.exit(0)
 
 
 cli.add_command(glossary)
 cli.add_command(projects)
 cli.add_command(modules)
 cli.add_command(layers)
-cli.add_command(architecture)
 cli.add_command(scaffolding)
 
-from .app import container  # noqa: E402
+if application.config.architecture is not None:
+    cli.add_command(architecture)
 
 wireup.integration.click.setup(container, cli)
 
