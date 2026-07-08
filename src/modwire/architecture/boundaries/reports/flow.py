@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
 from ..base import FlowViolation
@@ -7,11 +5,11 @@ from ..analyzer import BoundariesFlowAnalyzer
 
 
 class FlowReport(ReportItem):
-    report_id: ClassVar[str] = "architecture.violations.flow"
-    report_title: ClassVar[str] = "Dependency Flow"
-    report_category: ClassVar[ReportCategory] = ReportCategory.FLOW
-    report_path: ClassVar[str] = "violations.flow"
-    report_order: ClassVar[int] = 10
+    report_id: str = "architecture.violations.flow"
+    report_title: str = "Dependency Flow"
+    report_category: ReportCategory = ReportCategory.FLOW
+    report_path: str = "violations.flow"
+    report_order: int = 10
 
     violations: tuple[FlowViolation, ...] = ()
     analyzers: tuple[str, ...] = ()

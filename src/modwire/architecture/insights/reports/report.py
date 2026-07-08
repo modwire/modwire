@@ -1,9 +1,7 @@
-from typing import ClassVar
-
 from pydantic import BaseModel, Field
 
 from ...map.map import ArchitectureMap
-from ...base import ReportCategory, ReportSection
+from ...base import ReportCategory, ReportItem, ReportSection
 from .base import InsightReporter
 from .callables import CallablesReport, CallablesReporter
 from .clusters import ClustersReport, ClustersReporter
@@ -13,17 +11,20 @@ from .hotspots import HotspotsReport, HotspotsReporter
 
 
 class InsightReport(ReportSection):
-    report_id: ClassVar[str] = "architecture.insights"
-    report_title: ClassVar[str] = "Architecture Insights"
-    report_category: ClassVar[ReportCategory] = ReportCategory.INSIGHTS
-    report_path: ClassVar[str] = "insights"
-    report_order: ClassVar[int] = 30
-    report_children: ClassVar = (
-        ClustersReport,
-        HotspotsReport,
-        CoherenceReport,
-        CallablesReport,
-        ExportsReport,
+    report_id: str = "architecture.insights"
+    report_title: str = "Architecture Insights"
+    report_category: ReportCategory = ReportCategory.INSIGHTS
+    report_path: str = "insights"
+    report_order: int = 30
+    report_children: tuple[type[ReportItem], ...] = Field(
+        default=(
+            ClustersReport,
+            HotspotsReport,
+            CoherenceReport,
+            CallablesReport,
+            ExportsReport,
+        ),
+        exclude=True,
     )
 
     clusters: ClustersReport = Field(default_factory=ClustersReport)

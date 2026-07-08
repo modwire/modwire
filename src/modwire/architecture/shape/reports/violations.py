@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
 from ..base import ShapeViolation
@@ -8,11 +6,11 @@ from ..resolvers import ShapeResolverCatalog
 
 
 class ShapeReport(ReportItem):
-    report_id: ClassVar[str] = "architecture.violations.shape"
-    report_title: ClassVar[str] = "Shape Violations"
-    report_category: ClassVar[ReportCategory] = ReportCategory.SHAPE
-    report_path: ClassVar[str] = "violations.shape"
-    report_order: ClassVar[int] = 20
+    report_id: str = "architecture.violations.shape"
+    report_title: str = "Shape Violations"
+    report_category: ReportCategory = ReportCategory.SHAPE
+    report_path: str = "violations.shape"
+    report_order: int = 20
 
     violations: tuple[ShapeViolation, ...] = ()
     resolvers: tuple[str, ...] = ()

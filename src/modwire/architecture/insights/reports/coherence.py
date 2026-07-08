@@ -1,16 +1,14 @@
-from typing import ClassVar
-
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
 from .base import InsightReporter
 
 
 class CoherenceReport(ReportItem):
-    report_id: ClassVar[str] = "architecture.insights.coherence"
-    report_title: ClassVar[str] = "Dependency Coherence"
-    report_category: ClassVar[ReportCategory] = ReportCategory.INSIGHT
-    report_path: ClassVar[str] = "insights.coherence"
-    report_order: ClassVar[int] = 30
+    report_id: str = "architecture.insights.coherence"
+    report_title: str = "Dependency Coherence"
+    report_category: ReportCategory = ReportCategory.INSIGHT
+    report_path: str = "insights.coherence"
+    report_order: int = 30
 
     roots: tuple[str, ...] = ()
     leaves: tuple[str, ...] = ()

@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from modwire.shared import ModwireBaseModel
 
 from ...map.map import ArchitectureMap
@@ -12,11 +10,11 @@ class ArchitectureGroup(ModwireBaseModel):
 
 
 class ArchitectureMapReport(ReportItem):
-    report_id: ClassVar[str] = "architecture.map"
-    report_title: ClassVar[str] = "Architecture Map"
-    report_category: ClassVar[ReportCategory] = ReportCategory.MAP
-    report_path: ClassVar[str] = "map"
-    report_order: ClassVar[int] = 10
+    report_id: str = "architecture.map"
+    report_title: str = "Architecture Map"
+    report_category: ReportCategory = ReportCategory.MAP
+    report_path: str = "map"
+    report_order: int = 10
 
     modules: tuple[ArchitectureGroup, ...] = ()
     layers: tuple[ArchitectureGroup, ...] = ()

@@ -1,5 +1,7 @@
 from enum import StrEnum
-from typing import ClassVar, Generic, Protocol, TypeVar
+from typing import Any, Generic, Protocol, TypeVar
+
+from pydantic import Field
 
 from modwire.shared import ModwireBaseModel
 
@@ -34,35 +36,45 @@ class ReportMetadata(ModwireBaseModel):
 
 
 class ReportNode(ModwireBaseModel):
-    report_id: ClassVar[str]
-    report_title: ClassVar[str]
-    report_category: ClassVar[ReportCategory]
-    report_path: ClassVar[str] = ""
-    report_order: ClassVar[int] = 100
-    report_children: ClassVar[tuple[type["ReportNode"], ...]] = ()
+    report_id: str
+    report_title: str
+    report_category: ReportCategory
+    report_path: str = ""
+    report_order: int = 100
+    report_children: tuple[type["ReportNode"], ...] = Field(default=(), exclude=True)
 
     @classmethod
     def report_slug(cls) -> str:
-        return cls.report_id.rsplit(".", 1)[-1]
+        return cls.report_field("report_id").rsplit(".", 1)[-1]
 
     @classmethod
     def report_metadata(cls) -> ReportMetadata:
+        report_children = cls.report_field("report_children")
         children = tuple(
             child.report_metadata()
             for child in sorted(
-                cls.report_children,
-                key=lambda child: (child.report_order, child.report_id),
+                report_children,
+                key=lambda child: (
+                    child.report_field("report_order"),
+                    child.report_field("report_id"),
+                ),
             )
         )
+        report_id = cls.report_field("report_id")
+        report_path = cls.report_field("report_path")
         return ReportMetadata(
-            id=cls.report_id,
-            title=cls.report_title,
-            category=cls.report_category,
+            id=report_id,
+            title=cls.report_field("report_title"),
+            category=cls.report_field("report_category"),
             model=f"{cls.__module__}.{cls.__qualname__}",
-            path=cls.report_path or cls.report_id,
-            order=cls.report_order,
+            path=report_path or report_id,
+            order=cls.report_field("report_order"),
             children=children,
         )
+
+    @classmethod
+    def report_field(cls, field_name: str) -> Any:
+        return cls.model_fields[field_name].default
 
 
 class ReportSection(ReportNode):
@@ -70,7 +82,7 @@ class ReportSection(ReportNode):
 
 
 class ReportItem(ReportNode):
-    report_category: ClassVar[ReportCategory] = ReportCategory.ITEM
+    report_category: ReportCategory = ReportCategory.ITEM
 
 
 __all__ = [

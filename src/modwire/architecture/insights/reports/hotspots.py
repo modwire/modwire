@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from modwire.shared import ModwireBaseModel
 
 from ...map.map import ArchitectureMap
@@ -15,11 +13,11 @@ class HotspotsReportItem(ModwireBaseModel):
 
 
 class HotspotsReport(ReportItem):
-    report_id: ClassVar[str] = "architecture.insights.hotspots"
-    report_title: ClassVar[str] = "Dependency Hotspots"
-    report_category: ClassVar[ReportCategory] = ReportCategory.INSIGHT
-    report_path: ClassVar[str] = "insights.hotspots"
-    report_order: ClassVar[int] = 20
+    report_id: str = "architecture.insights.hotspots"
+    report_title: str = "Dependency Hotspots"
+    report_category: ReportCategory = ReportCategory.INSIGHT
+    report_path: str = "insights.hotspots"
+    report_order: int = 20
 
     hotspots: tuple[HotspotsReportItem, ...] = ()
 
