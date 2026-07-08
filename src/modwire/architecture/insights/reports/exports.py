@@ -2,13 +2,12 @@ from typing import TYPE_CHECKING, ClassVar
 
 from modwire.shared import ModwireBaseModel
 
-from ..base import ReportCategory, ReportItem
-
+from ...reports.base import ReportCategory, ReportItem
 from .base import InsightReporter
 
 
 if TYPE_CHECKING:
-    from ...boundaries import ArchitectureMap
+    from ...map import ArchitectureMap
 
 
 class ExportsReportItem(ModwireBaseModel):
@@ -33,7 +32,7 @@ class ExportsReporter(InsightReporter):
     name: str = "unused-exports"
     title: str = "Unused Exports"
 
-    def collect(self, architecture_map: ArchitectureMap) -> ExportsReport:
+    def collect(self, architecture_map: "ArchitectureMap") -> ExportsReport:
         imported_names = self.imported_names(architecture_map)
         unused_exports = tuple(
             ExportsReportItem(
@@ -52,7 +51,7 @@ class ExportsReporter(InsightReporter):
         )
         return ExportsReport(unused_exports=unused_exports)
 
-    def imported_names(self, architecture_map: ArchitectureMap) -> set[str]:
+    def imported_names(self, architecture_map: "ArchitectureMap") -> set[str]:
         imported_names: set[str] = set()
         for import_result in architecture_map.code_map.imports().all():
             imported_name = import_result.item.imported_name

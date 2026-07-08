@@ -2,13 +2,12 @@ from typing import TYPE_CHECKING, ClassVar
 
 from modwire.shared import ModwireBaseModel
 
-from ..base import ReportCategory, ReportItem
-
+from ...reports.base import ReportCategory, ReportItem
 from .base import InsightReporter
 
 
 if TYPE_CHECKING:
-    from ...boundaries import ArchitectureMap
+    from ...map import ArchitectureMap
 
 
 class ClustersReportItem(ModwireBaseModel):
@@ -36,7 +35,7 @@ class ClustersReporter(InsightReporter):
     group_depth: int = 2
     top_file_limit: int = 5
 
-    def collect(self, architecture_map: ArchitectureMap) -> ClustersReport:
+    def collect(self, architecture_map: "ArchitectureMap") -> ClustersReport:
         source_ids = architecture_map.code_map.source_ids()
         file_sets: dict[str, list[str]] = {}
         for source_id in source_ids:
@@ -78,7 +77,7 @@ class ClustersReporter(InsightReporter):
 
     def incoming_count(
         self,
-        architecture_map: ArchitectureMap,
+        architecture_map: "ArchitectureMap",
         files: tuple[str, ...],
     ) -> int:
         file_set = set(files)
@@ -91,7 +90,7 @@ class ClustersReporter(InsightReporter):
 
     def outgoing_count(
         self,
-        architecture_map: ArchitectureMap,
+        architecture_map: "ArchitectureMap",
         files: tuple[str, ...],
     ) -> int:
         file_set = set(files)
@@ -104,7 +103,7 @@ class ClustersReporter(InsightReporter):
 
     def top_files(
         self,
-        architecture_map: ArchitectureMap,
+        architecture_map: "ArchitectureMap",
         files: tuple[str, ...],
     ) -> tuple[str, ...]:
         return tuple(
@@ -117,7 +116,7 @@ class ClustersReporter(InsightReporter):
             )[: self.top_file_limit]
         )
 
-    def file_pressure(self, architecture_map: ArchitectureMap, source_id: str) -> int:
+    def file_pressure(self, architecture_map: "ArchitectureMap", source_id: str) -> int:
         return (
             architecture_map.code_map.incoming_dependencies(source_id).count()
             + architecture_map.code_map.outgoing_dependencies(source_id).count()

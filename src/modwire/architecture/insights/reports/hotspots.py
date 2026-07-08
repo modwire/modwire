@@ -2,13 +2,12 @@ from typing import TYPE_CHECKING, ClassVar
 
 from modwire.shared import ModwireBaseModel
 
-from ..base import ReportCategory, ReportItem
-
+from ...reports.base import ReportCategory, ReportItem
 from .base import InsightReporter
 
 
 if TYPE_CHECKING:
-    from ...boundaries import ArchitectureMap
+    from ...map import ArchitectureMap
 
 
 class HotspotsReportItem(ModwireBaseModel):
@@ -32,7 +31,7 @@ class HotspotsReporter(InsightReporter):
     name: str = "hotspots"
     title: str = "Dependency Hotspots"
 
-    def collect(self, architecture_map: ArchitectureMap) -> HotspotsReport:
+    def collect(self, architecture_map: "ArchitectureMap") -> HotspotsReport:
         hotspots = tuple(
             sorted(
                 (
@@ -49,11 +48,15 @@ class HotspotsReporter(InsightReporter):
 
     def hotspot_for(
         self,
-        architecture_map: ArchitectureMap,
+        architecture_map: "ArchitectureMap",
         source_id: str,
     ) -> HotspotsReportItem:
-        incoming_count = architecture_map.code_map.incoming_dependencies(source_id).count()
-        outgoing_count = architecture_map.code_map.outgoing_dependencies(source_id).count()
+        incoming_count = architecture_map.code_map.incoming_dependencies(
+            source_id
+        ).count()
+        outgoing_count = architecture_map.code_map.outgoing_dependencies(
+            source_id
+        ).count()
         return HotspotsReportItem(
             source_id=source_id,
             incoming_count=incoming_count,

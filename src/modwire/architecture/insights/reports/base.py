@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 
 if TYPE_CHECKING:
-    from ...boundaries import ArchitectureMap
+    from ...map import ArchitectureMap
 
 
 class InsightReporter(abc.ABC):
@@ -13,5 +13,5 @@ class InsightReporter(abc.ABC):
     title: str
 
     @abc.abstractmethod
-    def collect(self, architecture_map: ArchitectureMap) -> BaseModel:
+    def collect(self, architecture_map: "ArchitectureMap") -> BaseModel:
         raise NotImplementedError

@@ -5,6 +5,7 @@ from modwire.shared import ConfigResolver
 from .app import ArchitectureApplication
 from .boundaries import BoundariesContainer
 from .config import ArchitectureConfigResolver
+from .insights import InsightsContainer
 from .map import ArchitectureMapContainer
 from .shape.di import ShapeContainer
 
@@ -41,6 +42,8 @@ class ArchitectureContainer(containers.DeclarativeContainer):
         ShapeContainer,
         config=shape_config,
     )
+
+    insights = providers.Container(InsightsContainer)
 
     map = providers.Container(
         ArchitectureMapContainer,
