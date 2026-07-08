@@ -27,7 +27,7 @@ class FlowRealmSelector:
 
 class BoundariesFlowAnalyzer:
     def __init__(
-        self, 
+        self,
         config: BoundariesConfig,
         catalog: FlowAnalyzerCatalog,
         realm_selector: FlowRealmSelector,
@@ -36,11 +36,13 @@ class BoundariesFlowAnalyzer:
         self.catalog = catalog
         self.realm_selector = realm_selector
 
+    def analyzer_names(self) -> tuple[str, ...]:
+        return self.config.flow.analyzers or self.catalog.names()
+
     def analyze(self, architecture_map: ArchitectureMap) -> tuple[FlowViolation, ...]:
-        analyzer_names = self.config.flow.analyzers or self.catalog.names()
         violations: list[FlowViolation] = []
 
-        for analyzer_name in analyzer_names:
+        for analyzer_name in self.analyzer_names():
             analyzer = self.catalog.analyzer(analyzer_name)
             for realm in self.realm_selector.select(self.config.flow):
                 violations.extend(analyzer.analyze(architecture_map.with_realm(realm)))

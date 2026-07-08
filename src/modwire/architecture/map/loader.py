@@ -1,6 +1,6 @@
 from modwire_extraction.code import QueryableCodeMap
 
-from ..boundaries import TagMatcher
+from ..boundaries.tags import TagMatcher
 from ..config import ArchitectureConfig
 
 from .map import ArchitectureMap
