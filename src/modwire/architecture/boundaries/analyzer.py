@@ -2,7 +2,7 @@ from typing import Annotated
 
 from wireup import Inject, injectable
 
-from modwire.shared import config
+from modwire.shared.config import ArchitectureConfig, FlowRules, FlowRealm
 
 from ..map.map import ArchitectureMap
 
@@ -12,10 +12,10 @@ from .base import FlowViolation
 
 @injectable
 class FlowRealmSelector:
-    def select(self, flow: config.FlowRules) -> tuple[config.FlowRealm, ...]:
+    def select(self, flow: FlowRules) -> tuple[FlowRealm, ...]:
         if flow.realms:
             return tuple(
-                config.FlowRealm(
+                FlowRealm(
                     name=realm.name,
                     module_tag=realm.module_tag or flow.module_tag,
                     layers=realm.layers or flow.layers,
@@ -24,7 +24,7 @@ class FlowRealmSelector:
             )
 
         return (
-            config.FlowRealm(
+            FlowRealm(
                 module_tag=flow.module_tag,
                 layers=flow.layers,
             ),
@@ -35,13 +35,11 @@ class FlowRealmSelector:
 class BoundariesFlowAnalyzer:
     def __init__(
         self,
-        architecture_config: Annotated[
-            config.ArchitectureConfig, Inject(config="architecture")
-        ],
+        config: Annotated[ ArchitectureConfig, Inject(config="architecture") ],
         catalog: FlowAnalyzerCatalog,
         realm_selector: FlowRealmSelector,
     ):
-        self.config = architecture_config.boundaries
+        self.config = config.boundaries
         self.catalog = catalog
         self.realm_selector = realm_selector
 

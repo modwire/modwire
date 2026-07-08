@@ -22,6 +22,3 @@ class ArchitectureApplication:
         self.map_loader = map_loader
         self.flow_analyzer = flow_analyzer
         self.shape_catalog = shape_catalog
-
-    def run(self):
-        pass

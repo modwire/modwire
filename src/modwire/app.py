@@ -10,16 +10,6 @@ import modwire.shared
 
 from modwire.shared import config
 
-injectables = [
-    modwire.architecture,
-    modwire.glossary,
-    modwire.layers,
-    modwire.modules,
-    modwire.projects,
-    modwire.scaffolding,
-    modwire.shared,
-]
-
 
 class ModwireApplication:
     def __init__(
@@ -48,6 +38,19 @@ class ModwireApplication:
             resolved_config = resolved_config.model_copy(update=updates)
 
         self.config = resolved_config
+        
+        injectables = [
+            modwire.glossary,
+            modwire.layers,
+            modwire.modules,
+            modwire.projects,
+            modwire.scaffolding,
+            modwire.shared,
+        ]
+
+        if resolved_config.architecture is not None:
+            injectables.append(modwire.architecture)
+
         self.container = wireup.create_sync_container(
             injectables=injectables,
             config=resolved_config.as_wireup_config(),

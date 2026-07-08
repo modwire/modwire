@@ -12,13 +12,13 @@ from .scaffolding import ScaffoldingConfig
 
 class ModwireConfig(ModwireBaseConfig):
     architecture: ArchitectureConfig | None = None
-    projects: ProjectsConfig | None = None
+    projects: ProjectsConfig = Field(default_factory=ProjectsConfig)
     scaffolding: ScaffoldingConfig = Field(default_factory=ScaffoldingConfig)
     modules: ModulesConfig = Field(default_factory=ModulesConfig)
     layers: LayersConfig = Field(default_factory=LayersConfig)
 
     def as_wireup_config(self) -> dict[str, Any]:
-        return {
+        values = {
             "modwire": self,
             "architecture": self.architecture,
             "projects": self.projects,
@@ -26,3 +26,4 @@ class ModwireConfig(ModwireBaseConfig):
             "modules": self.modules,
             "layers": self.layers,
         }
+        return {key: value for key, value in values.items() if value is not None}
