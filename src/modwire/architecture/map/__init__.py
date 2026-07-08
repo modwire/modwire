@@ -1,10 +1,10 @@
-from .di import ArchitectureMapContainer
+from .di import MapContainer
 from .map import ArchitectureMap
 from .loader import ArchitectureMapLoader
 
 
 __all__ = [
     "ArchitectureMap",
-    "ArchitectureMapContainer",
+    "MapContainer",
     "ArchitectureMapLoader",
 ]

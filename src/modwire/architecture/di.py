@@ -2,12 +2,13 @@ from dependency_injector import containers, providers
 
 from modwire.shared import ConfigResolver
 
-from .app import ArchitectureApplication
 from .boundaries import BoundariesContainer
-from .config import ArchitectureConfigResolver
 from .insights import InsightsContainer
-from .map import ArchitectureMapContainer
-from .shape.di import ShapeContainer
+from .map import MapContainer
+from .shape import ShapeContainer
+
+from .app import ArchitectureApplication
+from .config import ArchitectureConfigResolver
 
 
 class ArchitectureContainer(containers.DeclarativeContainer):
@@ -46,7 +47,7 @@ class ArchitectureContainer(containers.DeclarativeContainer):
     insights = providers.Container(InsightsContainer)
 
     map = providers.Container(
-        ArchitectureMapContainer,
+        MapContainer,
         config=config,
     )
 

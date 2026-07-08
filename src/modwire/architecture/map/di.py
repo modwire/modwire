@@ -4,6 +4,6 @@ from ..config import ArchitectureConfig
 from .loader import ArchitectureMapLoader
 
 
-class ArchitectureMapContainer(containers.DeclarativeContainer):
+class MapContainer(containers.DeclarativeContainer):
     config = providers.Dependency(instance_of=ArchitectureConfig)
     loader = providers.Factory(ArchitectureMapLoader, config=config)
