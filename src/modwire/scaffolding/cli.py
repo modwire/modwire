@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 
-from ..shared import cli_tools
+from ..shared.cli import parse_inputs
 
 from ..di import load_app
 
@@ -25,5 +25,5 @@ def generate(
     data_items: tuple[str, ...],
 ):
     app = load_app(container, "scaffolding")
-    app.generate(name, destination, cli_tools.parse_inputs(data_items))
+    app.generate(name, destination, parse_inputs(data_items))
     click.echo(f"Generated scaffold {name} at {destination}")

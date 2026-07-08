@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from .services.scaffold import Scaffold
 from .services import ScaffoldRepository, CodePackage, CodePackageWriter
 
 
@@ -14,7 +13,10 @@ class ScaffoldingApplication:
         self.writer = writer
 
     def build_package(self, scaffold_id: str, data: dict[str, str]) -> CodePackage:
-        group, name = scaffold_id.split(".", maxsplit=1)
+        group, separator, name = scaffold_id.partition("/")
+        if not separator or not group or not name:
+            raise ValueError(f"Invalid scaffold id {scaffold_id!r}. Expected group/name.")
+
         scaffold = self.repository.get_scaffold(group, name)
         return scaffold.build_package(**data)
 

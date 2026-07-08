@@ -4,6 +4,7 @@ from pathlib import Path
 
 from .di import ModwireContainer
 
+from .glossary.cli import glossary
 from .projects.cli import projects
 from .modules.cli import modules
 from .layers.cli import layers
@@ -32,6 +33,7 @@ def cli(ctx, cwd: Path | None):
     ctx.obj = container
 
 
+cli.add_command(glossary)
 cli.add_command(projects)
 cli.add_command(modules)
 cli.add_command(layers)

@@ -4,6 +4,7 @@ from typing import Any
 from dependency_injector import containers, providers
 
 from .architecture.di import ArchitectureContainer
+from .glossary.di import GlossaryContainer
 from .layers.di import LayersContainer
 from .modules.di import ModulesContainer
 from .projects.di import ProjectsContainer
@@ -17,6 +18,7 @@ class ModwireContainer(containers.DeclarativeContainer):
     config_resolver = providers.Singleton(ConfigResolver, root=cwd)
 
     architecture = providers.Container(ArchitectureContainer, config_resolver=config_resolver)
+    glossary = providers.Container(GlossaryContainer, cwd=cwd)
     layers = providers.Container(LayersContainer, config_resolver=config_resolver)
     modules = providers.Container(ModulesContainer, config_resolver=config_resolver)
     projects = providers.Container(ProjectsContainer, config_resolver=config_resolver)
@@ -26,6 +28,7 @@ class ModwireContainer(containers.DeclarativeContainer):
 def load_app(container: ModwireContainer, name: str) -> Any:
     apps = {
         "architecture": lambda: container.architecture.app(),
+        "glossary": lambda: container.glossary.app(),
         "layers": lambda: container.layers.app(),
         "modules": lambda: container.modules.app(),
         "projects": lambda: container.projects.app(),

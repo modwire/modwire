@@ -1,19 +1,19 @@
-from pathlib import Path
-
 import click
 
-from ..glossary import GlossaryApplication
+from ..di import load_app
+from .app import GlossaryApplication
 
 
 @click.group()
 @click.pass_context
 def glossary(ctx):
-    ctx.obj = GlossaryApplication(Path.cwd())
+    ctx.obj = ctx.find_root().obj
 
 
 @glossary.command()
 @click.pass_obj
-def list_terms(app: GlossaryApplication):
+def list_terms(container):
+    app: GlossaryApplication = load_app(container, "glossary")
     app.list_terms()
 
 
@@ -26,7 +26,7 @@ def list_terms(app: GlossaryApplication):
 @click.option("--parent-id", default="")
 @click.pass_obj
 def add_term(
-    app: GlossaryApplication,
+    container,
     term: str,
     definition: str,
     aliases: tuple[str, ...],
@@ -34,6 +34,7 @@ def add_term(
     sources: tuple[str, ...],
     parent_id: str,
 ):
+    app: GlossaryApplication = load_app(container, "glossary")
     glossary_term = app.add_term(
         term=term,
         definition=definition,
@@ -51,11 +52,12 @@ def add_term(
 @click.argument("new_value")
 @click.pass_obj
 def update_term_data(
-    app: GlossaryApplication,
+    container,
     term_id: str,
     key: str,
     new_value: str,
 ):
+    app: GlossaryApplication = load_app(container, "glossary")
     app.update_term_data(term_id, key, new_value)
 
 
@@ -63,12 +65,14 @@ def update_term_data(
 @click.argument("term_id")
 @click.argument("key")
 @click.pass_obj
-def remove_term_data(app: GlossaryApplication, term_id: str, key: str):
+def remove_term_data(container, term_id: str, key: str):
+    app: GlossaryApplication = load_app(container, "glossary")
     app.remove_term_data(term_id, key)
 
 
 @glossary.command()
 @click.argument("term_id")
 @click.pass_obj
-def remove_term(app: GlossaryApplication, term_id: str):
+def remove_term(container, term_id: str):
+    app: GlossaryApplication = load_app(container, "glossary")
     app.remove_term(term_id)

@@ -20,6 +20,10 @@ class Scaffold:
 
         self.root = root
 
+    @property
+    def scaffold_id(self) -> str:
+        return f"{self.root.parent.name}/{self.root.name}"
+
     def build_package(self, **kwargs) -> CodePackage:
         with TemporaryDirectory() as temporary_directory:
             temporary_path = Path(temporary_directory)

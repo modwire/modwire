@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from tests.functional.cli_helpers import run_cli
-from tests.functional.shared.glossary.helpers import read_glossary
+from tests.functional.glossary.helpers import read_glossary
 
 
 def add_term(
@@ -11,7 +11,7 @@ def add_term(
     *extra_args: str,
 ):
     return run_cli(
-        ["tools", "glossary", "add-term", term, "-d", definition, *extra_args],
+        ["glossary", "add-term", term, "-d", definition, *extra_args],
         cwd,
     )
 
@@ -104,7 +104,7 @@ def test_rejects_removing_parent_with_child(tmp_path: Path):
         "architecture",
     ).exit_code == 0
 
-    result = run_cli(["tools", "glossary", "remove-term", "architecture"], tmp_path)
+    result = run_cli(["glossary", "remove-term", "architecture"], tmp_path)
 
     assert result.exit_code != 0
     assert (
@@ -123,7 +123,7 @@ def test_rejects_removing_referenced_term(tmp_path: Path):
         "domain",
     ).exit_code == 0
 
-    result = run_cli(["tools", "glossary", "remove-term", "domain"], tmp_path)
+    result = run_cli(["glossary", "remove-term", "domain"], tmp_path)
 
     assert result.exit_code != 0
     assert (
@@ -145,11 +145,11 @@ def test_updates_and_clears_list_data(tmp_path: Path):
     )
 
     assert run_cli(
-        ["tools", "glossary", "update-term-data", "modwire", "aliases", "modwire"],
+        ["glossary", "update-term-data", "modwire", "aliases", "modwire"],
         tmp_path,
     ).exit_code == 0
     assert run_cli(
-        ["tools", "glossary", "update-term-data", "modwire", "aliases", "mw"],
+        ["glossary", "update-term-data", "modwire", "aliases", "mw"],
         tmp_path,
     ).exit_code == 0
 
@@ -157,7 +157,7 @@ def test_updates_and_clears_list_data(tmp_path: Path):
     assert glossary["terms"][0]["aliases"] == ["modwire", "mw"]
 
     result = run_cli(
-        ["tools", "glossary", "remove-term-data", "modwire", "aliases"],
+        ["glossary", "remove-term-data", "modwire", "aliases"],
         tmp_path,
     )
 

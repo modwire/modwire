@@ -39,7 +39,6 @@ def test_generates_scaffold_from_cli_data(tmp_path: Path):
 
     result = run_cli(
         [
-            "tools",
             "scaffolding",
             "generate",
             "scaffolds/basic",
@@ -64,7 +63,6 @@ def test_rejects_invalid_cli_data_item(tmp_path: Path):
 
     result = run_cli(
         [
-            "tools",
             "scaffolding",
             "generate",
             "scaffolds/basic",
@@ -82,7 +80,6 @@ def test_rejects_invalid_cli_data_item(tmp_path: Path):
 def test_generates_bundled_scaffold(tmp_path: Path):
     result = run_cli(
         [
-            "tools",
             "scaffolding",
             "generate",
             "modules/layered",
@@ -98,7 +95,6 @@ def test_generates_bundled_scaffold(tmp_path: Path):
 def test_generates_hexagonal_python_files_with_default_filenames(tmp_path: Path):
     result = run_cli(
         [
-            "tools",
             "scaffolding",
             "generate",
             "modules/hexagonal",
@@ -132,7 +128,6 @@ def test_generates_hexagonal_python_files_with_default_filenames(tmp_path: Path)
 def test_generates_hexagonal_php_namespace_from_shared_data(tmp_path: Path):
     result = run_cli(
         [
-            "tools",
             "scaffolding",
             "generate",
             "modules/hexagonal",
@@ -163,7 +158,6 @@ def test_generates_hexagonal_php_namespace_from_shared_data(tmp_path: Path):
 def test_generates_composite_design_pattern_for_all_languages(tmp_path: Path):
     result = run_cli(
         [
-            "tools",
             "scaffolding",
             "generate",
             "design_patterns/composite",
@@ -208,7 +202,6 @@ def test_generates_composite_usage_without_regenerating_pattern_library(
 ):
     result = run_cli(
         [
-            "tools",
             "scaffolding",
             "generate",
             "design_patterns/composite_usage",
@@ -262,7 +255,6 @@ def test_scaffold_manifests_keep_language_specific_data_in_templates():
 def test_rejects_unknown_bundled_scaffold_id(tmp_path: Path):
     result = run_cli(
         [
-            "tools",
             "scaffolding",
             "generate",
             "modules/missing",

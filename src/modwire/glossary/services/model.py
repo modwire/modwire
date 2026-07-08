@@ -20,11 +20,6 @@ class Glossary(ModwireBaseModel):
 
         return "\n".join(lines)
 
-    def render(self):
-        text = self.render_text()
-        if text:
-            print(text)
-
     def add_term(
         self,
         term: str,

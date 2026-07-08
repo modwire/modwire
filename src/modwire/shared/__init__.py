@@ -9,9 +9,7 @@ from .config import (
     ConfigResolver,
 )
 
-from .cli import (
-    tools as cli_tools,
-)
+from .cli import parse_inputs
 
 
 __all__ = [
@@ -20,5 +18,5 @@ __all__ = [
     "ModwireConfig",
     "ModwireApplication",
     "ConfigResolver",
-    "cli_tools",
+    "parse_inputs",
 ]
