@@ -1,3 +1,5 @@
+from wireup import injectable
+
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
 from ..base import FlowViolation
@@ -15,6 +17,7 @@ class FlowReport(ReportItem):
     analyzers: tuple[str, ...] = ()
 
 
+@injectable(lifetime="transient")
 class FlowReportCollector:
     def __init__(self, flow_analyzer: BoundariesFlowAnalyzer):
         self.flow_analyzer = flow_analyzer

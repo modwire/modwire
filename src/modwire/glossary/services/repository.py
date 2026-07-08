@@ -1,11 +1,14 @@
-from pathlib import Path
+from wireup import injectable
+
+from modwire.shared import ModwireContext
 
 from .model import Glossary
 
 
+@injectable(lifetime="transient")
 class GlossaryRepository:
-    def __init__(self, root: Path):
-        self._file = root / "glossary.json"
+    def __init__(self, context: ModwireContext):
+        self._file = context.cwd / "glossary.json"
 
     def load(self) -> Glossary:
         if self._file.exists():

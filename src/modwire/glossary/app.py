@@ -1,8 +1,11 @@
+from wireup import injectable
+
 from modwire.shared import ModwireApplication
 
 from .services import GlossaryRenderer, GlossaryRepository, GlossaryTerm
 
 
+@injectable(lifetime="transient")
 class GlossaryApplication(ModwireApplication):
     def __init__(
         self,

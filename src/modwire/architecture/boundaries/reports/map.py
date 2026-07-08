@@ -1,3 +1,5 @@
+from wireup import injectable
+
 from modwire.shared import ModwireBaseModel
 
 from ...map.map import ArchitectureMap
@@ -21,6 +23,7 @@ class ArchitectureMapReport(ReportItem):
     unknown_files: tuple[str, ...] = ()
 
 
+@injectable(lifetime="transient")
 class ArchitectureMapReportCollector:
     def collect(self, architecture_map: ArchitectureMap) -> ArchitectureMapReport:
         return ArchitectureMapReport(

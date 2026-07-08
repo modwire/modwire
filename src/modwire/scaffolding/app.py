@@ -1,10 +1,13 @@
 from pathlib import Path
 
+from wireup import injectable
+
 from modwire.shared import code
 
 from .services import ScaffoldRepository
 
 
+@injectable(lifetime="transient")
 class ScaffoldingApplication:
     def __init__(
         self, 

@@ -1,47 +1,42 @@
 import click
+from wireup import Injected
 
-from ..di import load_app
+from .app import ModulesApplication
 
 
 @click.group()
-@click.pass_context
-def modules(ctx):
-    ctx.obj = ctx.find_root().obj
+def modules():
+    pass
 
 
 @modules.command()
 @click.argument("name")
-@click.pass_obj
-def scaffold(container, name: str):
-    app = load_app(container, "modules")
+def scaffold(name: str, app: Injected[ModulesApplication]):
+    pass
 
 
 
 @modules.command()
 @click.argument("name")
-@click.pass_obj
-def add_layer(container, name: str):
-    app = load_app(container, "modules")
+def add_layer(name: str, app: Injected[ModulesApplication]):
+    pass
 
 
 @modules.command()
 @click.argument("name")
-@click.pass_obj
-def remove_layer(container, name: str):
-    app = load_app(container, "modules")
+def remove_layer(name: str, app: Injected[ModulesApplication]):
+    pass
 
 
 @modules.command()
 @click.argument("name")
 @click.argument("layer")
-@click.pass_obj
-def add_package(container, name: str, layer: str):
-    app = load_app(container, "modules")
+def add_package(name: str, layer: str, app: Injected[ModulesApplication]):
+    pass
 
 
 @modules.command()
 @click.argument("name")
 @click.argument("layer")
-@click.pass_obj
-def remove_package(container, name: str, layer: str):
-    app = load_app(container, "modules")
+def remove_package(name: str, layer: str, app: Injected[ModulesApplication]):
+    pass

@@ -35,10 +35,10 @@ classifiers = [
 dependencies = [
     "click>=8.4.2",
     "copier>=9.16.0",
-    "dependency-injector>=4.49.1",
     "modwire-extraction>=1.0.1",
     "pydantic>=2.8",
     "pydantic-yaml>=1.7.0",
+    "wireup",
 ]
 
 [project.urls]

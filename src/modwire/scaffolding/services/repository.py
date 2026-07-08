@@ -1,15 +1,18 @@
 from pathlib import Path
 
+from wireup import injectable
+
+from modwire.shared import ConfigResolver
+
 from .scaffold import Scaffold, ScaffoldGroup
 
-from ..config import ScaffoldingConfig
 
-
+@injectable(lifetime="transient")
 class ScaffoldRepository:
-    def __init__(self, config: ScaffoldingConfig):
-        self.config = config
+    def __init__(self, config_resolver: ConfigResolver):
+        self.config = config_resolver.scaffolding()
         self.root_dirs = (
-            config.scaffolds_root,
+            self.config.scaffolds_root,
             Path(__file__).resolve().parents[3] / "scaffoldings",
         )
 

@@ -1,10 +1,15 @@
+from collections.abc import Sequence
+
+from wireup import injectable
+
 from ..base import FlowAnalyzerInterface
 
 
+@injectable
 class FlowAnalyzerCatalog:
     def __init__(
         self,
-        analyzers: list[FlowAnalyzerInterface]
+        analyzers: Sequence[FlowAnalyzerInterface],
     ):
         self._analyzers = {analyzer.name: analyzer for analyzer in analyzers}
 

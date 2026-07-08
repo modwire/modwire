@@ -1,6 +1,9 @@
+from wireup import injectable
+
 from modwire.shared import ModwireApplication
 
 
+@injectable(lifetime="transient")
 class ModulesApplication(ModwireApplication):
     def run(self):
         print("Running Modwire Modules CLI...")

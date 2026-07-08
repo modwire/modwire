@@ -1,10 +1,15 @@
+from wireup import injectable
+
+from modwire.shared import ConfigResolver
+
 from ..map.map import ArchitectureMap
 
 from .analyzers import FlowAnalyzerCatalog
 from .base import FlowViolation
-from .config import BoundariesConfig, FlowRealm, FlowRules
+from .config import FlowRealm, FlowRules
 
 
+@injectable
 class FlowRealmSelector:
     def select(self, flow: FlowRules) -> tuple[FlowRealm, ...]:
         if flow.realms:
@@ -25,14 +30,15 @@ class FlowRealmSelector:
         )
 
 
+@injectable(lifetime="transient")
 class BoundariesFlowAnalyzer:
     def __init__(
         self,
-        config: BoundariesConfig,
+        config_resolver: ConfigResolver,
         catalog: FlowAnalyzerCatalog,
         realm_selector: FlowRealmSelector,
     ):
-        self.config = config
+        self.config = config_resolver.architecture().boundaries
         self.catalog = catalog
         self.realm_selector = realm_selector
 

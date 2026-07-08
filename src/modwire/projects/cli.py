@@ -1,82 +1,91 @@
 import click
+from wireup import Injected
 
-from ..di import load_app
+from .app import ProjectsApplication
 
 
 @click.group()
-@click.pass_context
-def projects(ctx):
-    ctx.obj = ctx.find_root().obj
+def projects():
+    pass
 
 
 @projects.command()
 @click.argument("name")
 @click.argument("root")
-@click.pass_obj
-def init(container, name: str, root: str):
-    app = load_app(container, "projects")
+def init(name: str, root: str, app: Injected[ProjectsApplication]):
+    pass
 
 
 
 @projects.command()
 @click.argument("names")
 @click.argument("group")
-@click.pass_obj
-def add_dependencies(container, names: list[str], group: str):
-    app = load_app(container, "projects")
+def add_dependencies(
+    names: list[str],
+    group: str,
+    app: Injected[ProjectsApplication],
+):
+    pass
 
 
 @projects.command()
 @click.argument("names")
 @click.argument("group")
-@click.pass_obj
-def remove_dependencies(container, names: list[str], group: str):
-    app = load_app(container, "projects")
+def remove_dependencies(
+    names: list[str],
+    group: str,
+    app: Injected[ProjectsApplication],
+):
+    pass
 
 
 @projects.command()
 @click.argument("name")
-@click.pass_obj
-def add_module(container, name: str):
-    app = load_app(container, "projects")
+def add_module(name: str, app: Injected[ProjectsApplication]):
+    pass
 
 
 @projects.command()
 @click.argument("name")
-@click.pass_obj
-def remove_module(container, name: str):
-    app = load_app(container, "projects")
-
-
-@projects.command()
-@click.argument("name")
-@click.argument("module")
-@click.pass_obj
-def add_layer(container, name: str, module: str):
-    app = load_app(container, "projects")
+def remove_module(name: str, app: Injected[ProjectsApplication]):
+    pass
 
 
 @projects.command()
 @click.argument("name")
 @click.argument("module")
-@click.pass_obj
-def remove_layer(container, name: str, module: str):
-    app = load_app(container, "projects")
+def add_layer(name: str, module: str, app: Injected[ProjectsApplication]):
+    pass
 
 
 @projects.command()
 @click.argument("name")
 @click.argument("module")
-@click.argument("layer")
-@click.pass_obj
-def add_package(container, name: str, module: str, layer: str):
-    app = load_app(container, "projects")
+def remove_layer(name: str, module: str, app: Injected[ProjectsApplication]):
+    pass
 
 
 @projects.command()
 @click.argument("name")
 @click.argument("module")
 @click.argument("layer")
-@click.pass_obj
-def remove_package(container, name: str, module: str, layer: str):
-    app = load_app(container, "projects")
+def add_package(
+    name: str,
+    module: str,
+    layer: str,
+    app: Injected[ProjectsApplication],
+):
+    pass
+
+
+@projects.command()
+@click.argument("name")
+@click.argument("module")
+@click.argument("layer")
+def remove_package(
+    name: str,
+    module: str,
+    layer: str,
+    app: Injected[ProjectsApplication],
+):
+    pass

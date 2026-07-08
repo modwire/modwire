@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from wireup import injectable
 
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem, ReportSection
@@ -34,6 +35,7 @@ class InsightReport(ReportSection):
     exports: ExportsReport = Field(default_factory=ExportsReport)
 
 
+@injectable
 class InsightReporterCatalog:
     def __init__(self):
         self._reporters = {
@@ -67,6 +69,7 @@ class InsightReportFieldMap:
         return reporter_name.replace("-", "_")
 
 
+@injectable(lifetime="transient")
 class InsightReportCollector:
     def __init__(
         self,

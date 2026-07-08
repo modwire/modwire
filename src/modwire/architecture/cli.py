@@ -1,27 +1,24 @@
 import click
+from wireup import Injected
 
-from ..di import load_app
+from .app import ArchitectureApplication
 
 
 @click.group()
-@click.pass_context
-def architecture(ctx):
-    ctx.obj = ctx.find_root().obj
+def architecture():
+    pass
 
 
 @architecture.command()
-@click.pass_obj
-def boundaries(container):
-    app = load_app(container, "architecture")
+def boundaries(app: Injected[ArchitectureApplication]):
+    pass
 
 
 @architecture.command()
-@click.pass_obj
-def insights(container):
-    app = load_app(container, "architecture")
+def insights(app: Injected[ArchitectureApplication]):
+    pass
 
 
 @architecture.command()
-@click.pass_obj
-def shape(container):
-    app = load_app(container, "architecture")
+def shape(app: Injected[ArchitectureApplication]):
+    pass

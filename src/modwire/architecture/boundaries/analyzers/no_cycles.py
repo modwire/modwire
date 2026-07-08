@@ -1,8 +1,11 @@
+from wireup import injectable
+
 from ...map.map import ArchitectureMap
 from ..base import FlowViolation, FlowAnalyzerInterface
 from .analyzer_base import BaseFlowAnalyzer
 
 
+@injectable(qualifier="no-cycles", as_type=FlowAnalyzerInterface)
 class NoCyclesFlowAnalyzer(FlowAnalyzerInterface, BaseFlowAnalyzer):
     @property
     def name(self) -> str:

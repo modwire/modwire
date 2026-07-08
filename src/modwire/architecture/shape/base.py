@@ -2,6 +2,7 @@ import abc
 
 from modwire_extraction.extractors.source import SourceFile
 from modwire.shared import ModwireBaseModel
+from wireup import abstract
 
 from .config import ShapeConfig
 
@@ -15,6 +16,7 @@ class ShapeViolation(ModwireBaseModel):
     symbol_name: str = ""
 
 
+@abstract
 class ShapeResolverInterface(abc.ABC):
     @property
     @abc.abstractmethod

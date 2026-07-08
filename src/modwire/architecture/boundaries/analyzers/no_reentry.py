@@ -1,8 +1,11 @@
+from wireup import injectable
+
 from ...map.map import ArchitectureMap
 from ..base import FlowViolation, FlowAnalyzerInterface
 from .analyzer_base import BaseFlowAnalyzer
 
 
+@injectable(qualifier="no-reentry", as_type=FlowAnalyzerInterface)
 class NoReentryFlowAnalyzer(FlowAnalyzerInterface, BaseFlowAnalyzer):
     @property
     def name(self) -> str:

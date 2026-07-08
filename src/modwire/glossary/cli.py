@@ -1,19 +1,16 @@
 import click
+from wireup import Injected
 
-from ..di import load_app
 from .app import GlossaryApplication
 
 
 @click.group()
-@click.pass_context
-def glossary(ctx):
-    ctx.obj = ctx.find_root().obj
+def glossary():
+    pass
 
 
 @glossary.command()
-@click.pass_obj
-def list_terms(container):
-    app: GlossaryApplication = load_app(container, "glossary")
+def list_terms(app: Injected[GlossaryApplication]):
     app.list_terms()
 
 
@@ -24,17 +21,15 @@ def list_terms(container):
 @click.option("--relation", "relations", multiple=True)
 @click.option("--source", "sources", multiple=True)
 @click.option("--parent-id", default="")
-@click.pass_obj
 def add_term(
-    container,
     term: str,
     definition: str,
     aliases: tuple[str, ...],
     relations: tuple[str, ...],
     sources: tuple[str, ...],
     parent_id: str,
+    app: Injected[GlossaryApplication],
 ):
-    app: GlossaryApplication = load_app(container, "glossary")
     glossary_term = app.add_term(
         term=term,
         definition=definition,
@@ -50,29 +45,27 @@ def add_term(
 @click.argument("term_id")
 @click.argument("key")
 @click.argument("new_value")
-@click.pass_obj
 def update_term_data(
-    container,
     term_id: str,
     key: str,
     new_value: str,
+    app: Injected[GlossaryApplication],
 ):
-    app: GlossaryApplication = load_app(container, "glossary")
     app.update_term_data(term_id, key, new_value)
 
 
 @glossary.command()
 @click.argument("term_id")
 @click.argument("key")
-@click.pass_obj
-def remove_term_data(container, term_id: str, key: str):
-    app: GlossaryApplication = load_app(container, "glossary")
+def remove_term_data(
+    term_id: str,
+    key: str,
+    app: Injected[GlossaryApplication],
+):
     app.remove_term_data(term_id, key)
 
 
 @glossary.command()
 @click.argument("term_id")
-@click.pass_obj
-def remove_term(container, term_id: str):
-    app: GlossaryApplication = load_app(container, "glossary")
+def remove_term(term_id: str, app: Injected[GlossaryApplication]):
     app.remove_term(term_id)

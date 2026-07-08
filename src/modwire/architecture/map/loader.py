@@ -1,15 +1,18 @@
 from modwire_extraction.code import QueryableCodeMap
+from wireup import injectable
+
+from modwire.shared import ConfigResolver
 
 from ..boundaries.tags import TagMatcher
-from ..config import ArchitectureConfig
 
 from .map import ArchitectureMap
 
 
+@injectable(lifetime="transient")
 class ArchitectureMapLoader:
-    def __init__(self, config: ArchitectureConfig):
-        self.config = config
-        self.matcher = TagMatcher(config.boundaries)
+    def __init__(self, config_resolver: ConfigResolver):
+        self.config = config_resolver.architecture()
+        self.matcher = TagMatcher(self.config.boundaries)
 
     def load(self, code_map: QueryableCodeMap) -> ArchitectureMap:
         source_ids = tuple(code_map.source_ids())
