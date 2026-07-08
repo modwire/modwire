@@ -1,6 +1,4 @@
 import click
-import modwire
-import wireup
 import wireup.integration.click
 
 from .glossary.cli import glossary
@@ -22,7 +20,7 @@ class ModwireGroup(click.Group):
 @click.group(cls=ModwireGroup)
 @click.pass_context
 def cli(ctx):
-    ctx.obj = _container
+    ctx.obj = container
 
 
 cli.add_command(glossary)
@@ -32,8 +30,9 @@ cli.add_command(layers)
 cli.add_command(architecture)
 cli.add_command(scaffolding)
 
-_container = wireup.create_sync_container(injectables=[modwire])
-wireup.integration.click.setup(_container, cli)
+from .app import container  # noqa: E402
+
+wireup.integration.click.setup(container, cli)
 
 
 if __name__ == '__main__':

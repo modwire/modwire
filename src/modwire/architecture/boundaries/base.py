@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from modwire.shared import ModwireBaseModel
-from wireup import abstract
 
 from ..map.map import ArchitectureMap
 
@@ -34,7 +33,6 @@ class FlowViolation(ModwireBaseModel):
         )
 
 
-@abstract
 class FlowAnalyzerInterface(ABC):
     @property
     @abstractmethod

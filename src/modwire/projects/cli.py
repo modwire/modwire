@@ -1,4 +1,5 @@
 import click
+
 from wireup import Injected
 
 from .app import ProjectsApplication
