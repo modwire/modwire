@@ -18,8 +18,8 @@ from .shared import ConfigResolver
 class ModwireContainer(containers.DeclarativeContainer):
     cwd = providers.Dependency(instance_of=Path)
     config_resolver = providers.Singleton(ConfigResolver, root=cwd)
-
     shared = providers.Container(SharedContainer)
+    
     architecture = providers.Container(ArchitectureContainer, config_resolver=config_resolver)
     glossary = providers.Container(GlossaryContainer, cwd=cwd)
     layers = providers.Container(LayersContainer, config_resolver=config_resolver)
