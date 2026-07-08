@@ -3,7 +3,7 @@ from dependency_injector import containers, providers
 from modwire.shared import ConfigResolver
 
 from .app import ArchitectureApplication
-from .boundaries.di import BoundariesContainer
+from .boundaries import BoundariesContainer
 from .config import ArchitectureConfigResolver
 from .map import ArchitectureMapContainer
 from .shape.di import ShapeContainer

@@ -3,10 +3,12 @@ from .violations import (
     ShapeReportCollector,
     ShapeViolation,
 )
+from .di import ShapeReportsContainer
 
 
 __all__ = [
     "ShapeReport",
     "ShapeReportCollector",
+    "ShapeReportsContainer",
     "ShapeViolation",
 ]
