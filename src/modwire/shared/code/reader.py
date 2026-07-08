@@ -1,8 +1,9 @@
 from pathlib import Path
 
+from wireup import injectable
+
 from modwire_extraction import ModwireExtraction
 from modwire_extraction.code import QueryableCodeMap
-from wireup import injectable
 
 
 @injectable

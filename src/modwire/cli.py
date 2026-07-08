@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import click
 import modwire
 import wireup
@@ -11,7 +9,6 @@ from .modules.cli import modules
 from .layers.cli import layers
 from .architecture.cli import architecture
 from .scaffolding.cli import scaffolding
-from .shared import ModwireContext
 
 
 class ModwireGroup(click.Group):
@@ -23,14 +20,8 @@ class ModwireGroup(click.Group):
 
 
 @click.group(cls=ModwireGroup)
-@click.option(
-    "--cwd",
-    type=click.Path(path_type=Path, file_okay=False, dir_okay=True),
-    default=None,
-)
 @click.pass_context
-def cli(ctx, cwd: Path | None):
-    _container.get(ModwireContext).cwd = (cwd or Path.cwd()).resolve()
+def cli(ctx):
     ctx.obj = _container
 
 

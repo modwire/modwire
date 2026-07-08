@@ -1,12 +1,9 @@
 import abc
 from pathlib import Path
-from typing import Self, TypeVar
+from typing import Self
 
 from pydantic import BaseModel, ConfigDict
 from pydantic_yaml import parse_yaml_raw_as, to_yaml_str
-
-
-TConfig = TypeVar("TConfig", bound="ModwireConfig")
 
 
 class Modwire:
