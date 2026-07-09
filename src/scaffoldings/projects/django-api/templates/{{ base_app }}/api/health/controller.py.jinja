@@ -1,0 +1,13 @@
+from ninja import Schema
+from ninja_extra import ControllerBase, api_controller, http_get
+
+
+class Health(Schema):
+    ok: bool = True
+
+
+@api_controller("/health", tags=["System"])
+class HealthController(ControllerBase):
+    @http_get("", response=Health, operation_id="getHealth", summary="Return API health.")
+    def get(self):
+        return Health()

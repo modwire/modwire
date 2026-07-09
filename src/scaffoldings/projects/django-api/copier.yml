@@ -1,0 +1,22 @@
+_min_copier_version: "9.0.0"
+_templates_suffix: ".jinja"
+_subdirectory: templates
+
+project_name:
+  type: str
+  help: Python distribution name.
+
+project_package:
+  type: str
+  default: core
+  help: Importable Django project package.
+
+project_title:
+  type: str
+  default: New Project API
+  help: API title.
+
+base_app:
+  type: str
+  default: new_app
+  help: Base Django app that owns shared project conventions.

@@ -1,21 +1,22 @@
 [project]
-name = "{{project_name}}"
+name = "{{ project_name }}"
 version = "0.1.0"
-description = "Desc."
+description = "{{ project_title }} API"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "dj-database-url>=2.2,<3.0",
     "django>=5.0,<6.0",
     "django-health-check>=3.18,<4.0",
+    "django-model-utils>=5.0,<6.0",
     "django-ninja-extra>=0.21,<1.0",
+    "gunicorn>=23.0,<24.0",
     "pgvector>=0.3,<1.0",
     "psycopg[binary]>=3.2,<4.0",
-    "gunicorn>=23.0,<24.0",
-    "dj-database-url>=2.2,<3.0",
-    "python-dotenv>=1.0,<2.0",
-    "django-model-utils>=5.0,<6.0",
     "pydantic>=2.7,<3.0",
+    "python-dotenv>=1.0,<2.0",
     "pyyaml>=6.0,<7.0",
+    "structlog>=24.4,<25.0",
 ]
 
 [dependency-groups]
@@ -30,16 +31,18 @@ dev = [
 package = false
 
 [tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "{{ project_package }}.settings"
 python_files = ["test_*.py", "*_test.py"]
 testpaths = ["tests"]
 
 [tool.ruff]
-line-length = 160
+line-length = 120
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
+select = ["B", "E", "F", "I", "UP"]
 ignore = ["B008"]
 
 [tool.ruff.lint.per-file-ignores]
 "*/migrations/*.py" = ["E501"]
+"{{ project_package }}/settings.py" = ["E402"]

@@ -1,0 +1,15 @@
+from ninja_extra import ControllerBase, api_controller, http_get, http_post
+
+from ...models.{{ model_name | lower }} import Model
+from .schemas import In, Out
+
+
+@api_controller("/{{ model_name | lower }}s", tags=["{{ model_name }}s"])
+class {{ model_name }}Controller(ControllerBase):
+    @http_get("", response=list[Out], operation_id="list{{ model_name }}s", summary="List {{ model_name | lower }}s.")
+    def list(self):
+        return Model.objects.order_by("id")
+
+    @http_post("", response={201: Out}, operation_id="create{{ model_name }}", summary="Create a {{ model_name | lower }}.")
+    def create(self, data: In):
+        return 201, Model.objects.create(**data.model_dump())
