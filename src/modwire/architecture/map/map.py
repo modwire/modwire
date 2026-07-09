@@ -1,18 +1,18 @@
-from modwire_extraction.code import QueryableCodeMap
+from dataclasses import dataclass
 
-from modwire.shared import config
+from modwire_extraction.code import QueryableCodeMap
 
 from ..boundaries.tags import TagMap
 
 
-class ArchitectureMap:
-    realm: config.FlowRealm
-    code_map: QueryableCodeMap
-    tag_map: TagMap
-    modules: dict[str, tuple[str, ...]]
-    layers: dict[str, tuple[str, ...]]
-    unknown_files: tuple[str, ...]
+@dataclass(frozen=True)
+class ArchitectureRealm:
+    name: str = ""
+    module_tag: str = ""
+    layers: tuple[str, ...] = ()
 
+
+class ArchitectureMap:
     def __init__(
         self,
         code_map: QueryableCodeMap,
@@ -20,16 +20,21 @@ class ArchitectureMap:
         modules: dict[str, tuple[str, ...]],
         layers: dict[str, tuple[str, ...]],
         unknown_files: tuple[str, ...],
-        realm: config.FlowRealm | None = None,
+        realm: ArchitectureRealm,
     ):
-        self.config = config
-        self.realm = realm or config.FlowRealm(
-            module_tag=config.boundaries.flow.module_tag,
-            layers=config.boundaries.flow.layers,
-        )
+        self.realm = realm
         self.code_map = code_map
         self.tag_map = tag_map
         self.modules = modules
         self.layers = layers
         self.unknown_files = unknown_files
 
+    def with_realm(self, realm: ArchitectureRealm) -> "ArchitectureMap":
+        return ArchitectureMap(
+            code_map=self.code_map,
+            tag_map=self.tag_map,
+            modules=self.modules,
+            layers=self.layers,
+            unknown_files=self.unknown_files,
+            realm=realm,
+        )

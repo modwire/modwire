@@ -4,7 +4,7 @@ from wireup import Inject, injectable
 
 from modwire.shared.config import ArchitectureConfig, FlowRules, FlowRealm
 
-from ..map.map import ArchitectureMap
+from ..map.map import ArchitectureMap, ArchitectureRealm
 
 from .analyzers import FlowAnalyzerCatalog
 from .base import FlowViolation
@@ -12,10 +12,10 @@ from .base import FlowViolation
 
 @injectable
 class FlowRealmSelector:
-    def select(self, flow: FlowRules) -> tuple[FlowRealm, ...]:
+    def select(self, flow: FlowRules) -> tuple[ArchitectureRealm, ...]:
         if flow.realms:
             return tuple(
-                FlowRealm(
+                ArchitectureRealm(
                     name=realm.name,
                     module_tag=realm.module_tag or flow.module_tag,
                     layers=realm.layers or flow.layers,
@@ -24,7 +24,7 @@ class FlowRealmSelector:
             )
 
         return (
-            FlowRealm(
+            ArchitectureRealm(
                 module_tag=flow.module_tag,
                 layers=flow.layers,
             ),

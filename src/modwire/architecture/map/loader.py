@@ -7,7 +7,7 @@ from modwire.shared.config import ArchitectureConfig
 
 from ..boundaries.tags import TagMatcher
 
-from .map import ArchitectureMap
+from .map import ArchitectureMap, ArchitectureRealm
 
 
 @injectable(lifetime="transient")
@@ -19,12 +19,18 @@ class ArchitectureMapLoader:
         self.config = config
         self.matcher = TagMatcher(self.config.boundaries)
 
+    def default_realm(self) -> ArchitectureRealm:
+        flow = self.config.boundaries.flow
+        return ArchitectureRealm(
+            module_tag=flow.module_tag,
+            layers=flow.layers,
+        )
+
     def load(self, code_map: QueryableCodeMap) -> ArchitectureMap:
         source_ids = tuple(code_map.source_ids())
         tag_map = self.matcher.map_for(source_ids)
 
         return ArchitectureMap(
-            config=self.config,
             code_map=code_map,
             tag_map=tag_map,
             modules=self.matcher.group_by_capture(tag_map, self.module_tags()),
@@ -34,6 +40,7 @@ class ArchitectureMapLoader:
                 for source_id in source_ids
                 if source_id not in tag_map.matches_by_node
             ),
+            realm=self.default_realm(),
         )
 
     def module_tags(self) -> tuple[str, ...]:

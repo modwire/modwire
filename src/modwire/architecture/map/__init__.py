@@ -1,6 +1,7 @@
-from .map import ArchitectureMap
+from .map import ArchitectureMap, ArchitectureRealm
 
 
 __all__ = [
     "ArchitectureMap",
+    "ArchitectureRealm",
 ]
