@@ -22,5 +22,10 @@ def generate(
     data_items: tuple[str, ...],
     app: Injected[ScaffoldingApplication],
 ):
-    app.generate(name, destination, parse_inputs(data_items))
+    data = parse_inputs(data_items)
+    for key in app.required_data_keys(name):
+        if key not in data:
+            data[key] = click.prompt(key)
+
+    app.generate(name, destination, data)
     click.echo(f"Generated scaffold {name} at {destination}")

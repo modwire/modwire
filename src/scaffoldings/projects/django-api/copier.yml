@@ -17,11 +17,6 @@ project_title:
   default: New Project
   help: API title.
 
-base_app:
-  type: str
-  default: new_app
-  help: Base Django app that owns shared project conventions.
-
 package_manager:
   type: str
   default: uv

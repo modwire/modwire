@@ -1,7 +1,9 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 
 from copier import run_copy
+from pydantic_yaml import parse_yaml_raw_as
 
 from modwire.shared import code
 
@@ -24,10 +26,32 @@ class Scaffold:
     def scaffold_id(self) -> str:
         return f"{self.root.parent.name}/{self.root.name}"
 
-    def build_package(self, **kwargs) -> code.CodePackage:
+    @property
+    def required_data_keys(self) -> list[str]:
+        manifest = parse_yaml_raw_as(
+            dict[str, Any],
+            (self.root / "copier.yml").read_text(encoding="utf-8"),
+        )
+        return [
+            key
+            for key, question in manifest.items()
+            if not key.startswith("_")
+            and isinstance(question, dict)
+            and question.get("when", True) is not False
+            and "default" not in question
+        ]
+
+    def build_package(
+        self,
+        *,
+        destination: Path | None = None,
+        **kwargs,
+    ) -> code.CodePackage:
         with TemporaryDirectory() as temporary_directory:
             temporary_path = Path(temporary_directory)
-            
+            if destination:
+                temporary_path = temporary_path / destination.name
+
             run_copy(
                 str(self.root),
                 str(temporary_path),
