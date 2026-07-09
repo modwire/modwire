@@ -1,14 +1,18 @@
 import click
-
 import wireup.integration.click
 
+from modwire.shared.config import ModwireConfig
+
+from .app import create_application
+from .architecture.cli import architecture
+from .layers.cli import layers
+from .modules.cli import modules
+from .projects.cli import projects
 from .shared.glossary.cli import glossary
 from .shared.scaffolding.cli import scaffolding
-from .projects.cli import projects
-from .modules.cli import modules
-from .layers.cli import layers
-from .architecture.cli import architecture
-from .app import container
+
+
+application = create_application(ModwireConfig())
 
 
 class ModwireGroup(click.Group):
@@ -22,7 +26,8 @@ class ModwireGroup(click.Group):
 @click.group(cls=ModwireGroup, invoke_without_command=True, no_args_is_help=False)
 @click.pass_context
 def cli(ctx):
-    ctx.obj = container
+    ctx.obj = application.container
+
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
         ctx.exit(0)
@@ -35,9 +40,8 @@ cli.add_command(modules)
 cli.add_command(layers)
 cli.add_command(architecture)
 
+wireup.integration.click.setup(application.container, cli)
 
-wireup.integration.click.setup(container, cli)
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

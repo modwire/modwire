@@ -13,9 +13,12 @@ def projects():
 @projects.command()
 @click.argument("name")
 @click.argument("root")
-def init(name: str, root: str, app: Injected[ProjectsApplication]):
+def init(
+    name: str, 
+    root: str, 
+    app: Injected[ProjectsApplication]
+):
     pass
-
 
 
 @projects.command()
