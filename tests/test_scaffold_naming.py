@@ -52,7 +52,9 @@ def test_django_api_app_uses_snake_case_operation_ids_and_pascal_case_classes():
     assert "return get(" not in controller
     assert "class InvoiceController" in controller
     assert "InvoiceService" in controller
-    assert "response=Out" in controller
+    assert "from .schemas import InvoiceIn, InvoiceOut, InvoicePatchIn" in controller
+    assert "response=InvoiceOut" in controller
+    assert "response=list[InvoiceOut]" in controller
     assert "response={204: None}" in controller
     assert "def get(" in controller
     assert "def update(" in controller
@@ -72,5 +74,39 @@ def test_django_api_app_uses_snake_case_operation_ids_and_pascal_case_classes():
     assert 'operation_id="delete_invoice"' in controller
     assert 'operation_id="listInvoices"' not in controller
     assert 'operation_id="createInvoice"' not in controller
-    assert "class PatchIn(Schema):" in package.files["api/invoice/schemas.py"]
+    schemas = package.files["api/invoice/schemas.py"]
+    assert "class InvoiceIn(Schema):" in schemas
+    assert "class InvoicePatchIn(Schema):" in schemas
+    assert "class InvoiceOut(ModelSchema):" in schemas
     assert "@injectable" in package.files["services/invoice.py"]
+
+
+def test_django_api_app_normalizes_model_name_to_pascal_case_and_snake_case():
+    scaffold = Scaffold(SCAFFOLDINGS_ROOT / "modules" / "django-api-app")
+
+    package = scaffold.build_package(
+        app_name="billing",
+        model_name="invoice_item",
+    )
+
+    assert "api/invoice_item/controller.py" in package.files
+    assert "models/invoice_item.py" in package.files
+    assert "services/invoice_item.py" in package.files
+    assert "admin/invoice_item.py" in package.files
+
+    controller = package.files["api/invoice_item/controller.py"]
+    assert "class InvoiceItemController" in controller
+    assert "InvoiceItemService" in controller
+    assert "InvoiceItemIn" in controller
+    assert "InvoiceItemPatchIn" in controller
+    assert "InvoiceItemOut" in controller
+    assert 'operation_id="list_invoice_items"' in controller
+    assert "invoice_item_id" in controller
+
+    assert "class InvoiceItem(models.Model):" in package.files["models/invoice_item.py"]
+    assert "class InvoiceItemService:" in package.files["services/invoice_item.py"]
+
+    schemas = package.files["api/invoice_item/schemas.py"]
+    assert "class InvoiceItemIn(Schema):" in schemas
+    assert "class InvoiceItemPatchIn(Schema):" in schemas
+    assert "class InvoiceItemOut(ModelSchema):" in schemas

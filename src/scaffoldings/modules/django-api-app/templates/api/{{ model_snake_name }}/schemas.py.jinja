@@ -1,17 +1,17 @@
 from ninja import ModelSchema, Schema
 
-from ...models.{{ model_name | lower }} import Model
+from ...models.{{ model_snake_name }} import Model
 
 
-class In(Schema):
+class {{ model_pascal_name }}In(Schema):
     name: str
 
 
-class PatchIn(Schema):
+class {{ model_pascal_name }}PatchIn(Schema):
     name: str | None = None
 
 
-class Out(ModelSchema):
+class {{ model_pascal_name }}Out(ModelSchema):
     class Meta:
         model = Model
         fields = ("id", "name", "created_at", "updated_at")

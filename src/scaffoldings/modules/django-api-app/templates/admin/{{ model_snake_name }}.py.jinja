@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from ..models.{{ model_name | lower }} import Model
+from ..models.{{ model_snake_name }} import Model
 
 
 @admin.register(Model)
