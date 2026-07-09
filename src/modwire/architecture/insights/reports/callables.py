@@ -1,3 +1,5 @@
+from wireup import injectable
+
 from modwire.shared import ModwireBaseModel
 
 from ...map.map import ArchitectureMap
@@ -21,6 +23,7 @@ class CallablesReport(ReportItem):
     entries: tuple[CallableReportEntry, ...] = ()
 
 
+@injectable(qualifier="callables", as_type=InsightReporter)
 class CallablesReporter(InsightReporter):
     name: str = "callables"
     title: str = "Callable Graph"

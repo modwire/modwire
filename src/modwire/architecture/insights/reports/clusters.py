@@ -1,3 +1,5 @@
+from wireup import injectable
+
 from modwire.shared import ModwireBaseModel
 
 from ...map.map import ArchitectureMap
@@ -24,6 +26,7 @@ class ClustersReport(ReportItem):
     clusters: tuple[ClustersReportItem, ...] = ()
 
 
+@injectable(qualifier="clusters", as_type=InsightReporter)
 class ClustersReporter(InsightReporter):
     name: str = "clusters"
     title: str = "Dependency Clusters"

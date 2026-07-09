@@ -1,3 +1,5 @@
+from wireup import injectable
+
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
 from .base import InsightReporter
@@ -16,6 +18,7 @@ class CoherenceReport(ReportItem):
     external_dependencies: tuple[str, ...] = ()
 
 
+@injectable(qualifier="coherence", as_type=InsightReporter)
 class CoherenceReporter(InsightReporter):
     name: str = "coherence"
     title: str = "Dependency Coherence"

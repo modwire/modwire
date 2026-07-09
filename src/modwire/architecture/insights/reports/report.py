@@ -1,14 +1,16 @@
+from collections.abc import Sequence
+
 from pydantic import BaseModel, Field
 from wireup import injectable
 
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem, ReportSection
 from .base import InsightReporter
-from .callables import CallablesReport, CallablesReporter
-from .clusters import ClustersReport, ClustersReporter
-from .coherence import CoherenceReport, CoherenceReporter
-from .exports import ExportsReport, ExportsReporter
-from .hotspots import HotspotsReport, HotspotsReporter
+from .callables import CallablesReport
+from .clusters import ClustersReport
+from .coherence import CoherenceReport
+from .exports import ExportsReport
+from .hotspots import HotspotsReport
 
 
 class InsightReport(ReportSection):
@@ -35,33 +37,6 @@ class InsightReport(ReportSection):
     exports: ExportsReport = Field(default_factory=ExportsReport)
 
 
-@injectable
-class InsightReporterCatalog:
-    def __init__(self):
-        self._reporters = {
-            reporter.name: reporter
-            for reporter in (
-                ClustersReporter(),
-                HotspotsReporter(),
-                CoherenceReporter(),
-                CallablesReporter(),
-                ExportsReporter(),
-            )
-        }
-
-    def reporter(self, name: str) -> InsightReporter:
-        try:
-            return self._reporters[name]
-        except KeyError as exc:
-            known = ", ".join(sorted(self._reporters))
-            raise ValueError(
-                f"Unknown insight reporter {name!r}. Known reporters: {known}"
-            ) from exc
-
-    def names(self) -> tuple[str, ...]:
-        return tuple(self._reporters)
-
-
 class InsightReportFieldMap:
     def field_for(self, reporter_name: str) -> str:
         if reporter_name == "unused-exports":
@@ -73,18 +48,25 @@ class InsightReportFieldMap:
 class InsightReportCollector:
     def __init__(
         self,
-        catalog: InsightReporterCatalog,
-        reporter_names: tuple[str, ...] = (),
+        reporters: Sequence[InsightReporter],
     ):
-        self.catalog = catalog
-        self.reporter_names = reporter_names
-        self.field_map = InsightReportFieldMap()
+        self._reporters = {reporter.name: reporter for reporter in reporters}
+        self._field_map = InsightReportFieldMap()
 
     def collect(self, architecture_map: ArchitectureMap) -> InsightReport:
         payload: dict[str, BaseModel] = {}
-        for reporter_name in self.reporter_names or self.catalog.names():
-            reporter = self.catalog.reporter(reporter_name)
-            payload[self.field_map.field_for(reporter.name)] = reporter.collect(
+        for reporter_name in self.reporter_names:
+            reporter = self.reporter(reporter_name)
+            payload[self._field_map.field_for(reporter.name)] = reporter.collect(
                 architecture_map
             )
         return InsightReport.model_validate(payload)
+
+    def reporter(self, name: str) -> InsightReporter:
+        try:
+            return self._reporters[name]
+        except KeyError as error:
+            known = ", ".join(sorted(self._reporters))
+            raise ValueError(
+                f"Unknown insight reporter {name!r}. Known reporters: {known}"
+            ) from error

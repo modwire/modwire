@@ -1,3 +1,5 @@
+from wireup import injectable
+
 from modwire.shared import ModwireBaseModel
 
 from ...map.map import ArchitectureMap
@@ -23,6 +25,7 @@ class ExportsReport(ReportItem):
     unused_exports: tuple[ExportsReportItem, ...] = ()
 
 
+@injectable(qualifier="unused-exports", as_type=InsightReporter)
 class ExportsReporter(InsightReporter):
     name: str = "unused-exports"
     title: str = "Unused Exports"
