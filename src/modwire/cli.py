@@ -1,13 +1,14 @@
 import click
+
 import wireup.integration.click
 
 from .shared.glossary.cli import glossary
+from .shared.scaffolding.cli import scaffolding
 from .projects.cli import projects
 from .modules.cli import modules
 from .layers.cli import layers
 from .architecture.cli import architecture
-from .shared.scaffolding.cli import scaffolding
-from .app import application, container
+from .app import container
 
 
 class ModwireGroup(click.Group):
@@ -32,9 +33,8 @@ cli.add_command(projects)
 cli.add_command(modules)
 cli.add_command(layers)
 cli.add_command(scaffolding)
+cli.add_command(architecture)
 
-if application.config.architecture is not None:
-    cli.add_command(architecture)
 
 wireup.integration.click.setup(container, cli)
 
