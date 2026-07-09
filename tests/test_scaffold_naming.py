@@ -53,10 +53,24 @@ def test_django_api_app_uses_snake_case_operation_ids_and_pascal_case_classes():
     assert "class InvoiceController" in controller
     assert "InvoiceService" in controller
     assert "response=Out" in controller
+    assert "response={204: None}" in controller
+    assert "def get(" in controller
+    assert "def update(" in controller
+    assert "def partial_update(" in controller
+    assert "def delete(" in controller
     assert "return service.create(**data.model_dump())" in controller
+    assert "return service.get(invoice_id)" in controller
+    assert "return service.update(invoice_id, **data.model_dump())" in controller
+    assert "return service.update(invoice_id, **data.model_dump(exclude_unset=True))" in controller
+    assert "return Status(204, None)" in controller
     assert "return 201," not in controller
     assert 'operation_id="list_invoices"' in controller
+    assert 'operation_id="get_invoice"' in controller
     assert 'operation_id="create_invoice"' in controller
+    assert 'operation_id="update_invoice"' in controller
+    assert 'operation_id="partial_update_invoice"' in controller
+    assert 'operation_id="delete_invoice"' in controller
     assert 'operation_id="listInvoices"' not in controller
     assert 'operation_id="createInvoice"' not in controller
+    assert "class PatchIn(Schema):" in package.files["api/invoice/schemas.py"]
     assert "@injectable" in package.files["services/invoice.py"]

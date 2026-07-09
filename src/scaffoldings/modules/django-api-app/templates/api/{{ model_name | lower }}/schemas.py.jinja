@@ -7,6 +7,10 @@ class In(Schema):
     name: str
 
 
+class PatchIn(Schema):
+    name: str | None = None
+
+
 class Out(ModelSchema):
     class Meta:
         model = Model

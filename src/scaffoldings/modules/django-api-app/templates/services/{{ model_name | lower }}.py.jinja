@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from wireup import injectable
 
 from ..models.{{ model_name | lower }} import Model
@@ -10,5 +11,19 @@ class {{ model_name }}Service:
     def list(self):
         return self.model.objects.order_by("id")
 
+    def get(self, {{ model_name | lower }}_id: int):
+        return get_object_or_404(self.model, id={{ model_name | lower }}_id)
+
     def create(self, **data):
         return self.model.objects.create(**data)
+
+    def update(self, {{ model_name | lower }}_id: int, **data):
+        instance = self.get({{ model_name | lower }}_id)
+        for field, value in data.items():
+            setattr(instance, field, value)
+        instance.save()
+        return instance
+
+    def delete(self, {{ model_name | lower }}_id: int):
+        instance = self.get({{ model_name | lower }}_id)
+        instance.delete()
