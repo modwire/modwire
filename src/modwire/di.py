@@ -11,7 +11,9 @@ def create_container(config: ModwireConfig):
             layers,
             modules,
             projects,
-            shared,
+            shared.code,
+            shared.glossary,
+            shared.scaffolding,
         ],
         config=config.as_wireup_config(),
     )
