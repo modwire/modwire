@@ -2,7 +2,7 @@ import abc
 
 from pydantic import BaseModel
 
-from ..map.map import ArchitectureMap
+from ..map import ArchitectureMap
 
 
 class InsightReporterInterface(abc.ABC):

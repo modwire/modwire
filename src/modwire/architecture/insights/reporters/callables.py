@@ -1,9 +1,8 @@
 from wireup import injectable
 
-from modwire.shared import ModwireBaseModel
+from modwire.shared import ModwireBaseModel, report
 
-from ...map.map import ArchitectureMap
-from ...base import ReportCategory, ReportItem
+from ...map import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
@@ -13,10 +12,9 @@ class CallableReportEntry(ModwireBaseModel):
     callers: tuple[str, ...]
 
 
-class CallablesReport(ReportItem):
+class CallablesReport(report.ReportItem):
     report_id: str = "architecture.insights.callables"
     report_title: str = "Callable Graph"
-    report_category: ReportCategory = ReportCategory.INSIGHT
     report_path: str = "insights.callables"
     report_order: int = 40
 

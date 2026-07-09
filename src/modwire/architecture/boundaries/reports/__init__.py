@@ -1,10 +1,10 @@
 from .flow import FlowReport, FlowReportCollector
-from .map import ArchitectureMapReport, ArchitectureMapReportCollector
+from .map import MapReport, MapReportCollector
 
 
 __all__ = [
-    "ArchitectureMapReport",
-    "ArchitectureMapReportCollector",
+    "MapReport",
+    "MapReportCollector",
     "FlowReport",
     "FlowReportCollector",
 ]

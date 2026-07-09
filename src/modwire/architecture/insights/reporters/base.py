@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from ...base import ReportCategory, ReportItem, ReportSection
+from modwire.shared import report
 
 from .callables import CallablesReport
 from .clusters import ClustersReport
@@ -9,13 +9,12 @@ from .exports import ExportsReport
 from .hotspots import HotspotsReport
 
 
-class InsightReport(ReportSection):
+class InsightReport(report.ReportSection):
     report_id: str = "architecture.insights"
     report_title: str = "Architecture Insights"
-    report_category: ReportCategory = ReportCategory.INSIGHTS
     report_path: str = "insights"
     report_order: int = 30
-    report_children: tuple[type[ReportItem], ...] = Field(
+    report_children: tuple[type[report.ReportItem], ...] = Field(
         default=(
             ClustersReport,
             HotspotsReport,

@@ -1,14 +1,14 @@
 from wireup import injectable
 
-from ...map.map import ArchitectureMap
-from ...base import ReportCategory, ReportItem
+from modwire.shared import report
+
+from ...map import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
-class CoherenceReport(ReportItem):
+class CoherenceReport(report.ReportItem):
     report_id: str = "architecture.insights.coherence"
     report_title: str = "Dependency Coherence"
-    report_category: ReportCategory = ReportCategory.INSIGHT
     report_path: str = "insights.coherence"
     report_order: int = 30
 

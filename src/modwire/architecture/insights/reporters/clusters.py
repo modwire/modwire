@@ -1,9 +1,8 @@
 from wireup import injectable
 
-from modwire.shared import ModwireBaseModel
+from modwire.shared import ModwireBaseModel, report
 
-from ...map.map import ArchitectureMap
-from ...base import ReportCategory, ReportItem
+from ...map import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
@@ -16,10 +15,9 @@ class ClustersReportItem(ModwireBaseModel):
     top_files: tuple[str, ...]
 
 
-class ClustersReport(ReportItem):
+class ClustersReport(report.ReportItem):
     report_id: str = "architecture.insights.clusters"
     report_title: str = "Dependency Clusters"
-    report_category: ReportCategory = ReportCategory.INSIGHT
     report_path: str = "insights.clusters"
     report_order: int = 10
 

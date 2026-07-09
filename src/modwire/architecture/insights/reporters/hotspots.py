@@ -1,9 +1,8 @@
 from wireup import injectable
 
-from modwire.shared import ModwireBaseModel
+from modwire.shared import ModwireBaseModel, report
 
-from ...map.map import ArchitectureMap
-from ...base import ReportCategory, ReportItem
+from ...map import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
@@ -14,10 +13,9 @@ class HotspotsReportItem(ModwireBaseModel):
     pressure_score: int
 
 
-class HotspotsReport(ReportItem):
+class HotspotsReport(report.ReportItem):
     report_id: str = "architecture.insights.hotspots"
     report_title: str = "Dependency Hotspots"
-    report_category: ReportCategory = ReportCategory.INSIGHT
     report_path: str = "insights.hotspots"
     report_order: int = 20
 

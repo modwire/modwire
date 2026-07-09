@@ -1,9 +1,8 @@
 from wireup import injectable
 
-from modwire.shared import ModwireBaseModel
+from modwire.shared import ModwireBaseModel, report
 
-from ...map.map import ArchitectureMap
-from ...base import ReportCategory, ReportItem
+from ...map import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
@@ -15,10 +14,9 @@ class ExportsReportItem(ModwireBaseModel):
     reason: str
 
 
-class ExportsReport(ReportItem):
+class ExportsReport(report.ReportItem):
     report_id: str = "architecture.insights.exports"
     report_title: str = "Unused Exports"
-    report_category: ReportCategory = ReportCategory.INSIGHT
     report_path: str = "insights.exports"
     report_order: int = 50
 

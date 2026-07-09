@@ -1,6 +1,6 @@
 from wireup import injectable
 
-from ...map.map import ArchitectureMap
+from ...map import ArchitectureMap
 from ..base import FlowViolation, FlowAnalyzerInterface
 from .analyzer_base import BaseFlowAnalyzer
 

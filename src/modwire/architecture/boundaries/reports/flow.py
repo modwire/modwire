@@ -1,15 +1,15 @@
 from wireup import injectable
 
+from modwire.shared import report
+
 from ...map.map import ArchitectureMap
-from ...base import ReportCategory, ReportItem
 from ..base import FlowViolation
 from ..analyzer import BoundariesFlowAnalyzer
 
 
-class FlowReport(ReportItem):
+class FlowReport(report.ReportItem):
     report_id: str = "architecture.violations.flow"
     report_title: str = "Dependency Flow"
-    report_category: ReportCategory = ReportCategory.FLOW
     report_path: str = "violations.flow"
     report_order: int = 10
 

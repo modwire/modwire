@@ -1,4 +1,3 @@
-from enum import StrEnum
 from typing import Any, Generic, Protocol, TypeVar
 
 from pydantic import Field
@@ -14,21 +13,9 @@ class ReportCollector(Protocol, Generic[ReportResult]):
         ...
 
 
-class ReportCategory(StrEnum):
-    ROOT = "root"
-    MAP = "map"
-    VIOLATIONS = "violations"
-    FLOW = "flow"
-    SHAPE = "shape"
-    INSIGHTS = "insights"
-    INSIGHT = "insight"
-    ITEM = "item"
-
-
 class ReportMetadata(ModwireBaseModel):
     id: str
     title: str
-    category: ReportCategory
     model: str
     path: str
     order: int
@@ -38,7 +25,6 @@ class ReportMetadata(ModwireBaseModel):
 class ReportNode(ModwireBaseModel):
     report_id: str
     report_title: str
-    report_category: ReportCategory
     report_path: str = ""
     report_order: int = 100
     report_children: tuple[type["ReportNode"], ...] = Field(default=(), exclude=True)
@@ -65,7 +51,6 @@ class ReportNode(ModwireBaseModel):
         return ReportMetadata(
             id=report_id,
             title=cls.report_field("report_title"),
-            category=cls.report_field("report_category"),
             model=f"{cls.__module__}.{cls.__qualname__}",
             path=report_path or report_id,
             order=cls.report_field("report_order"),
@@ -82,4 +67,4 @@ class ReportSection(ReportNode):
 
 
 class ReportItem(ReportNode):
-    report_category: ReportCategory = ReportCategory.ITEM
+    ...

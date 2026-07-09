@@ -2,18 +2,16 @@ from typing import Annotated
 
 from wireup import Inject, injectable
 
+from modwire.shared import report
 from modwire.shared.config import ArchitectureConfig
 
-from ...map.map import ArchitectureMap
-from ...base import ReportCategory, ReportItem
-from ..base import ShapeViolation
-from ..resolvers import ShapeResolverCatalog
+from ..map import ArchitectureMap
+from .base import ShapeViolation
 
 
-class ShapeReport(ReportItem):
+class ShapeReport(report.ReportItem):
     report_id: str = "architecture.violations.shape"
     report_title: str = "Shape Violations"
-    report_category: ReportCategory = ReportCategory.SHAPE
     report_path: str = "violations.shape"
     report_order: int = 20
 
@@ -25,11 +23,9 @@ class ShapeReport(ReportItem):
 class ShapeReportCollector:
     def __init__(
         self,
-        config: Annotated[ ArchitectureConfig, Inject(config="architecture")],
-        catalog: ShapeResolverCatalog,
+        config: Annotated[ArchitectureConfig, Inject(config="architecture")],
     ):
         self.config = config.shape
-        self.catalog = catalog
 
     def collect(self, architecture_map: ArchitectureMap) -> ShapeReport:
         resolver_names = self.catalog.names()

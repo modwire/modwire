@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from wireup import injectable
 
-from ..map.map import ArchitectureMap
+from ..map import ArchitectureMap
 from .base import InsightReporterInterface
 from .reporters.base import InsightReport, InsightReportFieldMap
 
