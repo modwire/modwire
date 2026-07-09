@@ -1,12 +1,12 @@
 import abc
 from pathlib import Path
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 from pydantic import BaseModel, ConfigDict
 from pydantic_yaml import parse_yaml_raw_as, to_yaml_str
 
-from . import di
-from .config import ModwireConfig
+if TYPE_CHECKING:
+    from .config import ModwireConfig
 
 
 class Modwire:
@@ -37,10 +37,12 @@ class ModwireBaseApplication(abc.ABC, Modwire):
 
 
 class ModwireApplication:
-    def __init__(self, config: ModwireConfig):
+    def __init__(self, config: "ModwireConfig"):
+        from . import di
+
         self.config = config
         self.container = di.create_container(config)
 
 
-def create_application(config: ModwireConfig) -> ModwireApplication:
+def create_application(config: "ModwireConfig") -> ModwireApplication:
     return ModwireApplication(config)
