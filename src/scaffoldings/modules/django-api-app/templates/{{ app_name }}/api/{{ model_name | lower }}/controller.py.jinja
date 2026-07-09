@@ -1,6 +1,7 @@
 from ninja_extra import ControllerBase, api_controller, http_get, http_post
 
-from ...models.{{ model_name | lower }} import Model
+from {{ project_package }}.di import get
+from ...services.{{ model_name | lower }} import {{ model_name }}Service
 from .schemas import In, Out
 
 
@@ -8,8 +9,8 @@ from .schemas import In, Out
 class {{ model_name }}Controller(ControllerBase):
     @http_get("", response=list[Out], operation_id="list{{ model_name }}s", summary="List {{ model_name | lower }}s.")
     def list(self):
-        return Model.objects.order_by("id")
+        return get({{ model_name }}Service).list()
 
-    @http_post("", response={201: Out}, operation_id="create{{ model_name }}", summary="Create a {{ model_name | lower }}.")
+    @http_post("", response={201: Out}, operation_id="create{{ model_name }}", summary="Create {{ model_name | lower }}.")
     def create(self, data: In):
-        return 201, Model.objects.create(**data.model_dump())
+        return 201, get({{ model_name }}Service).create(**data.model_dump())

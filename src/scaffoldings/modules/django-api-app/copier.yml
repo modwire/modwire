@@ -4,8 +4,15 @@ _subdirectory: templates
 
 app_name:
   type: str
+  default: new_app
   help: Django app package name.
 
 model_name:
   type: str
+  default: Item
   help: Django model class name.
+
+project_package:
+  type: str
+  default: core
+  help: Importable Django project package that exposes the DI container.

@@ -2,4 +2,8 @@ from importlib import import_module
 from pkgutil import iter_modules
 
 for m in iter_modules(__path__):
-    import_module(f"{__name__}.{m.name}")
+    try:
+        import_module(f"{__name__}.{m.name}")
+    except ModuleNotFoundError as e:
+        if not e.name.startswith(__name__.partition(".")[0] + "."):
+            raise

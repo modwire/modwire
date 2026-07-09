@@ -1,0 +1,14 @@
+from wireup import injectable
+
+from ..models.{{ model_name | lower }} import Model
+
+
+@injectable
+class {{ model_name }}Service:
+    model = Model
+
+    def list(self):
+        return self.model.objects.order_by("id")
+
+    def create(self, **data):
+        return self.model.objects.create(**data)
