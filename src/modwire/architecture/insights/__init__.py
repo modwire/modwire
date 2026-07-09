@@ -1,4 +1,4 @@
-from .reports import (
+from .reporters import (
     InsightReport,
     InsightReportCollector,
 )

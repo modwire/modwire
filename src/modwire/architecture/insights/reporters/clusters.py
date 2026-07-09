@@ -4,7 +4,7 @@ from modwire.shared import ModwireBaseModel
 
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
-from .base import InsightReporter
+from ..base import InsightReporterInterface
 
 
 class ClustersReportItem(ModwireBaseModel):
@@ -26,8 +26,8 @@ class ClustersReport(ReportItem):
     clusters: tuple[ClustersReportItem, ...] = ()
 
 
-@injectable(qualifier="clusters", as_type=InsightReporter)
-class ClustersReporter(InsightReporter):
+@injectable(qualifier="clusters", as_type=InsightReporterInterface)
+class ClustersReporter(InsightReporterInterface):
     name: str = "clusters"
     title: str = "Dependency Clusters"
     group_depth: int = 2
@@ -37,7 +37,8 @@ class ClustersReporter(InsightReporter):
         source_ids = architecture_map.code_map.source_ids()
         file_sets: dict[str, list[str]] = {}
         for source_id in source_ids:
-            file_sets.setdefault(self.cluster_name(source_id), []).append(source_id)
+            file_sets.setdefault(self.cluster_name(
+                source_id), []).append(source_id)
 
         clusters: list[ClustersReportItem] = []
         for name, files in sorted(file_sets.items()):

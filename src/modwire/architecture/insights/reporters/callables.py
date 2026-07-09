@@ -4,7 +4,7 @@ from modwire.shared import ModwireBaseModel
 
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
-from .base import InsightReporter
+from ..base import InsightReporterInterface
 
 
 class CallableReportEntry(ModwireBaseModel):
@@ -23,8 +23,8 @@ class CallablesReport(ReportItem):
     entries: tuple[CallableReportEntry, ...] = ()
 
 
-@injectable(qualifier="callables", as_type=InsightReporter)
-class CallablesReporter(InsightReporter):
+@injectable(qualifier="callables", as_type=InsightReporterInterface)
+class CallablesReporter(InsightReporterInterface):
     name: str = "callables"
     title: str = "Callable Graph"
 
@@ -35,7 +35,8 @@ class CallablesReporter(InsightReporter):
         for call_result in architecture_map.code_map.calls().all():
             call = call_result.item
             target = call.target_callable_id or call.expression
-            calls_by_source.setdefault(call.source_callable_id, []).append(target)
+            calls_by_source.setdefault(
+                call.source_callable_id, []).append(target)
             if call.target_callable_id:
                 callers_by_target.setdefault(call.target_callable_id, []).append(
                     call.source_callable_id
@@ -48,7 +49,8 @@ class CallablesReporter(InsightReporter):
                     sorted(set(calls_by_source.get(callable_result.item.id, ())))
                 ),
                 callers=tuple(
-                    sorted(set(callers_by_target.get(callable_result.item.id, ())))
+                    sorted(set(callers_by_target.get(
+                        callable_result.item.id, ())))
                 ),
             )
             for callable_result in sorted(

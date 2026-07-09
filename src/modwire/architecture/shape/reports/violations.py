@@ -2,7 +2,7 @@ from typing import Annotated
 
 from wireup import Inject, injectable
 
-from modwire.shared import config
+from modwire.shared.config import ArchitectureConfig
 
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
@@ -25,12 +25,10 @@ class ShapeReport(ReportItem):
 class ShapeReportCollector:
     def __init__(
         self,
-        architecture_config: Annotated[
-            config.ArchitectureConfig, Inject(config="architecture")
-        ],
+        config: Annotated[ ArchitectureConfig, Inject(config="architecture")],
         catalog: ShapeResolverCatalog,
     ):
-        self.config = architecture_config.shape
+        self.config = config.shape
         self.catalog = catalog
 
     def collect(self, architecture_map: ArchitectureMap) -> ShapeReport:

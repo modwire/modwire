@@ -4,7 +4,7 @@ from modwire.shared import ModwireBaseModel
 
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
-from .base import InsightReporter
+from ..base import InsightReporterInterface
 
 
 class HotspotsReportItem(ModwireBaseModel):
@@ -24,8 +24,8 @@ class HotspotsReport(ReportItem):
     hotspots: tuple[HotspotsReportItem, ...] = ()
 
 
-@injectable(qualifier="hotspots", as_type=InsightReporter)
-class HotspotsReporter(InsightReporter):
+@injectable(qualifier="hotspots", as_type=InsightReporterInterface)
+class HotspotsReporter(InsightReporterInterface):
     name: str = "hotspots"
     title: str = "Dependency Hotspots"
 

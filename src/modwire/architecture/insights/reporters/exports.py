@@ -4,7 +4,7 @@ from modwire.shared import ModwireBaseModel
 
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
-from .base import InsightReporter
+from ..base import InsightReporterInterface
 
 
 class ExportsReportItem(ModwireBaseModel):
@@ -25,8 +25,8 @@ class ExportsReport(ReportItem):
     unused_exports: tuple[ExportsReportItem, ...] = ()
 
 
-@injectable(qualifier="unused-exports", as_type=InsightReporter)
-class ExportsReporter(InsightReporter):
+@injectable(qualifier="unused-exports", as_type=InsightReporterInterface)
+class ExportsReporter(InsightReporterInterface):
     name: str = "unused-exports"
     title: str = "Unused Exports"
 

@@ -2,7 +2,7 @@ from wireup import injectable
 
 from ...map.map import ArchitectureMap
 from ...base import ReportCategory, ReportItem
-from .base import InsightReporter
+from ..base import InsightReporterInterface
 
 
 class CoherenceReport(ReportItem):
@@ -18,8 +18,8 @@ class CoherenceReport(ReportItem):
     external_dependencies: tuple[str, ...] = ()
 
 
-@injectable(qualifier="coherence", as_type=InsightReporter)
-class CoherenceReporter(InsightReporter):
+@injectable(qualifier="coherence", as_type=InsightReporterInterface)
+class CoherenceReporter(InsightReporterInterface):
     name: str = "coherence"
     title: str = "Dependency Coherence"
 
@@ -31,10 +31,12 @@ class CoherenceReporter(InsightReporter):
 
         for source_id in sorted(source_ids):
             has_incoming = (
-                architecture_map.code_map.incoming_dependencies(source_id).count() > 0
+                architecture_map.code_map.incoming_dependencies(
+                    source_id).count() > 0
             )
             has_outgoing = (
-                architecture_map.code_map.outgoing_dependencies(source_id).count() > 0
+                architecture_map.code_map.outgoing_dependencies(
+                    source_id).count() > 0
             )
             if not has_incoming:
                 roots.append(source_id)
