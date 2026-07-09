@@ -1,8 +1,40 @@
 import abc
+from collections.abc import Sequence
+from typing import Protocol
 
-from modwire_extraction.extractors.source import SourceFile
+from modwire_extraction.code import QueryableCodeMap
 from modwire.shared import ModwireBaseModel
 from modwire.shared.config import ShapeConfig
+
+
+class ArchitectureMapQuery(Protocol):
+    code_map: QueryableCodeMap
+
+
+class NamedLineShape(Protocol):
+    name: str
+    line_count: int
+
+
+class CallableShape(NamedLineShape, Protocol):
+    declared_args: int
+    optional_args: bool
+
+
+class AbstractClassShape(NamedLineShape, Protocol):
+    abstract_methods: Sequence[CallableShape]
+    concrete_methods: Sequence[CallableShape]
+
+
+class PropertyShape(Protocol):
+    name: str
+    is_optional: bool
+
+
+class SignatureShape(Protocol):
+    declared_args: int
+    optional_args: bool
+
 
 class ShapeViolation(ModwireBaseModel):
     source_id: str
@@ -27,8 +59,7 @@ class ShapeResolverInterface(abc.ABC):
     @abc.abstractmethod
     def resolve(
         self,
-        source_id: str,
-        source_file: SourceFile,
+        architecture_map: ArchitectureMapQuery,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         raise NotImplementedError

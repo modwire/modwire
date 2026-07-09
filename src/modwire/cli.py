@@ -9,6 +9,7 @@ from .shared import cli_apps, create_application, ModwireConfig
 
 @click.group(invoke_without_command=True, no_args_is_help=False)
 @click.option(
+    "--config-dir",
     "-d",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
     help="Directory containing Modwire YAML config files.",

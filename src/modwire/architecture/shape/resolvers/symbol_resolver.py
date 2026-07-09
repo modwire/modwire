@@ -1,15 +1,15 @@
 from collections.abc import Sequence
 
-from modwire_extraction.extractors.source import SourceFile
 from wireup import injectable
 
 from ..base import (
+    ArchitectureMapQuery,
     BaseShapeResolver,
     ShapeResolverInterface,
     ShapeViolation,
     SymbolShapeResolverInterface,
 )
-from ....shared.config.shape import ShapeConfig
+from modwire.shared.config import ShapeConfig
 
 
 @injectable(qualifier="symbol", as_type=ShapeResolverInterface)
@@ -27,11 +27,10 @@ class SymbolResolver(ShapeResolverInterface, BaseShapeResolver):
 
     def resolve(
         self,
-        source_id: str,
-        source_file: SourceFile,
+        architecture_map: ArchitectureMapQuery,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         violations: list[ShapeViolation] = []
         for resolver in self.resolvers:
-            violations.extend(resolver.resolve(source_id, source_file, config))
+            violations.extend(resolver.resolve(architecture_map, config))
         return tuple(violations)

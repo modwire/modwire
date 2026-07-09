@@ -34,14 +34,7 @@ class ShapeReportCollector:
         resolver_names = tuple(resolver.name for resolver in self.resolvers)
         violations: list[ShapeViolation] = []
         for resolver in self.resolvers:
-            for source_file in architecture_map.code_map.source_files().all():
-                violations.extend(
-                    resolver.resolve(
-                        source_file.source_id,
-                        source_file.file,
-                        self.config,
-                    )
-                )
+            violations.extend(resolver.resolve(architecture_map, self.config))
         return ShapeReport(
             violations=tuple(violations),
             resolvers=resolver_names,

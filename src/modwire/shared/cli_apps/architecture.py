@@ -25,7 +25,9 @@ def architecture():
 @click.argument("root", type=click.Path(exists=True, file_okay=False, path_type=Path))
 @click.argument("language")
 def report(root: Path, language: str, app: Injected[ArchitectureApplication]):
-    app.report(root, language)
+    reports = app.report(root, language)
+    for report in reports:
+        click.echo(report.model_dump_json(indent=2))
 
 
 @architecture.command()

@@ -1,15 +1,15 @@
 from collections.abc import Sized
 
-from modwire_extraction.extractors.source import (
-    SourceClass,
-    SourceFile,
-    SourceInterface,
-    SourceType,
-)
 from wireup import injectable
 
-from ..base import BaseShapeResolver, ShapeViolation, SymbolShapeResolverInterface
-from ....shared.config.shape import ShapeConfig
+from ..base import (
+    ArchitectureMapQuery,
+    BaseShapeResolver,
+    NamedLineShape,
+    ShapeViolation,
+    SymbolShapeResolverInterface,
+)
+from modwire.shared.config import ShapeConfig
 
 
 @injectable(qualifier="class", as_type=SymbolShapeResolverInterface)
@@ -24,35 +24,34 @@ class ClassResolver(SymbolShapeResolverInterface, BaseShapeResolver):
 
     def resolve(
         self,
-        source_id: str,
-        source_file: SourceFile,
+        architecture_map: ArchitectureMapQuery,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         violations: list[ShapeViolation] = []
-        for source_class in source_file.classes:
+        for class_result in architecture_map.code_map.classes().all():
             violations.extend(
                 self.class_violations(
-                    source_id=source_id,
+                    source_id=class_result.source_id,
                     symbol_kind="class",
-                    symbol=source_class,
+                    symbol=class_result.item,
                     config=config,
                 )
             )
-        for source_interface in source_file.interfaces:
+        for interface_result in architecture_map.code_map.interfaces().all():
             violations.extend(
                 self.class_violations(
-                    source_id=source_id,
+                    source_id=interface_result.source_id,
                     symbol_kind="interface",
-                    symbol=source_interface,
+                    symbol=interface_result.item,
                     config=config,
                 )
             )
-        for source_type in source_file.types:
+        for type_result in architecture_map.code_map.types().all():
             violations.extend(
                 self.class_violations(
-                    source_id=source_id,
+                    source_id=type_result.source_id,
                     symbol_kind="type",
-                    symbol=source_type,
+                    symbol=type_result.item,
                     config=config,
                 )
             )
@@ -63,7 +62,7 @@ class ClassResolver(SymbolShapeResolverInterface, BaseShapeResolver):
         *,
         source_id: str,
         symbol_kind: str,
-        symbol: SourceClass | SourceInterface | SourceType,
+        symbol: NamedLineShape,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         violations = [
@@ -91,7 +90,6 @@ class ClassResolver(SymbolShapeResolverInterface, BaseShapeResolver):
             )
 
         return tuple(violation for violation in violations if violation is not None)
-
 
 
 __all__ = ["ClassResolver"]

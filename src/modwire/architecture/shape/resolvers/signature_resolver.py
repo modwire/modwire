@@ -1,8 +1,13 @@
-from modwire_extraction.extractors.source import SourceFile, SourceSignature
 from wireup import injectable
 
-from ..base import BaseShapeResolver, ShapeViolation, SymbolShapeResolverInterface
-from ....shared.config.shape import ShapeConfig
+from ..base import (
+    ArchitectureMapQuery,
+    BaseShapeResolver,
+    ShapeViolation,
+    SignatureShape,
+    SymbolShapeResolverInterface,
+)
+from modwire.shared.config import ShapeConfig
 
 
 @injectable(qualifier="signature", as_type=SymbolShapeResolverInterface)
@@ -17,27 +22,28 @@ class SignatureResolver(SymbolShapeResolverInterface, BaseShapeResolver):
 
     def resolve(
         self,
-        source_id: str,
-        source_file: SourceFile,
+        architecture_map: ArchitectureMapQuery,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         violations: list[ShapeViolation] = []
-        for source_interface in source_file.interfaces:
-            for signature in source_interface.signatures:
+        for interface_result in architecture_map.code_map.interfaces().all():
+            source_interface = interface_result.item
+            for signature in getattr(source_interface, "signatures", ()):
                 violations.extend(
                     self.signature_violations(
-                        source_id=source_id,
-                        symbol_name=source_interface.name,
+                        source_id=interface_result.source_id,
+                        symbol_name=getattr(source_interface, "name", ""),
                         signature=signature,
                         config=config,
                     )
                 )
-        for source_type in source_file.types:
-            for signature in source_type.signatures:
+        for type_result in architecture_map.code_map.types().all():
+            source_type = type_result.item
+            for signature in getattr(source_type, "signatures", ()):
                 violations.extend(
                     self.signature_violations(
-                        source_id=source_id,
-                        symbol_name=source_type.name,
+                        source_id=type_result.source_id,
+                        symbol_name=getattr(source_type, "name", ""),
                         signature=signature,
                         config=config,
                     )
@@ -49,7 +55,7 @@ class SignatureResolver(SymbolShapeResolverInterface, BaseShapeResolver):
         *,
         source_id: str,
         symbol_name: str,
-        signature: SourceSignature,
+        signature: SignatureShape,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         violations = [
@@ -62,10 +68,7 @@ class SignatureResolver(SymbolShapeResolverInterface, BaseShapeResolver):
                 symbol_name=symbol_name,
             )
         ]
-        if (
-            not config.allow_optional_method_args
-            and signature.optional_args
-        ):
+        if not config.allow_optional_method_args and signature.optional_args:
             violations.append(
                 ShapeViolation(
                     source_id=source_id,

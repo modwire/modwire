@@ -1,8 +1,15 @@
-from modwire_extraction.extractors.source import SourceClassProperty, SourceFile
+from collections.abc import Sequence
+
 from wireup import injectable
 
-from ..base import BaseShapeResolver, ShapeViolation, SymbolShapeResolverInterface
-from ....shared.config.shape import ShapeConfig
+from ..base import (
+    ArchitectureMapQuery,
+    BaseShapeResolver,
+    PropertyShape,
+    ShapeViolation,
+    SymbolShapeResolverInterface,
+)
+from modwire.shared.config import ShapeConfig
 
 
 @injectable(qualifier="property", as_type=SymbolShapeResolverInterface)
@@ -17,48 +24,51 @@ class PropertyResolver(SymbolShapeResolverInterface, BaseShapeResolver):
 
     def resolve(
         self,
-        source_id: str,
-        source_file: SourceFile,
+        architecture_map: ArchitectureMapQuery,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         if config.allow_optional_class_properties:
             return ()
 
         violations: list[ShapeViolation] = []
-        for source_class in source_file.classes:
+        for class_result in architecture_map.code_map.classes().all():
+            source_class = class_result.item
             violations.extend(
                 self.property_violations(
-                    source_id=source_id,
+                    source_id=class_result.source_id,
                     symbol_kind="class_property",
-                    symbol_name=source_class.name,
-                    properties=source_class.properties,
+                    symbol_name=getattr(source_class, "name", ""),
+                    properties=getattr(source_class, "properties", ()),
                 )
             )
-        for source_interface in source_file.interfaces:
+        for interface_result in architecture_map.code_map.interfaces().all():
+            source_interface = interface_result.item
             violations.extend(
                 self.property_violations(
-                    source_id=source_id,
+                    source_id=interface_result.source_id,
                     symbol_kind="interface_property",
-                    symbol_name=source_interface.name,
-                    properties=source_interface.properties,
+                    symbol_name=getattr(source_interface, "name", ""),
+                    properties=getattr(source_interface, "properties", ()),
                 )
             )
-        for source_type in source_file.types:
+        for type_result in architecture_map.code_map.types().all():
+            source_type = type_result.item
             violations.extend(
                 self.property_violations(
-                    source_id=source_id,
+                    source_id=type_result.source_id,
                     symbol_kind="type_property",
-                    symbol_name=source_type.name,
-                    properties=source_type.properties,
+                    symbol_name=getattr(source_type, "name", ""),
+                    properties=getattr(source_type, "properties", ()),
                 )
             )
-        for abstract_class in source_file.abstract_classes:
+        for abstract_class_result in architecture_map.code_map.abstract_classes().all():
+            abstract_class = abstract_class_result.item
             violations.extend(
                 self.property_violations(
-                    source_id=source_id,
+                    source_id=abstract_class_result.source_id,
                     symbol_kind="abstract_class_property",
-                    symbol_name=abstract_class.name,
-                    properties=abstract_class.properties,
+                    symbol_name=getattr(abstract_class, "name", ""),
+                    properties=getattr(abstract_class, "properties", ()),
                 )
             )
         return tuple(violations)
@@ -69,7 +79,7 @@ class PropertyResolver(SymbolShapeResolverInterface, BaseShapeResolver):
         source_id: str,
         symbol_kind: str,
         symbol_name: str,
-        properties: list[SourceClassProperty],
+        properties: Sequence[PropertyShape],
     ) -> tuple[ShapeViolation, ...]:
         return tuple(
             ShapeViolation(

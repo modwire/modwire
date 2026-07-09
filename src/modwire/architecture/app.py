@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Annotated
 
-import click
 from wireup import Inject, injectable
 
 from modwire.shared import config
@@ -33,16 +32,13 @@ class ArchitectureApplication:
         self.insight_report_collector = insight_report_collector
         self.shape_report_collector = shape_report_collector
 
-    def report(self, root: Path, language: str) -> None:
+    def report(self, root: Path, language: str):
         code_map = self.code_map_reader.read(root, language)
         architecture_map = self.map_loader.load(code_map)
 
-        reports = (
+        return (
             self.map_report_collector.collect(architecture_map),
             self.flow_report_collector.collect(architecture_map),
             self.insight_report_collector.collect(architecture_map),
             self.shape_report_collector.collect(architecture_map),
         )
-
-        for item in reports:
-            click.echo(item.model_dump_json(indent=2))

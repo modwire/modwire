@@ -1,12 +1,13 @@
-from modwire_extraction.extractors.source import (
-    SourceClassMethod,
-    SourceFile,
-    SourceFunction,
-)
 from wireup import injectable
 
-from ..base import BaseShapeResolver, ShapeViolation, SymbolShapeResolverInterface
-from ....shared.config.shape import ShapeConfig
+from ..base import (
+    ArchitectureMapQuery,
+    BaseShapeResolver,
+    CallableShape,
+    ShapeViolation,
+    SymbolShapeResolverInterface,
+)
+from modwire.shared.config import ShapeConfig
 
 
 @injectable(qualifier="callable", as_type=SymbolShapeResolverInterface)
@@ -21,28 +22,27 @@ class CallableResolver(SymbolShapeResolverInterface, BaseShapeResolver):
 
     def resolve(
         self,
-        source_id: str,
-        source_file: SourceFile,
+        architecture_map: ArchitectureMapQuery,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         violations: list[ShapeViolation] = []
-        for source_function in source_file.functions:
+        for function_result in architecture_map.code_map.functions().all():
             violations.extend(
                 self.callable_violations(
-                    source_id=source_id,
+                    source_id=function_result.source_id,
                     symbol_kind="function",
-                    symbol=source_function,
+                    symbol=function_result.item,
                     line_limit=config.max_function_lines,
                     allow_optional_args=config.allow_optional_function_args,
                     config=config,
                 )
             )
 
-        for source_class in source_file.classes:
-            for method in source_class.methods:
+        for class_result in architecture_map.code_map.classes().all():
+            for method in getattr(class_result.item, "methods", ()):
                 violations.extend(
                     self.callable_violations(
-                        source_id=source_id,
+                        source_id=class_result.source_id,
                         symbol_kind="method",
                         symbol=method,
                         line_limit=config.max_method_lines,
@@ -51,11 +51,11 @@ class CallableResolver(SymbolShapeResolverInterface, BaseShapeResolver):
                     )
                 )
 
-        for source_interface in source_file.interfaces:
-            for method in source_interface.methods:
+        for interface_result in architecture_map.code_map.interfaces().all():
+            for method in getattr(interface_result.item, "methods", ()):
                 violations.extend(
                     self.callable_violations(
-                        source_id=source_id,
+                        source_id=interface_result.source_id,
                         symbol_kind="method",
                         symbol=method,
                         line_limit=config.max_method_lines,
@@ -64,14 +64,15 @@ class CallableResolver(SymbolShapeResolverInterface, BaseShapeResolver):
                     )
                 )
 
-        for abstract_class in source_file.abstract_classes:
+        for abstract_class_result in architecture_map.code_map.abstract_classes().all():
+            abstract_class = abstract_class_result.item
             for method in (
-                *abstract_class.abstract_methods,
-                *abstract_class.concrete_methods,
+                *getattr(abstract_class, "abstract_methods", ()),
+                *getattr(abstract_class, "concrete_methods", ()),
             ):
                 violations.extend(
                     self.callable_violations(
-                        source_id=source_id,
+                        source_id=abstract_class_result.source_id,
                         symbol_kind="method",
                         symbol=method,
                         line_limit=config.max_method_lines,
@@ -87,15 +88,13 @@ class CallableResolver(SymbolShapeResolverInterface, BaseShapeResolver):
         *,
         source_id: str,
         symbol_kind: str,
-        symbol: SourceFunction | SourceClassMethod,
+        symbol: CallableShape,
         line_limit: int,
         allow_optional_args: bool,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         line_rule = (
-            "max_function_lines"
-            if symbol_kind == "function"
-            else "max_method_lines"
+            "max_function_lines" if symbol_kind == "function" else "max_method_lines"
         )
         violations = [
             self.limit_violation(

@@ -1,8 +1,12 @@
-from modwire_extraction.extractors.source import SourceFile
 from wireup import injectable
 
-from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
-from ....shared.config.shape import ShapeConfig
+from ..base import (
+    ArchitectureMapQuery,
+    BaseShapeResolver,
+    ShapeResolverInterface,
+    ShapeViolation,
+)
+from modwire.shared.config import ShapeConfig
 
 
 @injectable(qualifier="import", as_type=ShapeResolverInterface)
@@ -17,14 +21,16 @@ class ImportResolver(ShapeResolverInterface, BaseShapeResolver):
 
     def resolve(
         self,
-        source_id: str,
-        source_file: SourceFile,
+        architecture_map: ArchitectureMapQuery,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         violations: list[ShapeViolation] = []
         allowed_crossing_types = set(config.allowed_import_crossing_types)
 
-        for source_import in source_file.imports:
+        for import_result in architecture_map.code_map.imports().all():
+            source_id = import_result.source_id
+            source_import = import_result.item
+
             if not config.allow_import_aliases and source_import.is_aliased:
                 violations.append(
                     ShapeViolation(

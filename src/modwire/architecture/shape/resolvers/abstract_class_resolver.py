@@ -1,8 +1,13 @@
-from modwire_extraction.extractors.source import SourceAbstractClass, SourceFile
 from wireup import injectable
 
-from ..base import BaseShapeResolver, ShapeViolation, SymbolShapeResolverInterface
-from ....shared.config.shape import ShapeConfig
+from ..base import (
+    AbstractClassShape,
+    ArchitectureMapQuery,
+    BaseShapeResolver,
+    ShapeViolation,
+    SymbolShapeResolverInterface,
+)
+from modwire.shared.config.shape import ShapeConfig
 
 
 @injectable(qualifier="abstract-class", as_type=SymbolShapeResolverInterface)
@@ -14,19 +19,18 @@ class AbstractClassResolver(SymbolShapeResolverInterface, BaseShapeResolver):
     @property
     def title(self) -> str:
         return "Abstract Class Shape"
-    
+
     def resolve(
         self,
-        source_id: str,
-        source_file: SourceFile,
+        architecture_map: ArchitectureMapQuery,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         violations: list[ShapeViolation] = []
-        for abstract_class in source_file.abstract_classes:
+        for abstract_class_result in architecture_map.code_map.abstract_classes().all():
             violations.extend(
                 self.abstract_class_violations(
-                    source_id=source_id,
-                    abstract_class=abstract_class,
+                    source_id=abstract_class_result.source_id,
+                    abstract_class=abstract_class_result.item,
                     config=config,
                 )
             )
@@ -36,12 +40,11 @@ class AbstractClassResolver(SymbolShapeResolverInterface, BaseShapeResolver):
         self,
         *,
         source_id: str,
-        abstract_class: SourceAbstractClass,
+        abstract_class: AbstractClassShape,
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
-        method_count = (
-            len(abstract_class.abstract_methods)
-            + len(abstract_class.concrete_methods)
+        method_count = len(abstract_class.abstract_methods) + len(
+            abstract_class.concrete_methods
         )
         violations = [
             self.limit_violation(
