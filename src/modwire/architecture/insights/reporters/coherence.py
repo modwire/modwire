@@ -2,7 +2,7 @@ from wireup import injectable
 
 from modwire.shared import report
 
-from ...map import ArchitectureMap
+from ...map.base import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
@@ -21,7 +21,7 @@ class CoherenceReport(report.ReportItem):
 @injectable(qualifier="coherence", as_type=InsightReporterInterface)
 class CoherenceReporter(InsightReporterInterface):
     name: str = "coherence"
-    title: str = "Dependency Coherence"
+    report_type: type[CoherenceReport] = CoherenceReport
 
     def collect(self, architecture_map: ArchitectureMap) -> CoherenceReport:
         source_ids = set(architecture_map.code_map.source_ids())
@@ -56,7 +56,7 @@ class CoherenceReporter(InsightReporterInterface):
             if edge_result.edge.to_id not in source_ids
         )
 
-        return CoherenceReport(
+        return self.report_type(
             roots=tuple(roots),
             leaves=tuple(leaves),
             isolated=tuple(isolated),

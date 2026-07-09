@@ -13,9 +13,9 @@ class GlossaryApplication:
         self._repository = repository
         self._renderer = renderer
 
-    def list_terms(self):
+    def list_terms(self) -> str:
         glossary = self._repository.load()
-        self._renderer.render(glossary)
+        return self._renderer.render(glossary)
 
     def add_term(
         self,

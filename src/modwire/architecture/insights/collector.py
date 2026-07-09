@@ -4,14 +4,18 @@ from pydantic import BaseModel
 
 from wireup import injectable
 
-from ..map import ArchitectureMap
+from modwire.shared import report
+
+from ..map.base import ArchitectureMap
 
 from .base import InsightReporterInterface
 from .reporters import InsightReport, InsightReportFieldMap
 
 
 @injectable(lifetime="transient")
-class InsightReportCollector:
+class InsightReportCollector(report.ReportCollector[InsightReport]):
+    report_type: type[InsightReport] = InsightReport
+
     def __init__(
         self,
         reporters: Sequence[InsightReporterInterface],
@@ -29,4 +33,4 @@ class InsightReportCollector:
             field = self._field_for(name)
             payload[field] = reporter.collect(architecture_map)
 
-        return InsightReport.model_validate(payload)
+        return self.report_type.model_validate(payload)

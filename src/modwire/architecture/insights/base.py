@@ -2,12 +2,14 @@ import abc
 
 from pydantic import BaseModel
 
-from ..map import ArchitectureMap
+from modwire.shared import report
+
+from ..map.base import ArchitectureMap
 
 
 class InsightReporterInterface(abc.ABC):
     name: str
-    title: str
+    report_type: type[report.ReportItem]
 
     @abc.abstractmethod
     def collect(self, architecture_map: ArchitectureMap) -> BaseModel:

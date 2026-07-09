@@ -2,7 +2,7 @@ from wireup import injectable
 
 from modwire.shared import ModwireBaseModel, report
 
-from ...map import ArchitectureMap
+from ...map.base import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
@@ -25,7 +25,7 @@ class HotspotsReport(report.ReportItem):
 @injectable(qualifier="hotspots", as_type=InsightReporterInterface)
 class HotspotsReporter(InsightReporterInterface):
     name: str = "hotspots"
-    title: str = "Dependency Hotspots"
+    report_type: type[HotspotsReport] = HotspotsReport
 
     def collect(self, architecture_map: ArchitectureMap) -> HotspotsReport:
         hotspots = tuple(
@@ -40,7 +40,7 @@ class HotspotsReporter(InsightReporterInterface):
                 ),
             )
         )
-        return HotspotsReport(hotspots=hotspots)
+        return self.report_type(hotspots=hotspots)
 
     def hotspot_for(
         self,

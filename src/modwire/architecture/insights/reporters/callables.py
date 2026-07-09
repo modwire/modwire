@@ -2,7 +2,7 @@ from wireup import injectable
 
 from modwire.shared import ModwireBaseModel, report
 
-from ...map import ArchitectureMap
+from ...map.base import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
@@ -24,7 +24,7 @@ class CallablesReport(report.ReportItem):
 @injectable(qualifier="callables", as_type=InsightReporterInterface)
 class CallablesReporter(InsightReporterInterface):
     name: str = "callables"
-    title: str = "Callable Graph"
+    report_type: type[CallablesReport] = CallablesReport
 
     def collect(self, architecture_map: ArchitectureMap) -> CallablesReport:
         calls_by_source: dict[str, list[str]] = {}
@@ -56,4 +56,4 @@ class CallablesReporter(InsightReporterInterface):
                 key=lambda result: result.item.id,
             )
         )
-        return CallablesReport(entries=entries)
+        return self.report_type(entries=entries)

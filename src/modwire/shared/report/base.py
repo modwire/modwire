@@ -1,14 +1,16 @@
 from typing import Any, Generic, Protocol, TypeVar
 
-from pydantic import Field
+from pydantic import Field, model_serializer
 
 from modwire.shared import ModwireBaseModel
 
 
-ReportResult = TypeVar("ReportResult", covariant=True)
+ReportResult = TypeVar("ReportResult", bound="ReportNode", covariant=True)
 
 
 class ReportCollector(Protocol, Generic[ReportResult]):
+    report_type: type[ReportResult]
+
     def collect(self, architecture_map: object) -> ReportResult:
         ...
 
@@ -28,6 +30,30 @@ class ReportNode(ModwireBaseModel):
     report_path: str = ""
     report_order: int = 100
     report_children: tuple[type["ReportNode"], ...] = Field(default=(), exclude=True)
+
+    metadata: ReportMetadata = ReportMetadata(
+        id="",
+        title="",
+        model="",
+        path="",
+        order=100,
+    )
+
+    def model_post_init(self, __context: object) -> None:
+        object.__setattr__(self, "metadata", self.report_metadata())
+
+    @model_serializer(mode="wrap")
+    def serialize_report_node(self, handler: Any) -> dict[str, Any]:
+        payload = handler(self)
+        for field_name in (
+            "report_id",
+            "report_title",
+            "report_path",
+            "report_order",
+            "report_children",
+        ):
+            payload.pop(field_name, None)
+        return payload
 
     @classmethod
     def report_slug(cls) -> str:

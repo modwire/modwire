@@ -6,7 +6,7 @@ from wireup import Inject, injectable
 from modwire.shared import report
 from modwire.shared.config import ArchitectureConfig
 
-from ..map import ArchitectureMap
+from ..map.base import ArchitectureMap
 from .base import ShapeResolverInterface, ShapeViolation
 
 
@@ -21,7 +21,9 @@ class ShapeReport(report.ReportItem):
 
 
 @injectable(lifetime="transient")
-class ShapeReportCollector:
+class ShapeReportCollector(report.ReportCollector[ShapeReport]):
+    report_type: type[ShapeReport] = ShapeReport
+
     def __init__(
         self,
         config: Annotated[ArchitectureConfig, Inject(config="architecture")],
@@ -35,7 +37,7 @@ class ShapeReportCollector:
         violations: list[ShapeViolation] = []
         for resolver in self.resolvers:
             violations.extend(resolver.resolve(architecture_map, self.config))
-        return ShapeReport(
+        return self.report_type(
             violations=tuple(violations),
             resolvers=resolver_names,
         )

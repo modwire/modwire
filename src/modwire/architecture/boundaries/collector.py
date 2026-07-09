@@ -2,7 +2,7 @@ from wireup import injectable
 
 from modwire.shared import report
 
-from ..map import ArchitectureMap
+from ..map.base import ArchitectureMap
 from .base import FlowViolation
 from .analyzer import BoundariesFlowAnalyzer
 
@@ -18,12 +18,14 @@ class FlowReport(report.ReportItem):
 
 
 @injectable(lifetime="transient")
-class FlowReportCollector:
+class FlowReportCollector(report.ReportCollector[FlowReport]):
+    report_type: type[FlowReport] = FlowReport
+
     def __init__(self, flow_analyzer: BoundariesFlowAnalyzer):
         self.flow_analyzer = flow_analyzer
 
     def collect(self, architecture_map: ArchitectureMap) -> FlowReport:
-        return FlowReport(
+        return self.report_type(
             violations=self.flow_analyzer.analyze(architecture_map),
             analyzers=self.flow_analyzer.analyzer_names(),
         )

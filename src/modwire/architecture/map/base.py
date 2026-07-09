@@ -2,8 +2,6 @@ from dataclasses import dataclass
 
 from modwire_extraction.code import QueryableCodeMap
 
-from ..boundaries.tags import TagMap
-
 
 @dataclass(frozen=True)
 class ArchitectureRealm:
@@ -16,7 +14,7 @@ class ArchitectureMap:
     def __init__(
         self,
         code_map: QueryableCodeMap,
-        tag_map: TagMap,
+        tag_map: object,
         modules: dict[str, tuple[str, ...]],
         layers: dict[str, tuple[str, ...]],
         unknown_files: tuple[str, ...],

@@ -1,6 +1,6 @@
-from pydantic import Field
-
 from modwire.shared import report
+
+from pydantic import Field
 
 from .callables import CallablesReport
 from .clusters import ClustersReport

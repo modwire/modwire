@@ -1,4 +1,4 @@
-from ...map import ArchitectureMap
+from ...map.base import ArchitectureMap
 
 from ..base import FlowViolation
 

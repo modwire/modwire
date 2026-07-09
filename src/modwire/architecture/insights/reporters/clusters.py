@@ -2,7 +2,7 @@ from wireup import injectable
 
 from modwire.shared import ModwireBaseModel, report
 
-from ...map import ArchitectureMap
+from ...map.base import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
@@ -27,7 +27,7 @@ class ClustersReport(report.ReportItem):
 @injectable(qualifier="clusters", as_type=InsightReporterInterface)
 class ClustersReporter(InsightReporterInterface):
     name: str = "clusters"
-    title: str = "Dependency Clusters"
+    report_type: type[ClustersReport] = ClustersReport
     group_depth: int = 2
     top_file_limit: int = 5
 
@@ -54,7 +54,7 @@ class ClustersReporter(InsightReporterInterface):
                 )
             )
 
-        return ClustersReport(
+        return self.report_type(
             clusters=tuple(
                 sorted(
                     clusters,

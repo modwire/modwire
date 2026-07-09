@@ -22,9 +22,11 @@ class MapReport(report.ReportItem):
 
 
 @injectable(lifetime="transient")
-class MapReportCollector:
+class MapReportCollector(report.ReportCollector[MapReport]):
+    report_type: type[MapReport] = MapReport
+
     def collect(self, architecture_map: ArchitectureMap) -> MapReport:
-        return MapReport(
+        return self.report_type(
             modules=tuple(
                 ArchitectureGroup(name=name, source_ids=source_ids)
                 for name, source_ids in sorted(architecture_map.modules.items())

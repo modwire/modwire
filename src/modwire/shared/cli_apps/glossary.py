@@ -11,7 +11,9 @@ def glossary():
 
 @glossary.command()
 def list_terms(app: Injected[GlossaryApplication]):
-    app.list_terms()
+    text = app.list_terms()
+    if text:
+        click.echo(text)
 
 
 @glossary.command()

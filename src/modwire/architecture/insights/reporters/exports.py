@@ -2,7 +2,7 @@ from wireup import injectable
 
 from modwire.shared import ModwireBaseModel, report
 
-from ...map import ArchitectureMap
+from ...map.base import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
@@ -26,7 +26,7 @@ class ExportsReport(report.ReportItem):
 @injectable(qualifier="unused-exports", as_type=InsightReporterInterface)
 class ExportsReporter(InsightReporterInterface):
     name: str = "unused-exports"
-    title: str = "Unused Exports"
+    report_type: type[ExportsReport] = ExportsReport
 
     def collect(self, architecture_map: ArchitectureMap) -> ExportsReport:
         imported_names = self.imported_names(architecture_map)
@@ -45,7 +45,7 @@ class ExportsReporter(InsightReporterInterface):
             if (export := export_result.item).name not in imported_names
             and export.local_name not in imported_names
         )
-        return ExportsReport(unused_exports=unused_exports)
+        return self.report_type(unused_exports=unused_exports)
 
     def imported_names(self, architecture_map: ArchitectureMap) -> set[str]:
         imported_names: set[str] = set()
