@@ -1,16 +1,14 @@
-from .base import ModwireBaseApplication, ModwireBaseModel
+from .base import ModwireBaseModel, create_application
 from .config import ModwireConfig
-from .config.base import ModwireBaseConfig
 from .console import parse_inputs
 from . import code, config, glossary, scaffolding
 
 
 __all__ = [
     "ModwireBaseModel",
-    "ModwireBaseConfig",
-    "ModwireBaseApplication",
     "ModwireConfig",
     "parse_inputs",
+    "create_application",
     "code",
     "config",
     "glossary",

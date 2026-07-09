@@ -5,6 +5,9 @@ from typing import Self
 from pydantic import BaseModel, ConfigDict
 from pydantic_yaml import parse_yaml_raw_as, to_yaml_str
 
+from . import di
+from .config import ModwireConfig
+
 
 class Modwire:
     pass
@@ -31,3 +34,13 @@ class ModwireBaseApplication(abc.ABC, Modwire):
     @abc.abstractmethod
     def run(self):
         pass
+
+
+class ModwireApplication:
+    def __init__(self, config: ModwireConfig):
+        self.config = config
+        self.container = di.create_container(config)
+
+
+def create_application(config: ModwireConfig) -> ModwireApplication:
+    return ModwireApplication(config)

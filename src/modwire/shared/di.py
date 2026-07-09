@@ -1,7 +1,7 @@
 import wireup
 
-from modwire import architecture, layers, modules, projects, shared
-from modwire.shared.config import ModwireConfig
+from .. import architecture, layers, modules, projects, shared
+from .config import ModwireConfig
 
 
 def create_container(config: ModwireConfig):
