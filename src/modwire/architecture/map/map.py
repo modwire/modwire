@@ -15,7 +15,6 @@ class ArchitectureMap:
 
     def __init__(
         self,
-        config: config.ArchitectureConfig,
         code_map: QueryableCodeMap,
         tag_map: TagMap,
         modules: dict[str, tuple[str, ...]],

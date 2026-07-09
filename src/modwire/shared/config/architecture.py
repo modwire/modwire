@@ -38,7 +38,6 @@ class BoundariesConfig(ModwireBaseConfig):
 
 
 class ArchitectureConfig(ModwireBaseConfig):
-    language: str
     exclusions: tuple[str, ...] = ()
     boundaries: BoundariesConfig = Field(default_factory=BoundariesConfig)
     shape: ShapeConfig = Field(default_factory=ShapeConfig)
