@@ -1,7 +1,7 @@
 import click
 from wireup import Injected
 
-from .app import GlossaryApplication
+from ..glossary.app import GlossaryApplication
 
 
 @click.group()

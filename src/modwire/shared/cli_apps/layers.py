@@ -1,7 +1,7 @@
 import click
 from wireup import Injected
 
-from .app import LayersApplication
+from ...layers.app import LayersApplication
 
 
 @click.group()

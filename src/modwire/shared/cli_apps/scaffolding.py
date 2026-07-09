@@ -3,8 +3,8 @@ from pathlib import Path
 import click
 from wireup import Injected
 
-from ..cli import parse_inputs
-from .app import ScaffoldingApplication
+from ..console import parse_inputs
+from ..scaffolding.app import ScaffoldingApplication
 
 
 @click.group()

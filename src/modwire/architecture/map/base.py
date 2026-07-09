@@ -7,8 +7,8 @@ from ..boundaries.tags import TagMap
 
 @dataclass(frozen=True)
 class ArchitectureRealm:
-    name: str = ""
-    module_tag: str = ""
+    name: str
+    module_tag: str
     layers: tuple[str, ...] = ()
 
 

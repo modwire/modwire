@@ -2,7 +2,7 @@ import click
 
 from wireup import Injected
 
-from .app import ProjectsApplication
+from ...projects.app import ProjectsApplication
 
 
 @click.group()

@@ -1,7 +1,7 @@
 import click
 from wireup import Injected
 
-from .app import ModulesApplication
+from ...modules.app import ModulesApplication
 
 
 @click.group()
