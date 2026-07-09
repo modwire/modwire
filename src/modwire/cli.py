@@ -29,10 +29,10 @@ def cli(ctx):
 
 
 cli.add_command(glossary)
+cli.add_command(scaffolding)
 cli.add_command(projects)
 cli.add_command(modules)
 cli.add_command(layers)
-cli.add_command(scaffolding)
 cli.add_command(architecture)
 
 
