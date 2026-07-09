@@ -4,7 +4,7 @@ _subdirectory: templates
 
 project_name:
   type: str
-  default: new-project
+  default: new_project
   help: Python distribution name.
 
 project_package:

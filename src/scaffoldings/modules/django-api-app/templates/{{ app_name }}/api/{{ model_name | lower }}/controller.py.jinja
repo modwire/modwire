@@ -7,10 +7,10 @@ from .schemas import In, Out
 
 @api_controller("/{{ model_name | lower }}s", tags=["{{ model_name }}s"])
 class {{ model_name }}Controller(ControllerBase):
-    @http_get("", response=list[Out], operation_id="list{{ model_name }}s", summary="List {{ model_name | lower }}s.")
+    @http_get("", response=list[Out], operation_id="list_{{ model_name | lower }}s", summary="List {{ model_name | lower }}s.")
     def list(self):
         return get({{ model_name }}Service).list()
 
-    @http_post("", response={201: Out}, operation_id="create{{ model_name }}", summary="Create {{ model_name | lower }}.")
+    @http_post("", response=Out, operation_id="create_{{ model_name | lower }}", summary="Create {{ model_name | lower }}.")
     def create(self, data: In):
-        return 201, get({{ model_name }}Service).create(**data.model_dump())
+        return get({{ model_name }}Service).create(**data.model_dump())

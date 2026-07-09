@@ -8,6 +8,6 @@ class Health(Schema):
 
 @api_controller("/health", tags=["System"])
 class HealthController(ControllerBase):
-    @http_get("", response=Health, operation_id="getHealth", summary="Return API health.")
+    @http_get("", response=Health, operation_id="get_health", summary="Return API health.")
     def get(self):
         return Health()
