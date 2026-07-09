@@ -1,6 +1,1 @@
-from .catalog import FlowAnalyzerCatalog
-
-
-__all__ = [
-    "FlowAnalyzerCatalog",
-]
+__all__: list[str] = []
