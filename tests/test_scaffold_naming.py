@@ -18,6 +18,8 @@ def test_django_api_project_does_not_generate_app_scope_package():
     assert "core/api.py" in package.files
     assert "core/settings.py" in package.files
     assert "core/di.py" not in package.files
+    assert ".modwire/boundaries.yaml" in package.files
+    assert ".modwire/shape.yaml" in package.files
     assert package.files[".env"].count("DATABASE_URL=") == 1
     assert "DATABASE_URL=sqlite:///.dev/db.sqlite" in package.files[".env"]
     assert '"wireup.integration.django.apps.WireupConfig"' in package.files["core/settings.py"]
@@ -27,6 +29,17 @@ def test_django_api_project_does_not_generate_app_scope_package():
     ]
     assert not any(path.startswith("platform/") for path in package.files)
     assert not any("/api/health/" in path for path in package.files)
+
+    boundaries = package.files[".modwire/boundaries.yaml"]
+    assert 'match: "core"' in boundaries
+    assert 'match: "*/api"' in boundaries
+    assert 'match: "*/services"' in boundaries
+    assert 'match: "*/models"' in boundaries
+    assert "module_tag: app" in boundaries
+    assert "module_tag: project" in boundaries
+    assert "backward-flow" in boundaries
+    assert "no-cycles" in boundaries
+    assert "no-reentry" in boundaries
 
 
 def test_django_api_app_uses_snake_case_operation_ids_and_pascal_case_classes():
@@ -79,6 +92,7 @@ def test_django_api_app_uses_snake_case_operation_ids_and_pascal_case_classes():
     assert "class InvoicePatchIn(Schema):" in schemas
     assert "class InvoiceOut(ModelSchema):" in schemas
     assert "@injectable" in package.files["services/invoice.py"]
+    assert not any(path.startswith(".modwire/") for path in package.files)
 
 
 def test_django_api_app_normalizes_model_name_to_pascal_case_and_snake_case():

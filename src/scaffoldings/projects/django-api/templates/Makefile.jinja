@@ -51,3 +51,6 @@ add:
 remove:
 	@test -n "$(pkg)" || (echo "usage: make remove pkg=<pkg>" && exit 2)
 	$(REMOVE) $(pkg)
+
+modwire:
+	modwire -d .modwire architecture health . python
