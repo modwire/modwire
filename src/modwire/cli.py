@@ -1,12 +1,12 @@
 import click
 import wireup.integration.click
 
-from .glossary.cli import glossary
+from .shared.glossary.cli import glossary
 from .projects.cli import projects
 from .modules.cli import modules
 from .layers.cli import layers
 from .architecture.cli import architecture
-from .scaffolding.cli import scaffolding
+from .shared.scaffolding.cli import scaffolding
 from .app import application, container
 
 

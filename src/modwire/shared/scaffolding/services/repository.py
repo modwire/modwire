@@ -3,7 +3,7 @@ from typing import Annotated
 
 from wireup import Inject, injectable
 
-from modwire.shared import config
+from modwire.shared.config import ScaffoldingConfig
 
 from .scaffold import Scaffold, ScaffoldGroup
 
@@ -12,14 +12,12 @@ from .scaffold import Scaffold, ScaffoldGroup
 class ScaffoldRepository:
     def __init__(
         self,
-        scaffolding_config: Annotated[
-            config.ScaffoldingConfig, Inject(config="scaffolding")
-        ],
+        config: Annotated[ScaffoldingConfig, Inject(config="scaffolding") ],
     ):
-        self.config = scaffolding_config
+        self.config = config
         self.root_dirs = (
             self.config.scaffolds_root,
-            Path(__file__).resolve().parents[3] / "scaffoldings",
+            Path(__file__).resolve().parents[4] / "scaffoldings",
         )
 
     def find_groups(self) -> list[ScaffoldGroup]:

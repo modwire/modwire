@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 from wireup import Injected
 
-from ..shared.cli import parse_inputs
+from ..cli import parse_inputs
 from .app import ScaffoldingApplication
 
 
