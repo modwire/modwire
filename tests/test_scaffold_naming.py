@@ -17,8 +17,14 @@ def test_django_api_project_does_not_generate_app_scope_package():
 
     assert "core/api.py" in package.files
     assert "core/settings.py" in package.files
+    assert "core/di.py" not in package.files
     assert package.files[".env"].count("DATABASE_URL=") == 1
     assert "DATABASE_URL=sqlite:///.dev/db.sqlite" in package.files[".env"]
+    assert '"wireup.integration.django.apps.WireupConfig"' in package.files["core/settings.py"]
+    assert '"wireup.integration.django.wireup_middleware"' in package.files["core/settings.py"]
+    assert "WIREUP = WireupSettings(injectables=local_service_modules(), auto_inject_views=False)" in package.files[
+        "core/settings.py"
+    ]
     assert not any(path.startswith("platform/") for path in package.files)
     assert not any("/api/health/" in path for path in package.files)
 
@@ -35,6 +41,9 @@ def test_django_api_app_uses_snake_case_operation_ids_and_pascal_case_classes():
     assert "from ninja_extra import ControllerBase, api_controller, route" in controller
     assert "@route.get" in controller
     assert "@route.post" in controller
+    assert "from wireup import Inject" in controller
+    assert "from wireup.integration.django import inject" in controller
+    assert "@inject" in controller
     assert "http_get" not in controller
     assert "http_post" not in controller
     assert "core.di" not in controller
@@ -44,9 +53,10 @@ def test_django_api_app_uses_snake_case_operation_ids_and_pascal_case_classes():
     assert "class InvoiceController" in controller
     assert "InvoiceService" in controller
     assert "response=Out" in controller
-    assert "return InvoiceService().create(**data.model_dump())" in controller
+    assert "return service.create(**data.model_dump())" in controller
     assert "return 201," not in controller
     assert 'operation_id="list_invoices"' in controller
     assert 'operation_id="create_invoice"' in controller
     assert 'operation_id="listInvoices"' not in controller
     assert 'operation_id="createInvoice"' not in controller
+    assert "@injectable" in package.files["services/invoice.py"]

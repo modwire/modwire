@@ -1,4 +1,8 @@
+from typing import Annotated
+
 from ninja_extra import ControllerBase, api_controller, route
+from wireup import Inject
+from wireup.integration.django import inject
 
 from ...services.{{ model_name | lower }} import {{ model_name }}Service
 from .schemas import In, Out
@@ -7,9 +11,11 @@ from .schemas import In, Out
 @api_controller("/{{ model_name | lower }}s", tags=["{{ model_name }}s"])
 class {{ model_name }}Controller(ControllerBase):
     @route.get("", response=list[Out], operation_id="list_{{ model_name | lower }}s", summary="List {{ model_name | lower }}s.")
-    def list(self):
-        return {{ model_name }}Service().list()
+    @inject
+    def list(self, service: Annotated[{{ model_name }}Service, Inject()]):
+        return service.list()
 
     @route.post("", response=Out, operation_id="create_{{ model_name | lower }}", summary="Create {{ model_name | lower }}.")
-    def create(self, data: In):
-        return {{ model_name }}Service().create(**data.model_dump())
+    @inject
+    def create(self, data: In, service: Annotated[{{ model_name }}Service, Inject()]):
+        return service.create(**data.model_dump())

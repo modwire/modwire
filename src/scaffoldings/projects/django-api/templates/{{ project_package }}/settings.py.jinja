@@ -7,6 +7,7 @@ from pathlib import Path
 
 import dj_database_url
 import structlog
+from wireup.integration.django import WireupSettings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me")
@@ -15,6 +16,22 @@ ALLOWED_HOSTS = [h for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").sp
 
 def local_apps():
     return sorted(p.name for p in BASE_DIR.iterdir() if (p / "apps.py").is_file())
+
+
+def local_service_modules():
+    modules = []
+    for app in local_apps():
+        services_dir = BASE_DIR / app / "services"
+        if not services_dir.is_dir():
+            continue
+
+        modules.append(f"{app}.services")
+        modules.extend(
+            f"{app}.services.{path.stem}"
+            for path in sorted(services_dir.glob("*.py"))
+            if path.name != "__init__.py"
+        )
+    return modules
 
 
 INSTALLED_APPS = [
@@ -26,8 +43,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "health_check",
     "ninja_extra",
+    "wireup.integration.django.apps.WireupConfig",
 ] + local_apps()
 MIDDLEWARE = [
+    "wireup.integration.django.wireup_middleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -36,6 +55,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+WIREUP = WireupSettings(injectables=local_service_modules(), auto_inject_views=False)
 ROOT_URLCONF = "{{ project_package }}.urls"
 TEMPLATES = [{
     "BACKEND": "django.template.backends.django.DjangoTemplates",

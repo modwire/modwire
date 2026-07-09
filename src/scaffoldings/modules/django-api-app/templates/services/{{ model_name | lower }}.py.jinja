@@ -1,6 +1,9 @@
+from wireup import injectable
+
 from ..models.{{ model_name | lower }} import Model
 
 
+@injectable
 class {{ model_name }}Service:
     model = Model
 
