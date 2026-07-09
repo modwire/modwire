@@ -13,6 +13,10 @@ from .base import ShapeResolverInterface, ShapeViolation
 class ShapeReport(report.ReportItem):
     report_id: str = "architecture.violations.shape"
     report_title: str = "Shape Violations"
+    report_description: str = (
+        "Reports source-shape violations detected by configured resolvers, "
+        "including file, class, callable, import, property, signature, and symbol rules."
+    )
     report_path: str = "violations.shape"
     report_order: int = 20
 

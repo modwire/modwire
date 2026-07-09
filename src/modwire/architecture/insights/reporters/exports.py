@@ -17,6 +17,9 @@ class ExportsReportItem(ModwireBaseModel):
 class ExportsReport(report.ReportItem):
     report_id: str = "architecture.insights.exports"
     report_title: str = "Unused Exports"
+    report_description: str = (
+        "Lists exported symbols that are not referenced by tracked imports."
+    )
     report_path: str = "insights.exports"
     report_order: int = 50
 

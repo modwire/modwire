@@ -18,15 +18,21 @@ class ReportCollector(Protocol, Generic[ReportResult]):
 class ReportMetadata(ModwireBaseModel):
     id: str
     title: str
+    description: str
     model: str
     path: str
     order: int
     children: tuple["ReportMetadata", ...] = ()
 
 
+class ReportCatalog(ModwireBaseModel):
+    reports: tuple[ReportMetadata, ...]
+
+
 class ReportNode(ModwireBaseModel):
     report_id: str
     report_title: str
+    report_description: str = ""
     report_path: str = ""
     report_order: int = 100
     report_children: tuple[type["ReportNode"], ...] = Field(default=(), exclude=True)
@@ -34,6 +40,7 @@ class ReportNode(ModwireBaseModel):
     metadata: ReportMetadata = ReportMetadata(
         id="",
         title="",
+        description="",
         model="",
         path="",
         order=100,
@@ -48,6 +55,7 @@ class ReportNode(ModwireBaseModel):
         for field_name in (
             "report_id",
             "report_title",
+            "report_description",
             "report_path",
             "report_order",
             "report_children",
@@ -77,6 +85,7 @@ class ReportNode(ModwireBaseModel):
         return ReportMetadata(
             id=report_id,
             title=cls.report_field("report_title"),
+            description=cls.report_field("report_description"),
             model=f"{cls.__module__}.{cls.__qualname__}",
             path=report_path or report_id,
             order=cls.report_field("report_order"),

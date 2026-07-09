@@ -32,6 +32,28 @@ class ArchitectureApplication:
         self.insight_report_collector = insight_report_collector
         self.shape_report_collector = shape_report_collector
 
+    def reports(self) -> report.ReportCatalog:
+        reports = tuple(
+            collector.report_type.report_metadata()
+            for collector in (
+                self.map_report_collector,
+                self.flow_report_collector,
+                self.shape_report_collector,
+                self.insight_report_collector,
+            )
+        )
+        return report.ReportCatalog(
+            reports=tuple(
+                sorted(
+                    reports,
+                    key=lambda report_metadata: (
+                        report_metadata.order,
+                        report_metadata.id,
+                    ),
+                )
+            )
+        )
+
     def report(self, root: Path, language: str) -> tuple[report.ReportNode, ...]:
         code_map = self.code_map_reader.read(root, language)
         architecture_map = self.map_loader.load(code_map)

@@ -9,6 +9,10 @@ from ..base import InsightReporterInterface
 class CoherenceReport(report.ReportItem):
     report_id: str = "architecture.insights.coherence"
     report_title: str = "Dependency Coherence"
+    report_description: str = (
+        "Summarizes graph coherence by listing roots, leaves, isolated files, "
+        "and external dependency endpoints."
+    )
     report_path: str = "insights.coherence"
     report_order: int = 30
 

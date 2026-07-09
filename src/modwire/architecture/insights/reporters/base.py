@@ -12,6 +12,10 @@ from .hotspots import HotspotsReport
 class InsightReport(report.ReportSection):
     report_id: str = "architecture.insights"
     report_title: str = "Architecture Insights"
+    report_description: str = (
+        "Collects architecture insight reports for dependency clusters, hotspots, "
+        "coherence, callable relationships, and unused exports."
+    )
     report_path: str = "insights"
     report_order: int = 30
     report_children: tuple[type[report.ReportItem], ...] = Field(

@@ -13,6 +13,10 @@ class ArchitectureGroup(ModwireBaseModel):
 class MapReport(report.ReportItem):
     report_id: str = "architecture.map"
     report_title: str = "Architecture Map"
+    report_description: str = (
+        "Groups source files by configured architecture modules and layers, "
+        "and lists files that were not matched by the architecture map."
+    )
     report_path: str = "map"
     report_order: int = 10
 

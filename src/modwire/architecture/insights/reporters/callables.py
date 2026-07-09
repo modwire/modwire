@@ -15,6 +15,10 @@ class CallableReportEntry(ModwireBaseModel):
 class CallablesReport(report.ReportItem):
     report_id: str = "architecture.insights.callables"
     report_title: str = "Callable Graph"
+    report_description: str = (
+        "Lists callable-level call relationships, including calls made by each "
+        "callable and callers that reference it."
+    )
     report_path: str = "insights.callables"
     report_order: int = 40
 

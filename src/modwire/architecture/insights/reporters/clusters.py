@@ -18,6 +18,10 @@ class ClustersReportItem(ModwireBaseModel):
 class ClustersReport(report.ReportItem):
     report_id: str = "architecture.insights.clusters"
     report_title: str = "Dependency Clusters"
+    report_description: str = (
+        "Groups source files into path-based clusters and ranks them by incoming "
+        "and outgoing dependency pressure."
+    )
     report_path: str = "insights.clusters"
     report_order: int = 10
 

@@ -1,4 +1,5 @@
 from .base import (
+    ReportCatalog,
     ReportCollector,
     ReportMetadata,
     ReportSection,
@@ -8,6 +9,7 @@ from .base import (
 
 
 __all__ = [
+    "ReportCatalog",
     "ReportCollector",
     "ReportMetadata",
     "ReportSection",
