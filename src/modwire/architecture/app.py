@@ -4,9 +4,8 @@ from wireup import Inject, injectable
 
 from modwire.shared import config
 
-from .boundaries.analyzer import BoundariesFlowAnalyzer
-from .map.loader import ArchitectureMapLoader
-from .shape.resolvers.catalog import ShapeResolverCatalog
+from .boundaries import FlowReportCollector
+from .map import ArchitectureMapLoader
 
 
 @injectable(lifetime="transient")
@@ -15,10 +14,8 @@ class ArchitectureApplication:
         self,
         config: Annotated[config.ArchitectureConfig, Inject(config="architecture")],
         map_loader: ArchitectureMapLoader,
-        flow_analyzer: BoundariesFlowAnalyzer,
-        shape_catalog: ShapeResolverCatalog,
+        flow_report_collector: FlowReportCollector,
     ):
         self.config = config
         self.map_loader = map_loader
-        self.flow_analyzer = flow_analyzer
-        self.shape_catalog = shape_catalog
+        self.flow_report_collector = flow_report_collector

@@ -7,7 +7,7 @@ from modwire.shared.config import ArchitectureConfig
 
 from ..boundaries.tags import TagMatcher
 
-from .map import ArchitectureMap, ArchitectureRealm
+from .base import ArchitectureMap, ArchitectureRealm
 
 
 @injectable(lifetime="transient")

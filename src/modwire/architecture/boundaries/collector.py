@@ -2,9 +2,9 @@ from wireup import injectable
 
 from modwire.shared import report
 
-from ...map.map import ArchitectureMap
-from ..base import FlowViolation
-from ..analyzer import BoundariesFlowAnalyzer
+from ..map import ArchitectureMap
+from .base import FlowViolation
+from .analyzer import BoundariesFlowAnalyzer
 
 
 class FlowReport(report.ReportItem):

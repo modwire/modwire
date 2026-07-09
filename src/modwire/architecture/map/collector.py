@@ -2,7 +2,8 @@ from wireup import injectable
 
 from modwire.shared import ModwireBaseModel, report
 
-from ...map.map import ArchitectureMap
+from .base import ArchitectureMap
+
 
 class ArchitectureGroup(ModwireBaseModel):
     name: str

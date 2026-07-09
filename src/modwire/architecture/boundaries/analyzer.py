@@ -5,7 +5,7 @@ from wireup import Inject, injectable
 
 from modwire.shared.config import ArchitectureConfig, FlowRules
 
-from ..map.map import ArchitectureMap, ArchitectureRealm
+from ..map import ArchitectureMap, ArchitectureRealm
 
 from .base import FlowAnalyzerInterface, FlowViolation
 
