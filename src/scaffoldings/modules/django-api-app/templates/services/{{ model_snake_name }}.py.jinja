@@ -1,12 +1,12 @@
 from django.shortcuts import get_object_or_404
 from wireup import injectable
 
-from ..models.{{ model_snake_name }} import Model
+from ..models.{{ model_snake_name }} import {{ model_pascal_name }}
 
 
 @injectable
 class {{ model_pascal_name }}Service:
-    model = Model
+    model = {{ model_pascal_name }}
 
     def list(self):
         return self.model.objects.order_by("id")
