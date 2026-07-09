@@ -7,8 +7,7 @@ from pydantic_yaml import parse_yaml_raw_as, to_yaml_str
 
 
 class Modwire:
-    supported_languages: tuple[str, ...] = ("python", "typescript", "php",)
-
+    pass
 
 class ModwireBaseModel(BaseModel):
     model_config = ConfigDict(frozen=True, from_attributes=True)
