@@ -1,12 +1,15 @@
+from pathlib import Path
 from typing import Annotated
 
+import click
 from wireup import Inject, injectable
 
 from modwire.shared import config
+from modwire.shared.code import QueryableCodeMapReader
 
 from .boundaries import FlowReportCollector
-from .map import ArchitectureMapLoader, MapReportCollector
 from .insights import InsightReportCollector
+from .map import ArchitectureMapLoader, MapReportCollector
 from .shape import ShapeReportCollector
 
 
@@ -15,15 +18,31 @@ class ArchitectureApplication:
     def __init__(
         self,
         config: Annotated[config.ArchitectureConfig, Inject(config="architecture")],
+        code_map_reader: QueryableCodeMapReader,
         map_loader: ArchitectureMapLoader,
         map_report_collector: MapReportCollector,
         flow_report_collector: FlowReportCollector,
         insight_report_collector: InsightReportCollector,
-        shape_report_collector: ShapeReportCollector
+        shape_report_collector: ShapeReportCollector,
     ):
         self.config = config
+        self.code_map_reader = code_map_reader
         self.map_loader = map_loader
         self.map_report_collector = map_report_collector
         self.flow_report_collector = flow_report_collector
         self.insight_report_collector = insight_report_collector
         self.shape_report_collector = shape_report_collector
+
+    def report(self, root: Path, language: str) -> None:
+        code_map = self.code_map_reader.read(root, language)
+        architecture_map = self.map_loader.load(code_map)
+
+        reports = (
+            self.map_report_collector.collect(architecture_map),
+            self.flow_report_collector.collect(architecture_map),
+            self.insight_report_collector.collect(architecture_map),
+            self.shape_report_collector.collect(architecture_map),
+        )
+
+        for item in reports:
+            click.echo(item.model_dump_json(indent=2))
