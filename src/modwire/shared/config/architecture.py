@@ -1,7 +1,6 @@
 from pydantic import Field
 
 from .base import ModwireBaseConfig
-
 from .shape import ShapeConfig
 
 
