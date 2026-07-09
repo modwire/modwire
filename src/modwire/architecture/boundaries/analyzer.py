@@ -54,6 +54,7 @@ class BoundariesFlowAnalyzer:
 
         return (
             ArchitectureRealm(
+                name="",
                 module_tag=flow.module_tag,
                 layers=flow.layers,
             ),

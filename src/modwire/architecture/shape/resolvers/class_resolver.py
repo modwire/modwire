@@ -6,12 +6,14 @@ from modwire_extraction.extractors.source import (
     SourceInterface,
     SourceType,
 )
+from wireup import injectable
 
-from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
+from ..base import BaseShapeResolver, ShapeViolation, SymbolShapeResolverInterface
 from ....shared.config.shape import ShapeConfig
 
 
-class ClassResolver(ShapeResolverInterface, BaseShapeResolver):
+@injectable(qualifier="class", as_type=SymbolShapeResolverInterface)
+class ClassResolver(SymbolShapeResolverInterface, BaseShapeResolver):
     @property
     def name(self) -> str:
         return "class"

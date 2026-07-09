@@ -1,10 +1,12 @@
 from modwire_extraction.extractors.source import SourceFile, SourceSignature
+from wireup import injectable
 
-from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
+from ..base import BaseShapeResolver, ShapeViolation, SymbolShapeResolverInterface
 from ....shared.config.shape import ShapeConfig
 
 
-class SignatureResolver(ShapeResolverInterface, BaseShapeResolver):
+@injectable(qualifier="signature", as_type=SymbolShapeResolverInterface)
+class SignatureResolver(SymbolShapeResolverInterface, BaseShapeResolver):
     @property
     def name(self) -> str:
         return "signature"

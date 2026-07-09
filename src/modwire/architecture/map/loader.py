@@ -22,6 +22,7 @@ class ArchitectureMapLoader:
     def default_realm(self) -> ArchitectureRealm:
         flow = self.config.boundaries.flow
         return ArchitectureRealm(
+            name="",
             module_tag=flow.module_tag,
             layers=flow.layers,
         )

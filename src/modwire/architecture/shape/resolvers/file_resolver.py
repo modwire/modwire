@@ -1,9 +1,11 @@
 from modwire_extraction.extractors.source import SourceFile
+from wireup import injectable
 
 from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
 from ....shared.config.shape import ShapeConfig
 
 
+@injectable(qualifier="file", as_type=ShapeResolverInterface)
 class FileResolver(ShapeResolverInterface, BaseShapeResolver):
     @property
     def name(self) -> str:

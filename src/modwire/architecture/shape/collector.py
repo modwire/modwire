@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Annotated
 
 from wireup import Inject, injectable
@@ -6,7 +7,7 @@ from modwire.shared import report
 from modwire.shared.config import ArchitectureConfig
 
 from ..map import ArchitectureMap
-from .base import ShapeViolation
+from .base import ShapeResolverInterface, ShapeViolation
 
 
 class ShapeReport(report.ReportItem):
@@ -24,14 +25,15 @@ class ShapeReportCollector:
     def __init__(
         self,
         config: Annotated[ArchitectureConfig, Inject(config="architecture")],
+        resolvers: Sequence[ShapeResolverInterface],
     ):
         self.config = config.shape
+        self.resolvers = tuple(sorted(resolvers, key=lambda resolver: resolver.name))
 
     def collect(self, architecture_map: ArchitectureMap) -> ShapeReport:
-        resolver_names = self.catalog.names()
+        resolver_names = tuple(resolver.name for resolver in self.resolvers)
         violations: list[ShapeViolation] = []
-        for resolver_name in resolver_names:
-            resolver = self.catalog.resolver(resolver_name)
+        for resolver in self.resolvers:
             for source_file in architecture_map.code_map.source_files().all():
                 violations.extend(
                     resolver.resolve(

@@ -20,11 +20,11 @@ class InsightReportCollector:
         self._field_map = InsightReportFieldMap()
 
     def _field_for(self, name: str):
-        return ""
+        return self._field_map.field_for(name)
 
     def collect(self, architecture_map: ArchitectureMap) -> InsightReport:
         payload: dict[str, BaseModel] = {}
-        
+
         for name, reporter in self._reporters.items():
             field = self._field_for(name)
             payload[field] = reporter.collect(architecture_map)

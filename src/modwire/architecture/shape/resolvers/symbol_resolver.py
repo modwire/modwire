@@ -1,15 +1,22 @@
+from collections.abc import Sequence
+
 from modwire_extraction.extractors.source import SourceFile
+from wireup import injectable
 
-from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
+from ..base import (
+    BaseShapeResolver,
+    ShapeResolverInterface,
+    ShapeViolation,
+    SymbolShapeResolverInterface,
+)
 from ....shared.config.shape import ShapeConfig
-from .abstract_class_resolver import AbstractClassResolver
-from .callable_resolver import CallableResolver
-from .class_resolver import ClassResolver
-from .property_resolver import PropertyResolver
-from .signature_resolver import SignatureResolver
 
 
+@injectable(qualifier="symbol", as_type=ShapeResolverInterface)
 class SymbolResolver(ShapeResolverInterface, BaseShapeResolver):
+    def __init__(self, resolvers: Sequence[SymbolShapeResolverInterface]):
+        self.resolvers = tuple(sorted(resolvers, key=lambda resolver: resolver.name))
+
     @property
     def name(self) -> str:
         return "symbol"
@@ -25,12 +32,6 @@ class SymbolResolver(ShapeResolverInterface, BaseShapeResolver):
         config: ShapeConfig,
     ) -> tuple[ShapeViolation, ...]:
         violations: list[ShapeViolation] = []
-        for resolver in (
-            ClassResolver(),
-            AbstractClassResolver(),
-            CallableResolver(),
-            SignatureResolver(),
-            PropertyResolver(),
-        ):
+        for resolver in self.resolvers:
             violations.extend(resolver.resolve(source_id, source_file, config))
         return tuple(violations)

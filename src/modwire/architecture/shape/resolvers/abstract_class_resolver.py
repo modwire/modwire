@@ -1,10 +1,12 @@
 from modwire_extraction.extractors.source import SourceAbstractClass, SourceFile
+from wireup import injectable
 
-from ..base import ShapeResolverInterface, BaseShapeResolver, ShapeViolation
+from ..base import BaseShapeResolver, ShapeViolation, SymbolShapeResolverInterface
 from ....shared.config.shape import ShapeConfig
 
 
-class AbstractClassResolver(ShapeResolverInterface, BaseShapeResolver):
+@injectable(qualifier="abstract-class", as_type=SymbolShapeResolverInterface)
+class AbstractClassResolver(SymbolShapeResolverInterface, BaseShapeResolver):
     @property
     def name(self) -> str:
         return "abstract-class"

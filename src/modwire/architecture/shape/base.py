@@ -34,6 +34,10 @@ class ShapeResolverInterface(abc.ABC):
         raise NotImplementedError
 
 
+class SymbolShapeResolverInterface(ShapeResolverInterface):
+    pass
+
+
 class BaseShapeResolver:
     def limit_violation(
         self,
