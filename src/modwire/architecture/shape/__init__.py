@@ -1,8 +1,8 @@
 from .base import ShapeViolation
-from ...shared.config.shape import ShapeConfig
+from .collector import ShapeReportCollector
 
 
 __all__ = [
-    "ShapeConfig",
     "ShapeViolation",
+    "ShapeReportCollector",
 ]

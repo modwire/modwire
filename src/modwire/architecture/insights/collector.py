@@ -5,8 +5,9 @@ from pydantic import BaseModel
 from wireup import injectable
 
 from ..map import ArchitectureMap
+
 from .base import InsightReporterInterface
-from .reporters.base import InsightReport, InsightReportFieldMap
+from .reporters import InsightReport, InsightReportFieldMap
 
 
 @injectable(lifetime="transient")

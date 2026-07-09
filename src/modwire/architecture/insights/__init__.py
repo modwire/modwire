@@ -1,7 +1,5 @@
-from .reporters import (
-    InsightReport,
-    InsightReportCollector,
-)
+from .reporters import InsightReport
+from .collector import InsightReportCollector
 
 
 __all__ = [
