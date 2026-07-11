@@ -7,6 +7,12 @@ explains how to apply and operate it.
 
 ## Source-of-truth boundary
 
+For live GitHub work, use the connected GitHub app first. When the connector
+does not expose a required capability, such as Projects v2 field management,
+use `gh` in host mode. A live command is an application mechanism, never the
+sole definition: represent every manageable GitHub detail in repository YAML,
+workflow files, issue forms, or the reconciliation script before applying it.
+
 `.github/modwire-ecosystem.yml` is the only source of truth for ecosystem
 governance configuration. Its `packages` registry owns package identifiers,
 repositories, distributions, Project components, roles, lifecycle, summaries,
@@ -15,7 +21,10 @@ and package dependencies. Repository links, the Project readme, and the
 maintained as separate lists.
 
 The same contract owns Project metadata and fields, saved-view definitions,
-shared labels, automation policy, milestone policy, and operating cadence.
+shared labels, automation policy, milestone policy, operating cadence, versioned
+dependency edges, compatibility profiles, and named release trains. The
+[dependency and release-train contract](dependencies-and-release-trains.md)
+defines how those release controls are operated.
 GitHub remains the source of truth for issue and pull-request content, status,
 assignees, milestones, and discussion; copying delivery state into YAML would
 create a conflicting tracker.
@@ -55,8 +64,8 @@ Use three levels of authority:
 Do not copy another repository's issue into `modwire`. Create one coordinator
 parent issue and attach the implementation issues from their owning
 repositories as sub-issues. Versions remain independent; the Project's
-`Release train` field connects compatible package milestones without forcing a
-shared version number.
+`Release train` single-select options derive from the YAML contract and connect
+compatible package milestones without forcing a shared version number.
 
 The Project covers the coordinator (`modwire`), its runtime surface
 (`modwire-cli`), the Extraction, Mermaid, and Siren building blocks, and the
@@ -69,8 +78,8 @@ are derived from it.
 1. Create a user-level Project owned by `9orky` named **Modwire Ecosystem**.
 2. Set `9orky/modwire` as its default repository.
 3. Link the Project from every repository derived from the package registry.
-4. Create the custom fields and derived options exactly as declared by the
-   artifact.
+4. Create the custom fields and derived package/release-train options exactly as
+   declared by the artifact.
 5. Create the six saved views in the declared order.
 6. Bulk-add all open issues and pull requests from every repository.
 7. Enable the built-in added, closed, merged, and archive workflows.
@@ -145,6 +154,11 @@ and eventually MCP scaffolding. Run it on pull requests, on a schedule, and
 before a coordinator release. A package release may trigger it later through
 `repository_dispatch`; scheduled execution is the lower-maintenance starting
 point.
+
+The `ecosystem-compatibility.yml` workflow provides minimum and latest profiles
+for active consumers. Its matrix and Python versions are read from the
+ecosystem contract; its required GitHub cron literal is drift-checked against
+the same contract.
 
 ## Operating cadence
 

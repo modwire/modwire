@@ -10,6 +10,7 @@ PyPI environment are declared under `workflows` in
 | File | Responsibility |
 | --- | --- |
 | `ci.yml` | Repository-local triggers and any package-specific supplemental checks. |
+| `ecosystem-compatibility.yml` | Contract-derived minimum/latest active-consumer dependency gate. |
 | `python-package.yml` | Reusable Python matrix tests, Ruff, build, Twine check, and optional artifact upload. |
 | `release.yml` | Repository-local GitHub Release trigger and PyPI Trusted Publishing job. |
 | `python-release-build.yml` | Reusable strict tag validation, clean SCM-derived build, Twine check, version check, and artifact upload. |

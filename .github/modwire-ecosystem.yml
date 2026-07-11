@@ -1,4 +1,4 @@
-version: 2
+version: 3
 
 packages:
   core:
@@ -8,7 +8,16 @@ packages:
     role: coordinator
     lifecycle: active
     summary: Typed coordination library and ecosystem integration gate.
-    depends_on: [extraction, mermaid, siren]
+    dependencies:
+      extraction:
+        specifier: ">=1.0.2,<2.0.0"
+        minimum: 1.0.2
+      mermaid:
+        specifier: ">=1.0.0,<2.0.0"
+        minimum: 1.0.0
+      siren:
+        specifier: ">=1.0.0,<2.0.0"
+        minimum: 1.0.0
   cli:
     repository: 9orky/modwire-cli
     distribution: modwire-cli
@@ -16,7 +25,10 @@ packages:
     role: runtime
     lifecycle: active
     summary: Command-line runtime and user-facing workflows.
-    depends_on: [core]
+    dependencies:
+      core:
+        specifier: ">=4.0.2,<5.0.0"
+        minimum: 4.0.2
   extraction:
     repository: 9orky/modwire-extraction
     distribution: modwire-extraction
@@ -45,7 +57,10 @@ packages:
     role: integration
     lifecycle: incubating
     summary: MCP surface and future home of scaffolding operations.
-    depends_on: [core]
+    dependencies:
+      extraction:
+        specifier: ">=1.0.2,<2.0.0"
+        minimum: 1.0.2
 
 project:
   owner: 9orky
@@ -63,6 +78,8 @@ workflows:
   verify_reusable: .github/workflows/python-package.yml
   release_build_reusable: .github/workflows/python-release-build.yml
   release_assets_reusable: .github/workflows/python-release-assets.yml
+  compatibility_entrypoint: .github/workflows/ecosystem-compatibility.yml
+  compatibility_schedule: "17 5 * * 1"
   release_driver: github_release
   release_event: published
   release_tag_pattern: ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$
@@ -74,6 +91,50 @@ workflows:
     upload_artifact: actions/upload-artifact@v7
     download_artifact: actions/download-artifact@v8
     publish_pypi: pypa/gh-action-pypi-publish@release/v1
+
+compatibility:
+  profiles:
+    minimum:
+      python_version: "3.12"
+      resolution: minimum
+    latest:
+      python_version: "3.14"
+      resolution: latest
+  dependency_changes: consumer_pull_request
+  breaking_changes: coordinated_release_train
+
+release_trains:
+  workflows-v1 adoption:
+    status: active
+    summary: Adopt the shared CI and GitHub-Release publication contract.
+    phases:
+      - name: Building blocks
+        packages: [extraction, mermaid, siren]
+      - name: Coordinator
+        packages: [core]
+      - name: Surfaces
+        packages: [cli, mcp]
+    gates:
+      - package_ci
+      - minimum_compatibility
+      - latest_compatibility
+      - release_readiness
+  2026-Q3 Contracts:
+    status: active
+    target_date: 2026-09-30
+    summary: Stabilize package contracts and the extracted-code integration path.
+    phases:
+      - name: Building blocks
+        packages: [extraction, mermaid, siren]
+      - name: Coordinator
+        packages: [core]
+      - name: Surfaces
+        packages: [cli, mcp]
+    gates:
+      - package_ci
+      - minimum_compatibility
+      - latest_compatibility
+      - release_readiness
 
 fields:
   Status:
@@ -89,7 +150,8 @@ fields:
     type: single_select
     source: packages
   Release train:
-    type: text
+    type: single_select
+    source: release_trains
   Target date:
     type: date
   Risk:

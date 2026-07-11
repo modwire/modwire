@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added a typed ecosystem dependency matrix with supported ranges and tested
+  minimum versions.
+- Added release trains as YAML with validated provider-before-consumer phases,
+  gates, target dates, and GitHub Project field options.
+- Added a contract-derived minimum/latest compatibility workflow and a
+  repository-native release-train coordinator issue form.
+
+### Changed
+
+- Constrained Modwire building-block dependencies below their next unvalidated
+  major versions.
+
 ## 4.0.2 - 2026-07-11
 
 ### Fixed

@@ -1,21 +1,27 @@
 {
 	"folders": [
 		{
+			"name": "modwire",
 			"path": "../.."
 		},
 		{
-			"path": "../../../modwire-siren"
-		},
-		{
-			"path": "../../../modwire-mermaid"
-		},
-		{
+			"name": "modwire-extraction",
 			"path": "../../../modwire-extraction"
 		},
 		{
+			"name": "modwire-siren",
+			"path": "../../../modwire-siren"
+		},
+		{
+			"name": "modwire-mermaid",
+			"path": "../../../modwire-mermaid"
+		},
+		{
+			"name": "modwire-mcp",
 			"path": "../../../modwire-mcp"
 		},
 		{
+			"name": "modwire-cli",
 			"path": "../../../modwire-cli"
 		}
 	],

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from datetime import date
 from enum import StrEnum
 import re
 from typing import Literal, Self
 
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from modwire.shared import ModwireConfigModel, ModwireReportModel
 
@@ -23,6 +24,33 @@ class PackageLifecycle(StrEnum):
     RETIRED = "retired"
 
 
+class PackageDependency(ModwireConfigModel):
+    specifier: str
+    minimum: str
+
+    @field_validator("specifier")
+    @classmethod
+    def validate_specifier(cls, value: str) -> str:
+        value = value.strip()
+        if not value or any(character.isspace() for character in value):
+            raise ValueError("specifier must be a non-empty PEP 440 constraint")
+        return value
+
+    @field_validator("minimum")
+    @classmethod
+    def validate_minimum(cls, value: str) -> str:
+        value = value.strip()
+        if not re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", value):
+            raise ValueError("minimum must use MAJOR.MINOR.PATCH")
+        return value
+
+    @model_validator(mode="after")
+    def validate_minimum_is_declared(self) -> Self:
+        if f">={self.minimum}" not in self.specifier.split(","):
+            raise ValueError("specifier must declare the tested minimum with >=")
+        return self
+
+
 class EcosystemPackage(ModwireConfigModel):
     repository: str
     distribution: str
@@ -30,7 +58,7 @@ class EcosystemPackage(ModwireConfigModel):
     role: PackageRole
     lifecycle: PackageLifecycle
     summary: str
-    depends_on: tuple[str, ...] = ()
+    dependencies: dict[str, PackageDependency] = Field(default_factory=dict)
 
     @field_validator("repository")
     @classmethod
@@ -45,13 +73,6 @@ class EcosystemPackage(ModwireConfigModel):
         value = value.strip()
         if not value:
             raise ValueError("must not be empty")
-        return value
-
-    @field_validator("depends_on")
-    @classmethod
-    def validate_unique_dependencies(cls, value: tuple[str, ...]) -> tuple[str, ...]:
-        if len(value) != len(set(value)):
-            raise ValueError("dependencies must be unique")
         return value
 
 
@@ -85,6 +106,8 @@ class WorkflowContract(ModwireConfigModel):
     verify_reusable: str
     release_build_reusable: str
     release_assets_reusable: str
+    compatibility_entrypoint: str
+    compatibility_schedule: str
     release_driver: Literal["github_release"]
     release_event: Literal["published"]
     release_tag_pattern: str
@@ -109,7 +132,7 @@ class ProjectFieldType(StrEnum):
 class ProjectField(ModwireConfigModel):
     type: ProjectFieldType
     options: tuple[str, ...] = ()
-    source: Literal["packages"] | None = None
+    source: Literal["packages", "release_trains"] | None = None
 
     @model_validator(mode="after")
     def validate_options(self) -> Self:
@@ -172,11 +195,87 @@ class GovernanceCadence(ModwireConfigModel):
     project_status_update: str
 
 
+class CompatibilityResolution(StrEnum):
+    MINIMUM = "minimum"
+    LATEST = "latest"
+
+
+class CompatibilityProfile(ModwireConfigModel):
+    python_version: str
+    resolution: CompatibilityResolution
+
+
+class CompatibilityPolicy(ModwireConfigModel):
+    profiles: dict[str, CompatibilityProfile]
+    dependency_changes: Literal["consumer_pull_request"]
+    breaking_changes: Literal["coordinated_release_train"]
+
+    @model_validator(mode="after")
+    def validate_profiles(self) -> Self:
+        resolutions = {profile.resolution for profile in self.profiles.values()}
+        if len(self.profiles) != 2 or resolutions != {
+            CompatibilityResolution.MINIMUM,
+            CompatibilityResolution.LATEST,
+        }:
+            raise ValueError("compatibility profiles must cover minimum and latest")
+        return self
+
+
+class ReleaseTrainStatus(StrEnum):
+    PLANNED = "planned"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class ReleasePhase(ModwireConfigModel):
+    name: str
+    packages: tuple[str, ...]
+
+    @field_validator("packages")
+    @classmethod
+    def validate_unique_packages(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if not value or len(value) != len(set(value)):
+            raise ValueError("release phase packages must be non-empty and unique")
+        return value
+
+
+class ReleaseTrain(ModwireConfigModel):
+    status: ReleaseTrainStatus
+    target_date: date | None = None
+    summary: str
+    phases: tuple[ReleasePhase, ...]
+    gates: tuple[
+        Literal[
+            "package_ci",
+            "minimum_compatibility",
+            "latest_compatibility",
+            "release_readiness",
+        ],
+        ...,
+    ]
+
+    @field_validator("gates")
+    @classmethod
+    def validate_unique_gates(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        required = {
+            "package_ci",
+            "minimum_compatibility",
+            "latest_compatibility",
+            "release_readiness",
+        }
+        if len(value) != len(set(value)) or set(value) != required:
+            raise ValueError("release train must declare every required gate once")
+        return value
+
+
 class EcosystemContract(ModwireConfigModel):
-    version: Literal[2]
+    version: Literal[3]
     packages: dict[str, EcosystemPackage]
     project: EcosystemProject
     workflows: WorkflowContract
+    compatibility: CompatibilityPolicy
+    release_trains: dict[str, ReleaseTrain]
     fields: dict[str, ProjectField]
     views: tuple[ProjectView, ...]
     labels: dict[str, RepositoryLabel]
@@ -201,10 +300,10 @@ class EcosystemContract(ModwireConfigModel):
                 raise ValueError(f"package {name} must be unique")
 
         for key, package in self.packages.items():
-            unknown = set(package.depends_on).difference(self.packages)
+            unknown = set(package.dependencies).difference(self.packages)
             if unknown:
                 raise ValueError(f"package {key} has unknown dependencies: {unknown}")
-            if key in package.depends_on:
+            if key in package.dependencies:
                 raise ValueError(f"package {key} cannot depend on itself")
 
         visited: set[str] = set()
@@ -216,13 +315,37 @@ class EcosystemContract(ModwireConfigModel):
             if key in visited:
                 return
             active.add(key)
-            for dependency in self.packages[key].depends_on:
+            for dependency in self.packages[key].dependencies:
                 visit(dependency)
             active.remove(key)
             visited.add(key)
 
         for key in self.packages:
             visit(key)
+
+        if not self.release_trains:
+            raise ValueError("at least one release train must be declared")
+        for train_name, train in self.release_trains.items():
+            phase_by_package: dict[str, int] = {}
+            for phase_number, phase in enumerate(train.phases):
+                for package in phase.packages:
+                    if package not in self.packages:
+                        raise ValueError(
+                            f"release train {train_name} references unknown package {package}"
+                        )
+                    if package in phase_by_package:
+                        raise ValueError(
+                            f"release train {train_name} repeats package {package}"
+                        )
+                    phase_by_package[package] = phase_number
+            for package, phase_number in phase_by_package.items():
+                for dependency in self.packages[package].dependencies:
+                    dependency_phase = phase_by_package.get(dependency)
+                    if dependency_phase is not None and dependency_phase >= phase_number:
+                        raise ValueError(
+                            f"release train {train_name} must place dependency {dependency} "
+                            f"before consumer {package}"
+                        )
 
         component = self.fields.get("Component")
         if component is None or component.source != "packages":
@@ -248,7 +371,50 @@ class EcosystemContract(ModwireConfigModel):
         field = self.fields[name]
         if field.source == "packages":
             return self.component_options()
+        if field.source == "release_trains":
+            return tuple(self.release_trains)
         return field.options
+
+    def dependency_matrix(self) -> tuple[dict[str, str], ...]:
+        return tuple(
+            {
+                "consumer": consumer,
+                "dependency": dependency,
+                "specifier": requirement.specifier,
+                "minimum": requirement.minimum,
+            }
+            for consumer, package in self.packages.items()
+            for dependency, requirement in package.dependencies.items()
+        )
+
+    def github_compatibility_matrix(self) -> dict[str, list[dict[str, str]]]:
+        include: list[dict[str, str]] = []
+        default = self.project.default_package
+        for consumer, package in self.packages.items():
+            if package.lifecycle is not PackageLifecycle.ACTIVE or not package.dependencies:
+                continue
+            for name, profile in self.compatibility.profiles.items():
+                if profile.resolution is CompatibilityResolution.MINIMUM:
+                    requirements = " ".join(
+                        f"{self.packages[key].distribution}=={requirement.minimum}"
+                        for key, requirement in package.dependencies.items()
+                    )
+                else:
+                    requirements = " ".join(
+                        f"{self.packages[key].distribution}{requirement.specifier}"
+                        for key, requirement in package.dependencies.items()
+                    )
+                include.append(
+                    {
+                        "consumer": consumer,
+                        "profile": name,
+                        "python-version": profile.python_version,
+                        "repository": package.repository,
+                        "working-directory": "." if consumer == default else "consumer",
+                        "requirements": requirements,
+                    }
+                )
+        return {"include": include}
 
     def default_repository(self) -> str:
         return self.packages[self.project.default_package].repository

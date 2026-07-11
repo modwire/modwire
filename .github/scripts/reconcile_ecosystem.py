@@ -5,6 +5,7 @@ import argparse
 import json
 import re
 import subprocess
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -33,14 +34,41 @@ def load_contract(path: Path) -> EcosystemContract:
     return EcosystemContract.load_yaml(path)
 
 
-def workflow_drift(contract: EcosystemContract) -> list[str]:
+def package_metadata_drift(contract: EcosystemContract) -> list[str]:
+    values = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    dependencies = values["project"].get("dependencies", ())
+    ecosystem_distributions = {
+        package.distribution: key for key, package in contract.packages.items()
+    }
+    actual: dict[str, str] = {}
+    for dependency in dependencies:
+        match = re.fullmatch(r"([A-Za-z0-9_.-]+)(.*)", dependency)
+        if match and match.group(1) in ecosystem_distributions:
+            actual[ecosystem_distributions[match.group(1)]] = match.group(2)
+
+    package = contract.packages[contract.project.default_package]
+    expected = {
+        dependency: requirement.specifier
+        for dependency, requirement in package.dependencies.items()
+    }
     errors: list[str] = []
+    for dependency in sorted(expected.keys() | actual.keys()):
+        if actual.get(dependency) != expected.get(dependency):
+            errors.append(
+                f"pyproject dependency {dependency} differs from the ecosystem contract"
+            )
+    return errors
+
+
+def workflow_drift(contract: EcosystemContract) -> list[str]:
+    errors = package_metadata_drift(contract)
     workflow_paths = (
         contract.workflows.ci_entrypoint,
         contract.workflows.release_entrypoint,
         contract.workflows.verify_reusable,
         contract.workflows.release_build_reusable,
         contract.workflows.release_assets_reusable,
+        contract.workflows.compatibility_entrypoint,
     )
     contents: dict[str, str] = {}
     for relative_path in workflow_paths:
@@ -91,6 +119,11 @@ def workflow_drift(contract: EcosystemContract) -> list[str]:
         contract.workflows.release_assets_reusable: (
             contract.workflows.actions.download_artifact,
         ),
+        contract.workflows.compatibility_entrypoint: (
+            contract.workflows.actions.checkout,
+            contract.workflows.actions.setup_python,
+            contract.workflows.compatibility_schedule,
+        ),
     }
     for path, references in required_references.items():
         text = contents.get(path, "")
@@ -132,7 +165,7 @@ def project_fields(contract: EcosystemContract) -> dict[str, dict[str, Any]]:
             nodes {
               __typename
               ... on ProjectV2Field { id name dataType }
-              ... on ProjectV2SingleSelectField { id name options { name } }
+              ... on ProjectV2SingleSelectField { id name options { id name } }
             }
           }
         }
@@ -226,6 +259,130 @@ def project_item_urls(contract: EcosystemContract) -> set[str]:
         for item in data["items"]
         if item.get("content", {}).get("url")
     }
+
+
+def migrate_release_train_field(contract: EcosystemContract) -> None:
+    name = "Release train"
+    legacy_name = f"{name} (legacy)"
+    expected_options = contract.field_options(name)
+    project = gh_json(
+        "project",
+        "view",
+        str(contract.project.number),
+        "--owner",
+        contract.project.owner,
+        "--format",
+        "json",
+    )
+    fields = project_fields(contract)
+    current = fields.get(name)
+    legacy = fields.get(legacy_name)
+    current_options = tuple(
+        option["name"] for option in (current or {}).get("options", ())
+    )
+    current_is_ready = (
+        current is not None
+        and current.get("__typename") == "ProjectV2SingleSelectField"
+        and current_options == expected_options
+    )
+    if current_is_ready and legacy is None:
+        return
+    if current is not None and not current_is_ready and legacy is not None:
+        raise RuntimeError(f"both {name} and {legacy_name} require manual recovery")
+
+    items = gh_json(
+        "project",
+        "item-list",
+        str(contract.project.number),
+        "--owner",
+        contract.project.owner,
+        "--limit",
+        "1000",
+        "--format",
+        "json",
+    )["items"]
+    source_name = legacy_name if legacy is not None else name
+    assignments = {
+        item["id"]: item[source_name.lower()]
+        for item in items
+        if item.get(source_name.lower())
+    }
+    unknown = set(assignments.values()).difference(expected_options)
+    if unknown:
+        raise ValueError(
+            f"cannot migrate {name}; contract is missing populated options: {sorted(unknown)}"
+        )
+
+    if current is not None and not current_is_ready:
+        mutation = """
+        mutation($fieldId: ID!, $name: String!) {
+          updateProjectV2Field(input: {fieldId: $fieldId, name: $name}) {
+            clientMutationId
+          }
+        }
+        """
+        gh(
+            "api",
+            "graphql",
+            "-F",
+            f"fieldId={current['id']}",
+            "-f",
+            f"name={legacy_name}",
+            "-f",
+            f"query={mutation}",
+        )
+        legacy = current
+
+    if not current_is_ready:
+        gh(
+            "project",
+            "field-create",
+            str(contract.project.number),
+            "--owner",
+            contract.project.owner,
+            "--name",
+            name,
+            "--data-type",
+            "SINGLE_SELECT",
+            "--single-select-options",
+            ",".join(expected_options),
+        )
+    migrated = project_fields(contract)[name]
+    option_ids = {option["name"]: option["id"] for option in migrated["options"]}
+    for item_id, value in assignments.items():
+        gh(
+            "project",
+            "item-edit",
+            "--id",
+            item_id,
+            "--project-id",
+            project["id"],
+            "--field-id",
+            migrated["id"],
+            "--single-select-option-id",
+            option_ids[value],
+        )
+
+    migrated_items = gh_json(
+        "project",
+        "item-list",
+        str(contract.project.number),
+        "--owner",
+        contract.project.owner,
+        "--limit",
+        "1000",
+        "--format",
+        "json",
+    )["items"]
+    migrated_assignments = {
+        item["id"]: item[name.lower()]
+        for item in migrated_items
+        if item.get(name.lower())
+    }
+    if migrated_assignments != assignments:
+        raise RuntimeError(f"{name} assignments changed during migration")
+    if legacy is not None:
+        gh("project", "field-delete", "--id", legacy["id"])
 
 
 def label_drift(contract: EcosystemContract) -> list[str]:
@@ -369,7 +526,14 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description="Validate and reconcile Modwire governance")
     result.add_argument(
         "command",
-        choices=("validate", "check-live", "apply-live", "schema"),
+        choices=(
+            "validate",
+            "check-live",
+            "apply-live",
+            "schema",
+            "github-matrix",
+            "migrate-release-train-field",
+        ),
         nargs="?",
         default="validate",
     )
@@ -380,6 +544,13 @@ def parser() -> argparse.ArgumentParser:
 def main() -> int:
     arguments = parser().parse_args()
     contract = load_contract(arguments.contract)
+    if arguments.command == "github-matrix":
+        print(json.dumps(contract.github_compatibility_matrix(), separators=(",", ":")))
+        return 0
+    if arguments.command == "migrate-release-train-field":
+        migrate_release_train_field(contract)
+        print("migrated Release train field without changing assignments")
+        return 0
     if arguments.command == "schema":
         print(json.dumps(EcosystemContract.model_json_schema(), indent=2))
         return 0
@@ -390,6 +561,8 @@ def main() -> int:
             return 1
         print(
             f"valid ecosystem contract: {len(contract.packages)} packages, "
+            f"{len(contract.dependency_matrix())} dependency edges, "
+            f"{len(contract.release_trains)} release trains, "
             f"{len(contract.fields)} project fields"
         )
         return 0

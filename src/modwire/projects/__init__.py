@@ -1,5 +1,8 @@
 from .app import ProjectsApplication
 from .ecosystem import (
+    CompatibilityPolicy,
+    CompatibilityProfile,
+    CompatibilityResolution,
     EcosystemContract,
     EcosystemDrift,
     EcosystemPackage,
@@ -7,6 +10,7 @@ from .ecosystem import (
     GovernanceCadence,
     MilestonePolicy,
     PackageLifecycle,
+    PackageDependency,
     PackageRole,
     ProjectAutomation,
     ProjectField,
@@ -14,12 +18,18 @@ from .ecosystem import (
     ProjectView,
     ProjectVisibility,
     RepositoryLabel,
+    ReleasePhase,
+    ReleaseTrain,
+    ReleaseTrainStatus,
     WorkflowActions,
     WorkflowContract,
 )
 from modwire.shared.config import ProjectLayout, ProjectsConfig, ProjectStack
 
 __all__ = [
+    "CompatibilityPolicy",
+    "CompatibilityProfile",
+    "CompatibilityResolution",
     "EcosystemContract",
     "EcosystemDrift",
     "EcosystemPackage",
@@ -27,6 +37,7 @@ __all__ = [
     "GovernanceCadence",
     "MilestonePolicy",
     "PackageLifecycle",
+    "PackageDependency",
     "PackageRole",
     "ProjectAutomation",
     "ProjectField",
@@ -38,6 +49,9 @@ __all__ = [
     "ProjectsApplication",
     "ProjectsConfig",
     "RepositoryLabel",
+    "ReleasePhase",
+    "ReleaseTrain",
+    "ReleaseTrainStatus",
     "WorkflowActions",
     "WorkflowContract",
 ]

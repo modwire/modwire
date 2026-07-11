@@ -1,0 +1,65 @@
+name: Release train coordinator
+description: Coordinate a version-independent release across Modwire packages.
+title: "[Release train] "
+labels:
+  - ecosystem
+  - release-gate
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Release trains and their phase order are defined in
+        `.github/modwire-ecosystem.yml`. Use the exact train name from that file.
+  - type: input
+    id: train
+    attributes:
+      label: Release train
+      description: Exact release train name from the ecosystem contract.
+      placeholder: 2026-Q3 Contracts
+    validations:
+      required: true
+  - type: input
+    id: target
+    attributes:
+      label: Target date
+      description: ISO date matching the ecosystem contract.
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility promise
+      description: State what remains compatible and what intentionally changes.
+    validations:
+      required: true
+  - type: textarea
+    id: packages
+    attributes:
+      label: Package releases and sub-issues
+      description: List each affected repository, target version, and owning issue.
+      placeholder: |
+        - [ ] 9orky/modwire-extraction — vX.Y.Z — #issue
+        - [ ] 9orky/modwire — vX.Y.Z — #issue
+    validations:
+      required: true
+  - type: checkboxes
+    id: gates
+    attributes:
+      label: Required gates
+      options:
+        - label: Package CI is green for every release candidate.
+          required: true
+        - label: The minimum dependency profile passes.
+          required: true
+        - label: The latest dependency profile passes.
+          required: true
+        - label: Release readiness has been reviewed in phase order.
+          required: true
+  - type: textarea
+    id: rollout
+    attributes:
+      label: Rollout and rollback
+      description: Describe publishing order, verification, stop conditions, and rollback.
+    validations:
+      required: true

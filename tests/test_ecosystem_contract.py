@@ -30,6 +30,42 @@ def test_ecosystem_contract_is_the_package_taxonomy_source() -> None:
         "MCP",
     )
     assert contract.default_repository() == "9orky/modwire"
+    assert contract.field_options("Release train") == (
+        "workflows-v1 adoption",
+        "2026-Q3 Contracts",
+    )
+    assert contract.dependency_matrix() == (
+        {
+            "consumer": "core",
+            "dependency": "extraction",
+            "specifier": ">=1.0.2,<2.0.0",
+            "minimum": "1.0.2",
+        },
+        {
+            "consumer": "core",
+            "dependency": "mermaid",
+            "specifier": ">=1.0.0,<2.0.0",
+            "minimum": "1.0.0",
+        },
+        {
+            "consumer": "core",
+            "dependency": "siren",
+            "specifier": ">=1.0.0,<2.0.0",
+            "minimum": "1.0.0",
+        },
+        {
+            "consumer": "cli",
+            "dependency": "core",
+            "specifier": ">=4.0.2,<5.0.0",
+            "minimum": "4.0.2",
+        },
+        {
+            "consumer": "mcp",
+            "dependency": "extraction",
+            "specifier": ">=1.0.2,<2.0.0",
+            "minimum": "1.0.2",
+        },
+    )
     assert "9orky/modwire-cli" in contract.project_readme()
     assert re.fullmatch(contract.workflows.release_tag_pattern, "v3.2.1")
     assert not re.fullmatch(contract.workflows.release_tag_pattern, "3.2.1")
@@ -48,10 +84,72 @@ def test_ecosystem_contract_rejects_taxonomy_drift() -> None:
 def test_ecosystem_contract_rejects_unknown_dependencies() -> None:
     contract = EcosystemContract.load_yaml(CONTRACT)
     values = contract.to_dict(mode="json")
-    values["packages"]["cli"]["depends_on"] = ["unknown"]
+    values["packages"]["cli"]["dependencies"]["unknown"] = {
+        "specifier": ">=1.0.0",
+        "minimum": "1.0.0",
+    }
 
     with pytest.raises(ValidationError, match="unknown dependencies"):
         EcosystemContract.from_dict(values)
+
+
+def test_release_train_must_follow_dependency_order() -> None:
+    contract = EcosystemContract.load_yaml(CONTRACT)
+    values = contract.to_dict(mode="json")
+    phases = values["release_trains"]["2026-Q3 Contracts"]["phases"]
+    phases[0]["packages"] = ["core"]
+    phases[1]["packages"] = ["extraction", "mermaid", "siren"]
+
+    with pytest.raises(ValidationError, match="before consumer core"):
+        EcosystemContract.from_dict(values)
+
+
+def test_github_matrix_is_derived_from_default_package_dependencies() -> None:
+    contract = EcosystemContract.load_yaml(CONTRACT)
+
+    assert contract.github_compatibility_matrix() == {
+        "include": [
+            {
+                "consumer": "core",
+                "profile": "minimum",
+                "python-version": "3.12",
+                "repository": "9orky/modwire",
+                "working-directory": ".",
+                "requirements": (
+                    "modwire-extraction==1.0.2 "
+                    "modwire-mermaid==1.0.0 modwire-siren==1.0.0"
+                ),
+            },
+            {
+                "consumer": "core",
+                "profile": "latest",
+                "python-version": "3.14",
+                "repository": "9orky/modwire",
+                "working-directory": ".",
+                "requirements": (
+                    "modwire-extraction>=1.0.2,<2.0.0 "
+                    "modwire-mermaid>=1.0.0,<2.0.0 "
+                    "modwire-siren>=1.0.0,<2.0.0"
+                ),
+            },
+            {
+                "consumer": "cli",
+                "profile": "minimum",
+                "python-version": "3.12",
+                "repository": "9orky/modwire-cli",
+                "working-directory": "consumer",
+                "requirements": "modwire==4.0.2",
+            },
+            {
+                "consumer": "cli",
+                "profile": "latest",
+                "python-version": "3.14",
+                "repository": "9orky/modwire-cli",
+                "working-directory": "consumer",
+                "requirements": "modwire>=4.0.2,<5.0.0",
+            },
+        ]
+    }
 
 
 def test_workflow_contract_uses_one_action_set() -> None:

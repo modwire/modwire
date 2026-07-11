@@ -34,9 +34,9 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
-    "modwire-extraction>=1.0.1",
-    "modwire-mermaid>=1.0.0",
-    "modwire-siren>=1.0.0",
+    "modwire-extraction>=1.0.2,<2.0.0",
+    "modwire-mermaid>=1.0.0,<2.0.0",
+    "modwire-siren>=1.0.0,<2.0.0",
     "pydantic>=2.12",
     "pydantic-yaml>=1.7.0",
 ]

@@ -43,6 +43,9 @@ contract's package registry derives repository membership and the shared
 Project component taxonomy; CI validates it with strict Pydantic models. The
 [Python workflow contract](docs/governance/python-workflows.md) provides the
 standard reusable CI and release procedures for member packages.
+The [dependency matrix and release-train contract](docs/governance/dependencies-and-release-trains.md)
+defines supported package ranges, minimum/latest verification, and ordered
+cross-repository releases.
 
 ## Ecosystem
 

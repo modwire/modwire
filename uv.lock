@@ -407,9 +407,9 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.2" },
-    { name = "modwire-extraction", specifier = ">=1.0.1" },
-    { name = "modwire-mermaid", specifier = ">=1.0.0" },
-    { name = "modwire-siren", specifier = ">=1.0.0" },
+    { name = "modwire-extraction", specifier = ">=1.0.2,<2.0.0" },
+    { name = "modwire-mermaid", specifier = ">=1.0.0,<2.0.0" },
+    { name = "modwire-siren", specifier = ">=1.0.0,<2.0.0" },
     { name = "pydantic", specifier = ">=2.12" },
     { name = "pydantic-yaml", specifier = ">=1.7.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
@@ -428,39 +428,39 @@ dev = [
 
 [[package]]
 name = "modwire-extraction"
-version = "1.0.2"
+version = "1.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/74/6a/a2b338a3347a689e5d93c8a27e0168ac535495da5741e222e5aa49f0158f/modwire_extraction-1.0.2.tar.gz", hash = "sha256:ae1c2b6334c24144a8c965c697664f7f7ac34a710d6a1a39b121bae6f0cf75e0", size = 2309160, upload-time = "2026-06-30T17:47:43.984Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/b7/dcfff9177ba8935195e4fee8e588c329fd0956df2317da09ca0dbd7aff0a/modwire_extraction-1.0.3.tar.gz", hash = "sha256:0a4cc4de81f467e0665f4f732c9f1a7ff5e02c2f6d7efb3d1492401c7318e02e", size = 2356337, upload-time = "2026-07-11T16:50:49.086Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/4f/afc2c66d5b041adc0db4293d61f597d602ea7aa5dff84089123b055524cb/modwire_extraction-1.0.2-py3-none-any.whl", hash = "sha256:ed52153994cb5db43864d66916e2b9e09e49576c2516ecb8b1f9b71b4635c1ac", size = 2331926, upload-time = "2026-06-30T17:47:41.958Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/da/ad9225ff6397b1d4faa3cca9cd0e5c6cf661409ccbdcc768737e29538bd2/modwire_extraction-1.0.3-py3-none-any.whl", hash = "sha256:0d3309f0045ae51e3eb25ddd41625a67b2f1b5681327a53b3c5aa475b28174e0", size = 2332897, upload-time = "2026-07-11T16:50:46.924Z" },
 ]
 
 [[package]]
 name = "modwire-mermaid"
-version = "1.0.0"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/36/0d/b5b5c6a2f0e75db075141bcd66cc68b14de00d39de38dcec21ec53afb4cd/modwire_mermaid-1.0.0.tar.gz", hash = "sha256:d040a5c3bd50e612016048bcc1e406b9a8742571597ab2610c90ad72d353a802", size = 30727, upload-time = "2026-07-11T00:52:19.527Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cd/9a/499218753365c0159eaadf41337c7c9e8dfa226a03b0050b5fa511f54080/modwire_mermaid-1.0.1.tar.gz", hash = "sha256:40536d85414150a73f5cf935ad2ba10eeed074c1826e708e8aadb16eeaec4cfb", size = 31766, upload-time = "2026-07-11T16:31:52.43Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/d2/fbf05883512b8b4f346d465777d797528ef32e339851a5fe80d6a0959c9e/modwire_mermaid-1.0.0-py3-none-any.whl", hash = "sha256:b1db6fae1ec5202206b2c68f600d764e8b4a386dbb57e4f6b7682a6380df65b7", size = 41720, upload-time = "2026-07-11T00:52:18.518Z" },
+    { url = "https://files.pythonhosted.org/packages/06/89/aa42b1c20c3c22899d7ab08b817a7958dc13f759cf473a2728c988e9b6ac/modwire_mermaid-1.0.1-py3-none-any.whl", hash = "sha256:cf76bb9b3fb363d0b39af287b1a04baa53545fea1217dcf5da6fb274c3d288ab", size = 42798, upload-time = "2026-07-11T16:31:51.171Z" },
 ]
 
 [[package]]
 name = "modwire-siren"
-version = "1.0.0"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f2/26/89c0631d9077b6c67fe51d48ea89e3f6e695b35d819acac9a998c09a2298/modwire_siren-1.0.0.tar.gz", hash = "sha256:429f2d07d9e69737a45fd9ab96eb51bcb8051c6b92cd9d304a9afc24c29a159e", size = 13292, upload-time = "2026-07-11T00:52:17.957Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ae/14/704c3e14419e8c676df9185af64a40caf31bb53cb44ba776c664c30950ae/modwire_siren-1.0.1.tar.gz", hash = "sha256:2810989f8b3acb98572cf128c746169fb9d35d97f20eae75e2315f816181d807", size = 14695, upload-time = "2026-07-11T16:38:32.392Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/35/85a6527d95bb2d84c2fa8d07b042b1122a1c3f5576a23a4e9133683b582f/modwire_siren-1.0.0-py3-none-any.whl", hash = "sha256:915a29b472e9b103423f59933a07cf2f270bb7e1bc6c55a73b0aa4d5d331b942", size = 19666, upload-time = "2026-07-11T00:52:16.855Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/c0/648ecc4613709c93e5073093e371258ff167f70b474b90d2f02a99b43eff/modwire_siren-1.0.1-py3-none-any.whl", hash = "sha256:b88be75049a86bd2ed2dfacddb00e350bbed3d8a1a2128bab20735bda8f70708", size = 21018, upload-time = "2026-07-11T16:38:31.303Z" },
 ]
 
 [[package]]
