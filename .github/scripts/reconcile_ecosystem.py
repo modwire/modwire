@@ -8,7 +8,13 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from modwire.projects import EcosystemContract, EcosystemDrift, ProjectFieldType
+from modwire.projects import (
+    EcosystemContract,
+    EcosystemDrift,
+    FieldOwner,
+    FieldVisibility,
+    ProjectFieldType,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -29,8 +35,222 @@ def gh_json(*arguments: str) -> Any:
     return json.loads(gh(*arguments))
 
 
+def gh_api_json(method: str, path: str, payload: dict[str, Any]) -> Any:
+    result = subprocess.run(
+        [
+            "gh",
+            "api",
+            "--method",
+            method,
+            "-H",
+            "X-GitHub-Api-Version: 2026-03-10",
+            "--input",
+            "-",
+            path,
+        ],
+        check=True,
+        capture_output=True,
+        input=json.dumps(payload),
+        text=True,
+    )
+    return json.loads(result.stdout) if result.stdout else None
+
+
+def gh_graphql(query: str, variables: dict[str, Any]) -> Any:
+    return gh_api_json(
+        "POST",
+        "graphql",
+        {"query": query, "variables": variables},
+    )
+
+
 def load_contract(path: Path) -> EcosystemContract:
     return EcosystemContract.load_yaml(path)
+
+
+def organization_issue_types(contract: EcosystemContract) -> dict[str, dict[str, Any]]:
+    values = gh_json(
+        "api",
+        "-H",
+        "X-GitHub-Api-Version: 2026-03-10",
+        f"orgs/{contract.project.owner}/issue-types",
+    )
+    return {value["name"]: value for value in values}
+
+
+def organization_issue_fields(contract: EcosystemContract) -> dict[str, dict[str, Any]]:
+    values = gh_json(
+        "api",
+        "-H",
+        "X-GitHub-Api-Version: 2026-03-10",
+        f"orgs/{contract.project.owner}/issue-fields",
+    )
+    return {value["name"]: value for value in values}
+
+
+def option_color(field_name: str, option_name: str, position: int) -> str:
+    semantic = {
+        "P0": "red",
+        "P1": "orange",
+        "P2": "yellow",
+        "P3": "green",
+        "High": "red",
+        "Medium": "yellow",
+        "Low": "green",
+        "Now": "red",
+        "Next": "yellow",
+        "Later": "blue",
+        "Unscheduled": "gray",
+        "XS": "green",
+        "S": "blue",
+        "M": "yellow",
+        "L": "orange",
+        "XL": "red",
+    }
+    if option_name in semantic:
+        return semantic[option_name]
+    component_colors = ("blue", "green", "purple", "orange", "pink", "yellow")
+    return component_colors[position % len(component_colors)]
+
+
+def issue_governance_drift(contract: EcosystemContract) -> list[str]:
+    errors: list[str] = []
+    actual_types = organization_issue_types(contract)
+    for name, expected in contract.issue_types.items():
+        actual = actual_types.get(name)
+        if actual is None:
+            errors.append(f"organization is missing issue type {name}")
+            continue
+        if not actual.get("is_enabled", True):
+            errors.append(f"organization issue type {name} is disabled")
+        if actual.get("description") != expected.description:
+            errors.append(f"organization issue type {name} description differs")
+        if actual.get("color") != expected.color:
+            errors.append(f"organization issue type {name} color differs")
+
+    actual_fields = organization_issue_fields(contract)
+    for name, expected in contract.fields.items():
+        if expected.owner is not FieldOwner.ISSUE:
+            continue
+        actual = actual_fields.get(name)
+        if actual is None:
+            errors.append(f"organization is missing issue field {name}")
+            continue
+        if actual.get("data_type") != expected.type.value:
+            errors.append(f"organization issue field {name} type differs")
+        expected_visibility = (
+            "all"
+            if expected.visibility is FieldVisibility.PUBLIC
+            else "organization_members_only"
+        )
+        if actual.get("visibility") != expected_visibility:
+            errors.append(f"organization issue field {name} visibility differs")
+        if actual.get("description") != expected.description:
+            errors.append(f"organization issue field {name} description differs")
+        if expected.type in {
+            ProjectFieldType.SINGLE_SELECT,
+            ProjectFieldType.MULTI_SELECT,
+        }:
+            actual_options = tuple(
+                option["name"]
+                for option in sorted(
+                    actual.get("options", ()),
+                    key=lambda option: option["priority"],
+                )
+            )
+            if actual_options != contract.field_options(name):
+                errors.append(f"organization issue field {name} options differ")
+    return errors
+
+
+def desired_issue_field_options(
+    contract: EcosystemContract,
+    name: str,
+    actual: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    existing = {option["name"]: option for option in (actual or {}).get("options", ())}
+    aliases = {
+        "Priority": {"P0": "Urgent", "P1": "High", "P2": "Medium", "P3": "Low"},
+        "Effort": {"S": "Low", "M": "Medium", "L": "High"},
+    }
+    result: list[dict[str, Any]] = []
+    for position, option_name in enumerate(contract.field_options(name), start=1):
+        current = existing.get(option_name)
+        if current is None:
+            current = existing.get(aliases.get(name, {}).get(option_name, ""))
+        option: dict[str, Any] = {
+            "name": option_name,
+            "description": None,
+            "color": option_color(name, option_name, position - 1),
+            "priority": position,
+        }
+        if current is not None:
+            option["id"] = current["id"]
+        result.append(option)
+    return result
+
+
+def apply_issue_governance(contract: EcosystemContract) -> None:
+    owner = contract.project.owner
+    actual_types = organization_issue_types(contract)
+    for name, expected in contract.issue_types.items():
+        payload = {
+            "name": name,
+            "description": expected.description,
+            "is_enabled": True,
+            "color": expected.color,
+        }
+        actual = actual_types.get(name)
+        if actual is None:
+            gh_api_json("POST", f"orgs/{owner}/issue-types", payload)
+        else:
+            query = """
+            mutation($input: UpdateIssueTypeInput!) {
+              updateIssueType(input: $input) { issueType { id } }
+            }
+            """
+            gh_graphql(
+                query,
+                {
+                    "input": {
+                        "issueTypeId": actual["node_id"],
+                        "name": name,
+                        "description": expected.description,
+                        "isEnabled": True,
+                        "color": expected.color.upper(),
+                    }
+                },
+            )
+
+    actual_fields = organization_issue_fields(contract)
+    for name, expected in contract.fields.items():
+        if expected.owner is not FieldOwner.ISSUE:
+            continue
+        actual = actual_fields.get(name)
+        if actual is not None and actual.get("data_type") != expected.type.value:
+            raise RuntimeError(
+                f"cannot change organization issue field {name} from "
+                f"{actual.get('data_type')} to {expected.type.value}"
+            )
+        payload: dict[str, Any] = {
+            "name": name,
+            "description": expected.description,
+            "visibility": (
+                "all"
+                if expected.visibility is FieldVisibility.PUBLIC
+                else "organization_members_only"
+            ),
+        }
+        if expected.type in {
+            ProjectFieldType.SINGLE_SELECT,
+            ProjectFieldType.MULTI_SELECT,
+        }:
+            payload["options"] = desired_issue_field_options(contract, name, actual)
+        if actual is None:
+            payload["data_type"] = expected.type.value
+            gh_api_json("POST", f"orgs/{owner}/issue-fields", payload)
+        else:
+            gh_api_json("PATCH", f"orgs/{owner}/issue-fields/{actual['id']}", payload)
 
 
 def workflow_drift(contract: EcosystemContract) -> list[str]:
@@ -258,6 +478,7 @@ def label_drift(contract: EcosystemContract) -> list[str]:
 
 def inspect_live(contract: EcosystemContract) -> EcosystemDrift:
     errors = workflow_drift(contract)
+    errors.extend(issue_governance_drift(contract))
     project = gh_json(
         "project",
         "view",
@@ -290,6 +511,10 @@ def inspect_live(contract: EcosystemContract) -> EcosystemDrift:
         if actual is None:
             errors.append(f"project is missing field {name}")
             continue
+        if expected.owner is FieldOwner.ISSUE:
+            # The organization field is validated through the issue-field API.
+            # Project GraphQL exposes the column but not its option definitions.
+            continue
         if expected.type is ProjectFieldType.SINGLE_SELECT:
             options = tuple(option["name"] for option in actual.get("options", ()))
             if options != contract.field_options(name):
@@ -306,11 +531,14 @@ def inspect_live(contract: EcosystemContract) -> EcosystemDrift:
         manual_controls=(
             "Saved Project views must be compared in the GitHub UI.",
             "Project auto-add, close, merge, and archive workflows must be compared in the GitHub UI.",
+            "Issue fields must be pinned and ordered for every issue type in the organization UI.",
+            "Legacy Project-only field values must be migrated before deleting duplicate fields.",
         ),
     )
 
 
 def apply_live(contract: EcosystemContract) -> None:
+    apply_issue_governance(contract)
     gh(
         "project",
         "edit",
@@ -390,7 +618,10 @@ def main() -> int:
             return 1
         print(
             f"valid ecosystem contract: {len(contract.packages)} packages, "
-            f"{len(contract.fields)} project fields"
+            f"{sum(field.owner is FieldOwner.PROJECT for field in contract.fields.values())} "
+            "Project-owned field, "
+            f"{sum(field.owner is FieldOwner.ISSUE for field in contract.fields.values())} "
+            "issue-owned fields"
         )
         return 0
     if arguments.command == "apply-live":

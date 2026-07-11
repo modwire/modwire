@@ -1,8 +1,9 @@
 name: Bug report
 description: Report incorrect architecture analysis, graph output, package metadata, or report output.
 title: "Bug: "
-labels:
-  - bug
+type: Bug
+projects:
+  - modwire/1
 body:
   - type: markdown
     attributes:

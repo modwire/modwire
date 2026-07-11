@@ -1,0 +1,48 @@
+name: Architecture or governance decision
+description: Record a decision that changes contracts, compatibility, architecture, or governance.
+title: "Decision: "
+type: Decision
+labels:
+  - contract
+projects:
+  - modwire/1
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Explain the forces, constraints, and decision deadline.
+    validations:
+      required: true
+
+  - type: textarea
+    id: options
+    attributes:
+      label: Options considered
+      description: Describe credible alternatives and their tradeoffs.
+    validations:
+      required: true
+
+  - type: textarea
+    id: decision
+    attributes:
+      label: Proposed decision
+      description: State the proposed choice and why it best fits the constraints.
+    validations:
+      required: true
+
+  - type: textarea
+    id: consequences
+    attributes:
+      label: Consequences and acceptance criteria
+      description: Describe positive and negative consequences plus the evidence needed to consider the decision implemented.
+    validations:
+      required: true
+
+  - type: input
+    id: relationships
+    attributes:
+      label: Related issues and decisions
+      description: Link superseded, blocking, blocked, parent, or implementation issues.
+    validations:
+      required: false
