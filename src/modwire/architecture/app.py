@@ -4,7 +4,7 @@ from typing import Annotated
 from wireup import Inject, injectable
 
 from modwire.shared import config, report
-from modwire.shared.code import QueryableCodeMapReader
+from modwire.code import QueryableCodeMapReader
 
 from .boundaries import FlowReportCollector
 from .insights import InsightReportCollector

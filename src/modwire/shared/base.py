@@ -1,13 +1,9 @@
 import abc
 from pathlib import Path
-from typing import TYPE_CHECKING, Self
+from typing import Self
 
 from pydantic import BaseModel, ConfigDict
 from pydantic_yaml import parse_yaml_raw_as, to_yaml_str
-
-if TYPE_CHECKING:
-    from .config import ModwireConfig
-
 
 class Modwire:
     pass

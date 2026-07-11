@@ -8,14 +8,12 @@ from .base import ModwireBaseConfig
 from .layers import LayersConfig
 from .modules import ModulesConfig
 from .projects import ProjectsConfig
-from .scaffolding import ScaffoldingConfig
 from .shape import ShapeConfig
 
 
 class ModwireConfig(ModwireBaseConfig):
     architecture: ArchitectureConfig = Field(default_factory=ArchitectureConfig)
     projects: ProjectsConfig = Field(default_factory=ProjectsConfig)
-    scaffolding: ScaffoldingConfig = Field(default_factory=ScaffoldingConfig)
     modules: ModulesConfig = Field(default_factory=ModulesConfig)
     layers: LayersConfig = Field(default_factory=LayersConfig)
 
@@ -24,7 +22,6 @@ class ModwireConfig(ModwireBaseConfig):
             "modwire": self,
             "architecture": self.architecture,
             "projects": self.projects,
-            "scaffolding": self.scaffolding,
             "modules": self.modules,
             "layers": self.layers,
         }
@@ -38,7 +35,6 @@ class ModwireConfig(ModwireBaseConfig):
         loaders = {
             "architecture": (("architecture",), ArchitectureConfig),
             "projects": (("projects",), ProjectsConfig),
-            "scaffolding": (("scaffolding",), ScaffoldingConfig),
             "modules": (("modules",), ModulesConfig),
             "layers": (("layers",), LayersConfig),
             "boundaries": (("architecture", "boundaries"), BoundariesConfig),
