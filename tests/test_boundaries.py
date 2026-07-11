@@ -1,5 +1,6 @@
 from modwire import ArchitectureConfig, Modwire
-from modwire_extraction.code import CodeMap, QueryableCodeMap
+from modwire_extraction import QueryableCodeMap
+from modwire_extraction.code import CodeMap
 
 
 def test_public_api_evaluates_each_configured_flow_realm() -> None:

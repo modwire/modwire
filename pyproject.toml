@@ -34,7 +34,7 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
-    "modwire-extraction>=2,<3",
+    "modwire-extraction>=2.0.1,<3",
     "modwire-mermaid>=1.0.0",
     "modwire-siren>=1.0.0",
     "pydantic>=2.12",
