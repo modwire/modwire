@@ -202,6 +202,9 @@ labels:
   needs-metadata:
     color: "b60205"
     description: Missing required issue intake metadata
+  requires-human-approval:
+    color: "d93f0b"
+    description: Explicitly require a human to approve the pull request
 
 automation:
   auto_add_filter: "is:open"
