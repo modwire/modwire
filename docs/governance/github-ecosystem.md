@@ -48,7 +48,7 @@ Use three levels of authority:
 
 1. **Modwire Ecosystem Project** — the cross-repository roadmap, status,
    priority, risk, and release trains.
-2. **`9orky/modwire` issues** — cross-package epics, architecture decisions,
+2. **`modwire/modwire` issues** — cross-package epics, architecture decisions,
    compatibility contracts, and integration release gates.
 3. **Repository milestones** — delivery commitments owned by one package.
 
@@ -66,8 +66,8 @@ are derived from it.
 
 ## Bootstrap or restore the Project
 
-1. Create a user-level Project owned by `9orky` named **Modwire Ecosystem**.
-2. Set `9orky/modwire` as its default repository.
+1. Create an organization-level Project owned by `modwire` named **Modwire Ecosystem**.
+2. Set `modwire/modwire` as its default repository.
 3. Link the Project from every repository derived from the package registry.
 4. Create the custom fields and derived options exactly as declared by the
    artifact.
