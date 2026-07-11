@@ -407,7 +407,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.2" },
-    { name = "modwire-extraction", specifier = ">=1.0.1" },
+    { name = "modwire-extraction", specifier = ">=2,<3" },
     { name = "modwire-mermaid", specifier = ">=1.0.0" },
     { name = "modwire-siren", specifier = ">=1.0.0" },
     { name = "pydantic", specifier = ">=2.12" },
@@ -428,14 +428,14 @@ dev = [
 
 [[package]]
 name = "modwire-extraction"
-version = "1.0.2"
+version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/74/6a/a2b338a3347a689e5d93c8a27e0168ac535495da5741e222e5aa49f0158f/modwire_extraction-1.0.2.tar.gz", hash = "sha256:ae1c2b6334c24144a8c965c697664f7f7ac34a710d6a1a39b121bae6f0cf75e0", size = 2309160, upload-time = "2026-06-30T17:47:43.984Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/90/ff56eadbbb8f9c00162028ae9352a639182d3a5a1db4227ba259ea283876/modwire_extraction-2.0.0.tar.gz", hash = "sha256:58b563d9da2be01d8c2c251c39f69cc7f9e654427ceaf8eba504d3f0216f0c89", size = 2363161, upload-time = "2026-07-11T22:25:29.034Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/4f/afc2c66d5b041adc0db4293d61f597d602ea7aa5dff84089123b055524cb/modwire_extraction-1.0.2-py3-none-any.whl", hash = "sha256:ed52153994cb5db43864d66916e2b9e09e49576c2516ecb8b1f9b71b4635c1ac", size = 2331926, upload-time = "2026-06-30T17:47:41.958Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/0e/53380c201d6c6e2503d5e4c99fbf185e90e96072cc830f90747660106105/modwire_extraction-2.0.0-py3-none-any.whl", hash = "sha256:19add213d245e6a6967f4ff11af8fa3b61e6bdafbba550693039aa588b58bcba", size = 2335462, upload-time = "2026-07-11T22:25:27.46Z" },
 ]
 
 [[package]]

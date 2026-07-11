@@ -1,5 +1,21 @@
 # Changelog
 
+## 5.0.0 - Unreleased
+
+### Breaking Changes
+
+- Require `modwire-extraction>=2,<3` and consume its resolved dependency graph.
+- Remove filesystem extraction and writing from the Core façade.
+- Make architecture reporting accept an injected `QueryableCodeMap`.
+- Remove configuration-directory and path-based model serialization helpers.
+- Enforce tracked cross-module dependencies through closed boundary allowlists.
+
+### Added
+
+- Add structured module identities to deterministic boundary violations.
+- Add acceptance coverage for multiple architecture flow realms.
+- Add direct Modwire 4 to 5 migration guidance.
+
 ## 4.0.2 - 2026-07-11
 
 ### Fixed

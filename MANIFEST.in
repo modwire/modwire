@@ -1,1 +1,2 @@
 exclude .env
+recursive-include docs *.md

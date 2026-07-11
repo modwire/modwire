@@ -1,16 +1,21 @@
 # Modwire
 
 Modwire is the typed coordination library for the Modwire ecosystem. It composes
-code extraction, architecture analysis, Siren documents, and Mermaid diagrams
-without embedding a command-line runtime in the library.
+in-memory architecture analysis, Siren documents, and Mermaid diagrams without
+embedding filesystem or command-line orchestration in the library.
 
 ```python
 from modwire import Modwire
+from modwire_extraction.code.query import QueryableCodeMap
 
-modwire = Modwire()
-code_map = modwire.extract("src", "python")
-architecture = modwire.architecture()
+
+def analyze(code_map: QueryableCodeMap):
+    return Modwire().architecture().report(code_map)
 ```
+
+Core accepts in-memory configuration and an already extracted code map. Install
+`modwire-cli` when paths, configuration directories, or generated files are
+involved.
 
 Install `modwire-cli` when you need the command line:
 
@@ -23,8 +28,7 @@ modwire --config-dir .modwire architecture health src python
 
 - `modwire.architecture` — architecture maps, boundary policies, shape checks,
   insights, and typed reports.
-- `modwire.code` — common code-package and extraction access shared across the
-  ecosystem.
+- `modwire.code` — validated in-memory code-package values.
 - `modwire.layers` — named layer contracts; orchestration remains to be defined.
 - `modwire.modules` — named module contracts; orchestration remains to be defined.
 - `modwire.projects` — project coordination contracts for modules and layers;
@@ -60,16 +64,16 @@ Modwire coordinates three independently released building blocks:
 
 The architecture work here tracks [Architecture Policy Core](https://github.com/modwire/modwire/milestone/1)
 and [Architecture Insights and Integration Ergonomics](https://github.com/modwire/modwire/milestone/2).
-Current integration follow-ups include [multiple flow realms](https://github.com/modwire/modwire/issues/13)
-and [explicit duplicate tag behavior](https://github.com/modwire/modwire/issues/14).
+Modwire 5 migration guidance is available in
+[Migrating from Modwire 4 to 5](docs/migration-5.md).
 
 ## Model contracts
 
 Public value objects derive from one of three Pydantic bases:
 `ModwireModel`, `ModwireConfigModel`, or `ModwireReportModel`. They are frozen,
 reject unknown fields, validate defaults, normalize surrounding string
-values through domain validators, and provide dictionary, JSON, YAML, and file
-round-trip helpers.
+values through domain validators, and provide dictionary, JSON, and YAML
+round-trip helpers without filesystem orchestration.
 
 ## Development
 

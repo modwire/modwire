@@ -1,6 +1,5 @@
 import abc
 import json
-from pathlib import Path
 from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict
@@ -29,20 +28,6 @@ class ModwireModel(BaseModel):
     @classmethod
     def from_yaml(cls, value: str) -> Self:
         return parse_yaml_raw_as(cls, value)
-
-    def save_yaml(self, path: str | Path) -> None:
-        Path(path).write_text(self.to_yaml(), encoding="utf-8")
-
-    @classmethod
-    def load_yaml(cls, path: str | Path) -> Self:
-        return cls.from_yaml(Path(path).read_text(encoding="utf-8"))
-
-    def save_json(self, path: str | Path) -> None:
-        Path(path).write_text(self.to_json(), encoding="utf-8")
-
-    @classmethod
-    def load_json(cls, path: str | Path) -> Self:
-        return cls.from_json(Path(path).read_text(encoding="utf-8"))
 
     def to_dict(self, **kwargs: Any) -> dict[str, Any]:
         return self.model_dump(**kwargs)

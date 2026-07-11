@@ -48,6 +48,8 @@ class NoReentryFlowAnalyzer(FlowAnalyzerInterface, BaseFlowAnalyzer):
         source_module = self.module_for(architecture_map, source_id)
         for dependency in architecture_map.code_map.outgoing_dependencies(source_id).all():
             target_id = dependency.edge.to_id
+            if target_id is None:
+                continue
             target_module = self.module_for(architecture_map, target_id)
             next_exited = exited_modules
             if source_module and target_module and source_module != target_module:

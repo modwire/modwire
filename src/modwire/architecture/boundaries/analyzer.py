@@ -16,7 +16,10 @@ class BoundariesFlowAnalyzer:
         self._analyzers = {analyzer.name: analyzer for analyzer in analyzers}
 
     def analyzer_names(self) -> tuple[str, ...]:
-        return self.config.flow.analyzers or tuple(sorted(self._analyzers))
+        configured = self.config.flow.analyzers or tuple(sorted(self._analyzers))
+        if self.config.rules and "module-boundaries" not in configured:
+            return ("module-boundaries", *configured)
+        return configured
 
     def analyze(self, architecture_map: ArchitectureMap) -> tuple[FlowViolation, ...]:
         violations: list[FlowViolation] = []
@@ -25,7 +28,8 @@ class BoundariesFlowAnalyzer:
             analyzer = self.analyzer(analyzer_name)
             for realm in self.realms(self.config.flow):
                 violations.extend(analyzer.analyze(architecture_map.with_realm(realm)))
-        return tuple(violations)
+        unique = {violation.violation_key(): violation for violation in violations}
+        return tuple(unique[key] for key in sorted(unique))
 
     def analyzer(self, name: str) -> FlowAnalyzerInterface:
         try:

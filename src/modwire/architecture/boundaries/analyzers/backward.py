@@ -22,6 +22,8 @@ class BackwardFlowAnalyzer(FlowAnalyzerInterface, BaseFlowAnalyzer):
         for dependency in architecture_map.code_map.dependency_edges().all():
             source_id = dependency.edge.from_id
             target_id = dependency.edge.to_id
+            if target_id is None:
+                continue
             source_layer = self.layer_for(architecture_map, source_id, layers)
             target_layer = self.layer_for(architecture_map, target_id, layers)
             if not source_layer or not target_layer:

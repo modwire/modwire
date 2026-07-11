@@ -1,10 +1,9 @@
-from pathlib import Path
-
+from modwire_extraction.code import QueryableCodeMap
 from modwire.shared import config, report
-from modwire.code import QueryableCodeMapReader
 
 from .boundaries.analyzer import BoundariesFlowAnalyzer
 from .boundaries.analyzers.backward import BackwardFlowAnalyzer
+from .boundaries.analyzers.module_boundaries import ModuleBoundaryAnalyzer
 from .boundaries.analyzers.no_cycles import NoCyclesFlowAnalyzer
 from .boundaries.analyzers.no_reentry import NoReentryFlowAnalyzer
 from .boundaries.collector import FlowReportCollector
@@ -30,7 +29,6 @@ class ArchitectureApplication:
     def __init__(
         self,
         config: config.ArchitectureConfig,
-        code_map_reader: QueryableCodeMapReader,
         map_loader: ArchitectureMapLoader,
         map_report_collector: MapReportCollector,
         flow_report_collector: FlowReportCollector,
@@ -38,7 +36,6 @@ class ArchitectureApplication:
         shape_report_collector: ShapeReportCollector,
     ):
         self.config = config
-        self.code_map_reader = code_map_reader
         self.map_loader = map_loader
         self.map_report_collector = map_report_collector
         self.flow_report_collector = flow_report_collector
@@ -49,8 +46,6 @@ class ArchitectureApplication:
     def standard(
         cls,
         config_: config.ArchitectureConfig | None = None,
-        *,
-        code_map_reader: QueryableCodeMapReader | None = None,
     ) -> "ArchitectureApplication":
         """Build the supported architecture-reporting composition."""
 
@@ -60,6 +55,7 @@ class ArchitectureApplication:
             architecture_config,
             (
                 BackwardFlowAnalyzer(),
+                ModuleBoundaryAnalyzer(architecture_config.boundaries),
                 NoCyclesFlowAnalyzer(),
                 NoReentryFlowAnalyzer(),
             ),
@@ -75,7 +71,6 @@ class ArchitectureApplication:
         )
         return cls(
             config=architecture_config,
-            code_map_reader=code_map_reader or QueryableCodeMapReader(),
             map_loader=map_loader,
             map_report_collector=MapReportCollector(),
             flow_report_collector=FlowReportCollector(flow_analyzer),
@@ -116,8 +111,7 @@ class ArchitectureApplication:
             )
         )
 
-    def report(self, root: Path, language: str) -> tuple[report.ReportNode, ...]:
-        code_map = self.code_map_reader.read(root, language)
+    def report(self, code_map: QueryableCodeMap) -> tuple[report.ReportNode, ...]:
         architecture_map = self.map_loader.load(code_map)
 
         reports = (

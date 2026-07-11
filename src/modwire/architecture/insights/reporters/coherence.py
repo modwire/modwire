@@ -47,15 +47,10 @@ class CoherenceReporter(InsightReporterInterface):
                 isolated.append(source_id)
 
         external_dependencies = {
-            edge_result.edge.from_id
+            edge_result.edge.specifier
             for edge_result in architecture_map.code_map.external_dependency_edges().all()
-            if edge_result.edge.from_id not in source_ids
+            if edge_result.edge.resolution == "external"
         }
-        external_dependencies.update(
-            edge_result.edge.to_id
-            for edge_result in architecture_map.code_map.external_dependency_edges().all()
-            if edge_result.edge.to_id not in source_ids
-        )
 
         return self.report_type(
             roots=tuple(roots),

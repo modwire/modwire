@@ -21,7 +21,8 @@ ecosystem façade.
 
 ## Code Maps
 
-Use `Modwire().extract(...)` to produce a queryable code map and
-`Modwire().architecture(...)` or `ArchitectureApplication.standard(...)` to
-compose architecture reports. Install the sibling `modwire-cli` distribution
-for terminal commands.
+Pass an already extracted `QueryableCodeMap` to
+`Modwire().architecture().report(code_map)` or
+`ArchitectureApplication.standard().report(code_map)`. Install the sibling
+`modwire-cli` distribution for path discovery, configuration loading, generated
+files, and terminal commands.

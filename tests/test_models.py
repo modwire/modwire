@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 from pydantic import ValidationError
 
@@ -7,7 +5,7 @@ from modwire.code import CodePackage
 from modwire.shared.config import BoundariesConfig, ModwireConfig, TagRule
 
 
-def test_model_json_and_yaml_round_trips(tmp_path: Path) -> None:
+def test_model_json_and_yaml_round_trips() -> None:
     config = ModwireConfig(
         architecture={
             "boundaries": {
@@ -18,14 +16,6 @@ def test_model_json_and_yaml_round_trips(tmp_path: Path) -> None:
 
     assert ModwireConfig.from_json(config.to_json()) == config
     assert ModwireConfig.from_yaml(config.to_yaml()) == config
-
-    json_path = tmp_path / "config.json"
-    yaml_path = tmp_path / "config.yaml"
-    config.save_json(json_path)
-    config.save_yaml(yaml_path)
-    assert ModwireConfig.load_json(json_path) == config
-    assert ModwireConfig.load_yaml(yaml_path) == config
-
 
 def test_models_are_frozen_and_forbid_unknown_fields() -> None:
     with pytest.raises(ValidationError):
