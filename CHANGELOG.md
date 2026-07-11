@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.2 - 2026-07-11
+
+### Fixed
+
+- Release asset uploads now target `GITHUB_REPOSITORY` explicitly when running
+  from a reusable workflow without a repository checkout.
+
 ## 4.0.1 - 2026-07-11
 
 ### Changed

@@ -66,3 +66,4 @@ def test_workflow_contract_uses_one_action_set() -> None:
     assert "python - <<" not in contents
     assert "SETUPTOOLS_SCM_PRETEND_VERSION" not in contents
     assert "softprops/" not in contents
+    assert '--repo "$GITHUB_REPOSITORY"' in contents

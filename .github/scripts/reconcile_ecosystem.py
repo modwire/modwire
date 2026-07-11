@@ -118,6 +118,8 @@ def workflow_drift(contract: EcosystemContract) -> list[str]:
         errors.append("release.yml must be driven by a published GitHub Release")
     if "skip-existing: true" not in release:
         errors.append("release.yml must make PyPI publication idempotent")
+    if '--repo "$GITHUB_REPOSITORY"' not in release_assets:
+        errors.append("release assets must target GITHUB_REPOSITORY explicitly")
     return errors
 
 
