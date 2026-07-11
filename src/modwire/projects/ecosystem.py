@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
+import re
 from typing import Literal, Self
 
 from pydantic import field_validator, model_validator
@@ -67,6 +68,33 @@ class EcosystemProject(ModwireConfigModel):
     default_package: str
     description: str
     governance_url: str
+
+
+class WorkflowActions(ModwireConfigModel):
+    checkout: str
+    setup_python: str
+    upload_artifact: str
+    download_artifact: str
+    publish_pypi: str
+
+
+class WorkflowContract(ModwireConfigModel):
+    contract_ref: str
+    ci_entrypoint: str
+    release_entrypoint: str
+    verify_reusable: str
+    release_build_reusable: str
+    github_release_reusable: str
+    release_tag_pattern: str
+    artifact_name: str
+    pypi_environment: str
+    actions: WorkflowActions
+
+    @field_validator("release_tag_pattern")
+    @classmethod
+    def validate_release_tag_pattern(cls, value: str) -> str:
+        re.compile(value)
+        return value
 
 
 class ProjectFieldType(StrEnum):
@@ -146,6 +174,7 @@ class EcosystemContract(ModwireConfigModel):
     version: Literal[2]
     packages: dict[str, EcosystemPackage]
     project: EcosystemProject
+    workflows: WorkflowContract
     fields: dict[str, ProjectField]
     views: tuple[ProjectView, ...]
     labels: dict[str, RepositoryLabel]

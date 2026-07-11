@@ -20,6 +20,8 @@
   and reusable Python-package verification workflow.
 - Added a typed, executable ecosystem source-of-truth contract with package
   taxonomy, CI validation, live GitHub drift detection, and reconciliation.
+- Added the standard reusable Python verification, release-build, and GitHub
+  Release workflows with a minimal repository-local PyPI publishing pattern.
 
 ### Changed
 

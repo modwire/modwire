@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,91 @@ def gh_json(*arguments: str) -> Any:
 
 def load_contract(path: Path) -> EcosystemContract:
     return EcosystemContract.load_yaml(path)
+
+
+def workflow_drift(contract: EcosystemContract) -> list[str]:
+    errors: list[str] = []
+    workflow_paths = (
+        contract.workflows.ci_entrypoint,
+        contract.workflows.release_entrypoint,
+        contract.workflows.verify_reusable,
+        contract.workflows.release_build_reusable,
+        contract.workflows.github_release_reusable,
+    )
+    contents: dict[str, str] = {}
+    for relative_path in workflow_paths:
+        path = ROOT / relative_path
+        if not path.is_file():
+            errors.append(f"missing workflow file {relative_path}")
+            continue
+        contents[relative_path] = path.read_text(encoding="utf-8")
+
+    expected_actions = {
+        "actions/checkout": contract.workflows.actions.checkout,
+        "actions/setup-python": contract.workflows.actions.setup_python,
+        "actions/upload-artifact": contract.workflows.actions.upload_artifact,
+        "actions/download-artifact": contract.workflows.actions.download_artifact,
+        "pypa/gh-action-pypi-publish": contract.workflows.actions.publish_pypi,
+    }
+    for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+        text = path.read_text(encoding="utf-8")
+        for action in re.findall(
+            r"(?:actions/(?:checkout|setup-python|upload-artifact|download-artifact)|"
+            r"pypa/gh-action-pypi-publish)@[^\s]+",
+            text,
+        ):
+            name = action.split("@", maxsplit=1)[0]
+            if action != expected_actions[name]:
+                errors.append(f"{path.name}: unmanaged action reference {action}")
+
+    release = contents.get(contract.workflows.release_entrypoint, "")
+    release_build = contents.get(contract.workflows.release_build_reusable, "")
+    verify = contents.get(contract.workflows.verify_reusable, "")
+    required_references = {
+        contract.workflows.release_entrypoint: (
+            contract.workflows.release_build_reusable,
+            contract.workflows.github_release_reusable,
+            contract.workflows.actions.download_artifact,
+            contract.workflows.actions.publish_pypi,
+        ),
+        contract.workflows.release_build_reusable: (
+            contract.workflows.actions.checkout,
+            contract.workflows.actions.setup_python,
+            contract.workflows.actions.upload_artifact,
+        ),
+        contract.workflows.verify_reusable: (
+            contract.workflows.actions.checkout,
+            contract.workflows.actions.setup_python,
+            contract.workflows.actions.upload_artifact,
+        ),
+        contract.workflows.github_release_reusable: (
+            contract.workflows.actions.download_artifact,
+        ),
+    }
+    for path, references in required_references.items():
+        text = contents.get(path, "")
+        for reference in references:
+            if reference not in text:
+                errors.append(f"{path}: missing required reference {reference}")
+
+    for forbidden in (
+        "python - <<",
+        "SETUPTOOLS_SCM_PRETEND_VERSION",
+        "softprops/",
+        "types: [published]",
+    ):
+        if forbidden in release or forbidden in release_build:
+            errors.append(f"release workflows contain forbidden pattern {forbidden}")
+    if contract.workflows.artifact_name not in release or contract.workflows.artifact_name not in release_build:
+        errors.append("release artifact name differs from the workflow contract")
+    github_release = contents.get(contract.workflows.github_release_reusable, "")
+    if (
+        "workflow_call:" not in verify
+        or "workflow_call:" not in release_build
+        or "workflow_call:" not in github_release
+    ):
+        errors.append("reusable workflows must use workflow_call")
+    return errors
 
 
 def project_fields(contract: EcosystemContract) -> dict[str, dict[str, Any]]:
@@ -166,7 +252,7 @@ def label_drift(contract: EcosystemContract) -> list[str]:
 
 
 def inspect_live(contract: EcosystemContract) -> EcosystemDrift:
-    errors: list[str] = []
+    errors = workflow_drift(contract)
     project = gh_json(
         "project",
         "view",
@@ -293,6 +379,10 @@ def main() -> int:
         print(json.dumps(EcosystemContract.model_json_schema(), indent=2))
         return 0
     if arguments.command == "validate":
+        errors = workflow_drift(contract)
+        if errors:
+            print(EcosystemDrift(errors=tuple(errors)).pretty())
+            return 1
         print(
             f"valid ecosystem contract: {len(contract.packages)} packages, "
             f"{len(contract.fields)} project fields"

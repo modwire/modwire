@@ -14,6 +14,8 @@ from .ecosystem import (
     ProjectView,
     ProjectVisibility,
     RepositoryLabel,
+    WorkflowActions,
+    WorkflowContract,
 )
 from modwire.shared.config import ProjectLayout, ProjectsConfig, ProjectStack
 
@@ -36,4 +38,6 @@ __all__ = [
     "ProjectsApplication",
     "ProjectsConfig",
     "RepositoryLabel",
+    "WorkflowActions",
+    "WorkflowContract",
 ]

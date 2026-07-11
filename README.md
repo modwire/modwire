@@ -40,7 +40,9 @@ The repeatable GitHub coordination model is frozen in the
 [ecosystem playbook](docs/governance/github-ecosystem.md) and its
 [executable source-of-truth contract](.github/modwire-ecosystem.yml). The
 contract's package registry derives repository membership and the shared
-Project component taxonomy; CI validates it with strict Pydantic models.
+Project component taxonomy; CI validates it with strict Pydantic models. The
+[Python workflow contract](docs/governance/python-workflows.md) provides the
+standard reusable CI and release procedures for member packages.
 
 ## Ecosystem
 

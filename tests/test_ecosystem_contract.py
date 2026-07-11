@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 import pytest
 from pydantic import ValidationError
@@ -30,6 +31,9 @@ def test_ecosystem_contract_is_the_package_taxonomy_source() -> None:
     )
     assert contract.default_repository() == "9orky/modwire"
     assert "9orky/modwire-cli" in contract.project_readme()
+    assert re.fullmatch(contract.workflows.release_tag_pattern, "v3.2.1")
+    assert not re.fullmatch(contract.workflows.release_tag_pattern, "3.2.1")
+    assert not re.fullmatch(contract.workflows.release_tag_pattern, "v3.2")
 
 
 def test_ecosystem_contract_rejects_taxonomy_drift() -> None:
@@ -48,3 +52,17 @@ def test_ecosystem_contract_rejects_unknown_dependencies() -> None:
 
     with pytest.raises(ValidationError, match="unknown dependencies"):
         EcosystemContract.from_dict(values)
+
+
+def test_workflow_contract_uses_one_action_set() -> None:
+    contract = EcosystemContract.load_yaml(CONTRACT)
+    workflows = Path(__file__).parents[1] / ".github" / "workflows"
+    contents = "\n".join(
+        path.read_text(encoding="utf-8") for path in workflows.glob("*.yml")
+    )
+
+    for action in contract.workflows.actions.to_dict().values():
+        assert action in contents
+    assert "python - <<" not in contents
+    assert "SETUPTOOLS_SCM_PRETEND_VERSION" not in contents
+    assert "softprops/" not in contents
