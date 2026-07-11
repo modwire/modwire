@@ -6,9 +6,10 @@ embedding filesystem or command-line orchestration in the library.
 
 ```python
 from modwire import ArchitectureConfig, Modwire
+from modwire_extraction import QueryableCodeMap
 
 
-def analyze(code_map):
+def analyze(code_map: QueryableCodeMap):
     return Modwire().architecture(ArchitectureConfig()).report(code_map)
 ```
 

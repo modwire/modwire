@@ -10,9 +10,10 @@ Pass an already extracted `QueryableCodeMap` to Core:
 
 ```python
 from modwire import ArchitectureConfig, Modwire
+from modwire_extraction import QueryableCodeMap
 
 
-def architecture_reports(code_map):
+def architecture_reports(code_map: QueryableCodeMap):
     return Modwire().architecture(ArchitectureConfig()).report(code_map)
 ```
 
