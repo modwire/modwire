@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../modwire-siren"
+		},
+		{
+			"path": "../../../modwire-mermaid"
+		},
+		{
+			"path": "../../../modwire-extraction"
+		},
+		{
+			"path": "../../../modwire-mcp"
+		},
+		{
+			"path": "../../../modwire-cli"
+		}
+	],
+	"settings": {}
+}
