@@ -22,6 +22,8 @@ class FlowViolation(ModwireModel):
     violation_index: int
     rule_name: str
     message: str
+    source_module: str = ""
+    target_module: str = ""
 
     def violation_key(self) -> tuple[object, ...]:
         return (
@@ -30,6 +32,8 @@ class FlowViolation(ModwireModel):
             self.violation_index,
             self.rule_name,
             self.message,
+            self.source_module,
+            self.target_module,
         )
 
 

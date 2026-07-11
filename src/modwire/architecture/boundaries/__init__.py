@@ -1,8 +1,4 @@
-from modwire.shared.config import BoundariesConfig
-from .collector import FlowReportCollector
+from .composition import standard_flow_report_collector
 
 
-__all__ = [
-    "BoundariesConfig",
-    "FlowReportCollector",
-]
+__all__ = ["standard_flow_report_collector"]

@@ -11,7 +11,7 @@ CONTRACT = Path(__file__).parents[1] / ".github" / "modwire-ecosystem.yml"
 
 
 def test_ecosystem_contract_is_the_package_taxonomy_source() -> None:
-    contract = EcosystemContract.load_yaml(CONTRACT)
+    contract = EcosystemContract.from_yaml(CONTRACT.read_text(encoding="utf-8"))
 
     assert contract.repositories() == (
         "modwire/modwire",
@@ -54,7 +54,7 @@ def test_ecosystem_contract_is_the_package_taxonomy_source() -> None:
 
 
 def test_ecosystem_contract_rejects_taxonomy_drift() -> None:
-    contract = EcosystemContract.load_yaml(CONTRACT)
+    contract = EcosystemContract.from_yaml(CONTRACT.read_text(encoding="utf-8"))
     values = contract.to_dict(mode="json")
     values["packages"]["cli"]["component"] = "Core"
 
@@ -63,7 +63,7 @@ def test_ecosystem_contract_rejects_taxonomy_drift() -> None:
 
 
 def test_ecosystem_contract_rejects_unknown_dependencies() -> None:
-    contract = EcosystemContract.load_yaml(CONTRACT)
+    contract = EcosystemContract.from_yaml(CONTRACT.read_text(encoding="utf-8"))
     values = contract.to_dict(mode="json")
     values["packages"]["cli"]["depends_on"] = ["unknown"]
 
@@ -72,7 +72,7 @@ def test_ecosystem_contract_rejects_unknown_dependencies() -> None:
 
 
 def test_issue_intake_rejects_project_owned_required_fields() -> None:
-    contract = EcosystemContract.load_yaml(CONTRACT)
+    contract = EcosystemContract.from_yaml(CONTRACT.read_text(encoding="utf-8"))
     values = contract.to_dict(mode="json")
     values["issue_intake"]["required_fields"].append("Status")
 
@@ -81,7 +81,7 @@ def test_issue_intake_rejects_project_owned_required_fields() -> None:
 
 
 def test_workflow_contract_uses_one_action_set() -> None:
-    contract = EcosystemContract.load_yaml(CONTRACT)
+    contract = EcosystemContract.from_yaml(CONTRACT.read_text(encoding="utf-8"))
     workflows = Path(__file__).parents[1] / ".github" / "workflows"
     contents = "\n".join(
         path.read_text(encoding="utf-8") for path in workflows.glob("*.yml")

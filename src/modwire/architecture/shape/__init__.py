@@ -1,8 +1,4 @@
-from .base import ShapeViolation
-from .collector import ShapeReportCollector
+from .composition import standard_shape_report_collector
 
 
-__all__ = [
-    "ShapeViolation",
-    "ShapeReportCollector",
-]
+__all__ = ["standard_shape_report_collector"]

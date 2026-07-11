@@ -65,7 +65,7 @@ def gh_graphql(query: str, variables: dict[str, Any]) -> Any:
 
 
 def load_contract(path: Path) -> EcosystemContract:
-    return EcosystemContract.load_yaml(path)
+    return EcosystemContract.from_yaml(path.read_text(encoding="utf-8"))
 
 
 def organization_issue_types(contract: EcosystemContract) -> dict[str, dict[str, Any]]:

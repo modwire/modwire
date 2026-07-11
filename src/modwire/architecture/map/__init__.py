@@ -1,11 +1,4 @@
-from .base import ArchitectureMap, ArchitectureRealm
-from .collector import MapReportCollector
-from .loader import ArchitectureMapLoader
+from .composition import standard_map_components
 
 
-__all__ = [
-    "ArchitectureMap",
-    "ArchitectureRealm",
-    "MapReportCollector",
-    "ArchitectureMapLoader",
-]
+__all__ = ["standard_map_components"]

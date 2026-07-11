@@ -1,8 +1,4 @@
-from .reporters import InsightReport
-from .collector import InsightReportCollector
+from .composition import standard_insight_report_collector
 
 
-__all__ = [
-    "InsightReport",
-    "InsightReportCollector",
-]
+__all__ = ["standard_insight_report_collector"]
