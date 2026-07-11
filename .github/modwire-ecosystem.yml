@@ -155,7 +155,7 @@ automation:
   added_status: Inbox
   closed_status: Done
   merged_status: Done
-  archive_filter: "Status:Done updated:<@today-30d"
+  archive_filter: "is:closed updated:<@today-30d"
 
 milestones:
   scope: repository
