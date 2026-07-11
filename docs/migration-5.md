@@ -9,12 +9,10 @@ belong to `modwire-cli`.
 Pass an already extracted `QueryableCodeMap` to Core:
 
 ```python
-from modwire import Modwire
-from modwire.architecture import ArchitectureConfig
-from modwire_extraction.code import QueryableCodeMap
+from modwire import ArchitectureConfig, Modwire
 
 
-def architecture_reports(code_map: QueryableCodeMap):
+def architecture_reports(code_map):
     return Modwire().architecture(ArchitectureConfig()).report(code_map)
 ```
 

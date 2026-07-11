@@ -5,12 +5,10 @@ in-memory architecture analysis, Siren documents, and Mermaid diagrams without
 embedding filesystem or command-line orchestration in the library.
 
 ```python
-from modwire import Modwire
-from modwire.architecture import ArchitectureConfig
-from modwire_extraction.code import QueryableCodeMap
+from modwire import ArchitectureConfig, Modwire
 
 
-def analyze(code_map: QueryableCodeMap):
+def analyze(code_map):
     return Modwire().architecture(ArchitectureConfig()).report(code_map)
 ```
 

@@ -1,5 +1,4 @@
-from modwire import Modwire
-from modwire.architecture import ArchitectureConfig
+from modwire import ArchitectureConfig, Modwire
 from modwire_extraction.code import CodeMap, QueryableCodeMap
 
 
