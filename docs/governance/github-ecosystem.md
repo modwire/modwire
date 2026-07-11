@@ -5,6 +5,43 @@ are the frozen, repeatable definition of how the Modwire repositories are
 coordinated on GitHub. The YAML file is the concise desired state; this document
 explains how to apply and operate it.
 
+## Source-of-truth boundary
+
+`.github/modwire-ecosystem.yml` is the only source of truth for ecosystem
+governance configuration. Its `packages` registry owns package identifiers,
+repositories, distributions, Project components, roles, lifecycle, summaries,
+and package dependencies. Repository links, the Project readme, and the
+`Component` field options are derived from that registry and must not be
+maintained as separate lists.
+
+The same contract owns Project metadata and fields, saved-view definitions,
+shared labels, automation policy, milestone policy, and operating cadence.
+GitHub remains the source of truth for issue and pull-request content, status,
+assignees, milestones, and discussion; copying delivery state into YAML would
+create a conflicting tracker.
+
+The contract is parsed by the strict Pydantic taxonomy in
+`modwire.projects.ecosystem`. CI rejects unknown properties, duplicate package
+identities, invalid field definitions, missing automation statuses, unknown or
+cyclic dependencies, and malformed label colors. Run the same checks locally:
+
+```bash
+python .github/scripts/reconcile_ecosystem.py validate
+python .github/scripts/reconcile_ecosystem.py check-live
+```
+
+`apply-live` converges Project metadata, repository links, shared labels, and
+open issue/PR membership before checking for remaining drift:
+
+```bash
+python .github/scripts/reconcile_ecosystem.py apply-live
+```
+
+Saved views and built-in Project workflow configuration are represented in the
+contract but currently require comparison and application in the GitHub UI;
+GitHub does not expose those controls through `gh`. The drift report identifies
+them explicitly as manual controls.
+
 ## Planning model
 
 Use three levels of authority:
@@ -23,16 +60,17 @@ shared version number.
 
 The Project covers the coordinator (`modwire`), its runtime surface
 (`modwire-cli`), the Extraction, Mermaid, and Siren building blocks, and the
-in-progress MCP surface. The repository inventory and `Component` options in
-the YAML artifact are authoritative; add a repository to both whenever the
-ecosystem gains a separately delivered package.
+in-progress MCP surface. Add a separately delivered package once, to the YAML
+artifact's `packages` registry; repository membership and `Component` options
+are derived from it.
 
 ## Bootstrap or restore the Project
 
 1. Create a user-level Project owned by `9orky` named **Modwire Ecosystem**.
 2. Set `9orky/modwire` as its default repository.
-3. Link the Project from every repository listed in the YAML artifact.
-4. Create the custom fields and options exactly as declared in the artifact.
+3. Link the Project from every repository derived from the package registry.
+4. Create the custom fields and derived options exactly as declared by the
+   artifact.
 5. Create the six saved views in the declared order.
 6. Bulk-add all open issues and pull requests from every repository.
 7. Enable the built-in added, closed, merged, and archive workflows.

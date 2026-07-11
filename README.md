@@ -38,7 +38,9 @@ retains the ecosystem's crucial scaffolding surface.
 
 The repeatable GitHub coordination model is frozen in the
 [ecosystem playbook](docs/governance/github-ecosystem.md) and its
-[desired-state artifact](.github/modwire-ecosystem.yml).
+[executable source-of-truth contract](.github/modwire-ecosystem.yml). The
+contract's package registry derives repository membership and the shared
+Project component taxonomy; CI validates it with strict Pydantic models.
 
 ## Ecosystem
 

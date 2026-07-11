@@ -18,6 +18,8 @@
 - Added public layer, module, project, configuration, and report imports.
 - Added the frozen GitHub ecosystem playbook, desired-state Project artifact,
   and reusable Python-package verification workflow.
+- Added a typed, executable ecosystem source-of-truth contract with package
+  taxonomy, CI validation, live GitHub drift detection, and reconciliation.
 
 ### Changed
 

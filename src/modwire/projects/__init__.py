@@ -1,4 +1,39 @@
 from .app import ProjectsApplication
+from .ecosystem import (
+    EcosystemContract,
+    EcosystemDrift,
+    EcosystemPackage,
+    EcosystemProject,
+    GovernanceCadence,
+    MilestonePolicy,
+    PackageLifecycle,
+    PackageRole,
+    ProjectAutomation,
+    ProjectField,
+    ProjectFieldType,
+    ProjectView,
+    ProjectVisibility,
+    RepositoryLabel,
+)
 from modwire.shared.config import ProjectLayout, ProjectsConfig, ProjectStack
 
-__all__ = ["ProjectLayout", "ProjectsApplication", "ProjectsConfig", "ProjectStack"]
+__all__ = [
+    "EcosystemContract",
+    "EcosystemDrift",
+    "EcosystemPackage",
+    "EcosystemProject",
+    "GovernanceCadence",
+    "MilestonePolicy",
+    "PackageLifecycle",
+    "PackageRole",
+    "ProjectAutomation",
+    "ProjectField",
+    "ProjectFieldType",
+    "ProjectLayout",
+    "ProjectStack",
+    "ProjectView",
+    "ProjectVisibility",
+    "ProjectsApplication",
+    "ProjectsConfig",
+    "RepositoryLabel",
+]
