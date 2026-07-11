@@ -12,7 +12,6 @@ pipeline:
 repository_kinds:
   - library
   - cli
-  - mcp-django
 
 variables:
   required:
@@ -43,7 +42,6 @@ variables:
       enum:
         - library
         - cli
-        - mcp-django
     modules:
       type: list
       unique_by: name

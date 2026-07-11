@@ -42,13 +42,3 @@ def test_golden_shapes_cover_each_repository_kind():
         paths = [entry["path"] for entry in golden["expected_paths"]]
         assert len(paths) == len(set(paths))
         assert ".modwire/repository.yaml" in paths
-
-
-def test_mcp_shape_is_not_forced_into_the_library_source_layout():
-    golden = load_yaml(GOLDEN_PATH / "mcp-django.yaml")
-
-    assert golden["variables"]["source_root"] == "."
-    assert golden["variables"]["import_package"] == "core"
-    assert "src/core/__init__.py" not in {
-        entry["path"] for entry in golden["expected_paths"]
-    }

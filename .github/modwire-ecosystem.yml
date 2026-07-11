@@ -44,8 +44,8 @@ packages:
     component: MCP
     role: integration
     lifecycle: incubating
-    summary: MCP surface and future home of scaffolding operations.
-    depends_on: [core]
+    summary: Planned MCP integration, activated after CLI exposes filesystem, project, and execution capabilities.
+    depends_on: [cli]
 
 project:
   owner: modwire

@@ -37,8 +37,10 @@ modwire --config-dir .modwire architecture health src python
 - `modwire.shared.report` — architecture report contracts and metadata.
 
 Scaffolding and glossary functionality are not part of this package. The
-work-in-progress [modwire-mcp](https://github.com/modwire/modwire-mcp) project
-retains the ecosystem's crucial scaffolding surface.
+current [modwire-mcp](https://github.com/modwire/modwire-mcp) repository is a
+work-in-progress local scaffolding devserver, not yet an operational ecosystem
+package. The MCP package becomes workable after `modwire-cli` exposes the
+filesystem, project, and execution capabilities that MCP will coordinate.
 
 The repeatable GitHub coordination model is frozen in the
 [ecosystem playbook](docs/governance/github-ecosystem.md) and its

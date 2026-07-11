@@ -75,7 +75,10 @@ shared version number.
 
 The Project covers the coordinator (`modwire`), its runtime surface
 (`modwire-cli`), the Extraction, Mermaid, and Siren building blocks, and the
-in-progress MCP surface. Add a separately delivered package once, to the YAML
+planned MCP integration. MCP remains incubating until CLI exposes the
+filesystem, project, and execution capabilities it needs. The current local
+Django scaffolding devserver is a prototype host, not a canonical Modwire
+repository profile. Add a separately delivered package once, to the YAML
 artifact's `packages` registry; repository membership and `Component` options
 are derived from it.
 
@@ -228,19 +231,19 @@ point.
 
 ### Initial `modwire-mcp` milestone
 
-Title: **M1: Scaffolding Contract and MCP Transition**
+Title: **M1: CLI Capabilities and MCP Activation**
 
 Description:
 
-> Stabilize the scaffolding server as the source of reusable ecosystem
-> templates, align generated Python package workflows and metadata, expose the
-> scaffolding contract through MCP, and preserve migration and verification
-> coverage during the transition.
+> Activate the MCP package after `modwire-cli` exposes stable filesystem,
+> project, execution, and scaffolding capabilities. Keep the current Django
+> scaffolding devserver as a development host until those capabilities can be
+> composed through MCP without duplicating CLI behavior.
 
 Suggested initial issues:
 
-- Define the versioned scaffolding bundle and variable contract.
-- Add the reusable Python-package workflow scaffolding.
-- Make scaffolding synchronization idempotent and observable.
-- Expose list, schema, bundle, and preview operations through MCP.
+- Define the versioned CLI capability contract required by MCP.
+- Expose filesystem, project, execution, and scaffolding operations through CLI.
+- Make scaffolding synchronization idempotent and observable in the local devserver.
+- Compose CLI capabilities into MCP list, schema, bundle, and preview operations.
 - Add end-to-end generation and clean-environment verification.

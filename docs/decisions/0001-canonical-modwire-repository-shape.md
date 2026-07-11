@@ -9,17 +9,16 @@ Every Modwire Python repository is created or adopted by two ordered scaffolds:
 1. the UV package scaffold establishes Python packaging mechanics;
 2. the Modwire repository scaffold declares ecosystem identity and module policy.
 
-The Modwire scaffold is implemented and served by `modwire-mcp`. Core owns only
-the versioned contract that the scaffold consumes. The scaffold never turns a
-Django/MCP repository into a library package and never rewrites application
-code.
+The Modwire scaffold is prototyped in the local Django scaffolding devserver.
+That server is an implementation host, not a target repository kind and not
+the operational `modwire-mcp` package. Core owns the versioned target contract
+that the scaffold consumes. The scaffold never rewrites application code.
 
 The machine-readable contract is
 [`repository-contract-v1.yaml`](../scaffolding/repository-contract-v1.yaml).
 Golden manifests define the supported initial shapes for a
-[`library`](../scaffolding/golden/library.yaml),
-[`CLI`](../scaffolding/golden/cli.yaml), and
-[`MCP/Django`](../scaffolding/golden/mcp-django.yaml) repository.
+[`library`](../scaffolding/golden/library.yaml) and
+[`CLI`](../scaffolding/golden/cli.yaml) repository.
 
 ## Ecosystem audit
 
@@ -30,7 +29,12 @@ Golden manifests define the supported initial shapes for a
 | Extraction | library | `modwire-extraction` | `modwire_extraction` | `src` | code, dependency, extractors and bundled runtimes |
 | Mermaid | library | `modwire-mermaid` | `modwire_mermaid` | `src` | diagram families, examples and generated API docs |
 | Siren | library | `modwire-siren` | `modwire_siren` | `src` | contracts, policies, integrations and OpenAPI |
-| MCP | MCP/Django | `modwire-mcp` | `core` | `.` | Django project package and top-level Django apps |
+
+These five operational package repositories are the scaffold targets. The
+incubating `modwire-mcp` package is not a third target shape: it becomes
+workable after `modwire-cli` provides its filesystem, project, execution, and
+scaffolding capabilities. The current local Django devserver is not included
+in this audit.
 
 Common invariants are deliberately small: a UV-managed Python project, a
 stable repository/distribution/import identity, an explicit source root,
@@ -51,7 +55,7 @@ into it.
 - Every dependency target must be declared; self-dependencies and cycles are
   invalid.
 - A module may choose its own internal layers. The repository contract does
-  not prescribe Django layers for libraries or library layers for Django apps.
+  not prescribe one package's layers for another package.
 - Package `__init__.py` files are export surfaces. Construction and application
   logic live in normal modules, including dedicated composition modules.
 - Exclusions describe generated, vendored, migration, fixture or development
@@ -94,7 +98,9 @@ their code.
 
 ## Consequences
 
-The MCP implementation can expose a HATEOAS workflow with separate discover,
-preview and apply actions while Core remains filesystem-independent. Contract
-version 1 can be implemented without deciding repository-specific architecture
-layers or rewriting any of the six repositories.
+The local scaffolding devserver can expose a HATEOAS workflow with separate
+discover, preview and apply actions while Core remains filesystem-independent.
+The future `modwire-mcp` package will compose the stable capabilities supplied
+by `modwire-cli`; it does not inherit the devserver's Django repository shape.
+Contract version 1 can be implemented without deciding repository-specific
+architecture layers or rewriting any target repository.
