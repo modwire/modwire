@@ -18,3 +18,8 @@ The CI workflow currently validates:
 - Python 3.12, 3.13, and 3.14
 - Ruff static checks and the unit test suite
 - package build and distribution metadata
+
+CI delegates these checks to the reusable
+[`python-package.yml`](../../.github/workflows/python-package.yml) workflow.
+Packaging and tests do not require a pre-existing `.dev` directory; caches are
+disposable and use their tool defaults.

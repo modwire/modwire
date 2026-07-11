@@ -16,12 +16,16 @@
 - Added `Modwire`, a small façade coordinating extraction, architecture, Siren,
   and Mermaid packages.
 - Added public layer, module, project, configuration, and report imports.
+- Added the frozen GitHub ecosystem playbook, desired-state Project artifact,
+  and reusable Python-package verification workflow.
 
 ### Changed
 
 - `modwire` now composes `modwire-extraction`, `modwire-siren`, and
   `modwire-mermaid` as independently released building blocks.
 - Architecture tag names and flow realm/analyzer names now reject duplicates.
+- Packaging, tests, and releases no longer require a pre-existing `.dev`
+  directory.
 
 ## 3.2.0
 

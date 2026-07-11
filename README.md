@@ -36,6 +36,10 @@ Scaffolding and glossary functionality are not part of this package. The
 work-in-progress [modwire-mcp](https://github.com/9orky/modwire-mcp) project
 retains the ecosystem's crucial scaffolding surface.
 
+The repeatable GitHub coordination model is frozen in the
+[ecosystem playbook](docs/governance/github-ecosystem.md) and its
+[desired-state artifact](.github/modwire-ecosystem.yml).
+
 ## Ecosystem
 
 Modwire coordinates three independently released building blocks:

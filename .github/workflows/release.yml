@@ -61,7 +61,7 @@ jobs:
           python-version: "3.12"
 
       - name: Clean packaging artifacts
-        run: rm -rf .dev build dist src/*.egg-info
+        run: rm -rf build dist src/*.egg-info
 
       - name: Install package and release tooling
         run: |
