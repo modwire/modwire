@@ -42,6 +42,18 @@ contract but currently require comparison and application in the GitHub UI;
 GitHub does not expose those controls through `gh`. The drift report identifies
 them explicitly as manual controls.
 
+## Human merge approval
+
+Every ecosystem repository protects its default branch with an active ruleset
+named `Require human approval`. The ruleset requires the `Human approval`
+status check produced by `.github/workflows/human-approval.yml`.
+
+That workflow waits on the protected `human-approval` environment, where
+`9orky` is the required reviewer. Every new pull-request commit cancels the
+previous run and requires fresh approval. Agents must not approve or bypass this
+environment. When the check is waiting, they must stop and ask the human reviewer
+to use **Review deployments** before attempting the merge again.
+
 ## Planning model
 
 Use three levels of authority:
