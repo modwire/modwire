@@ -1,0 +1,51 @@
+name: Ecosystem epic
+description: Coordinate an outcome delivered by multiple repository-owned sub-issues.
+title: "Epic: "
+type: Epic
+labels:
+  - ecosystem
+projects:
+  - modwire/1
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Ecosystem outcome
+      description: Describe the user-visible or compatibility result across packages.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repositories
+    attributes:
+      label: Affected repositories
+      description: List every repository expected to own a sub-issue.
+      placeholder: |
+        - modwire/modwire
+        - modwire/modwire-cli
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Include integration verification and release-readiness conditions.
+    validations:
+      required: true
+
+  - type: textarea
+    id: rollout
+    attributes:
+      label: Rollout and rollback
+      description: Define compatibility promises, rollout order, and rollback strategy.
+    validations:
+      required: true
+
+  - type: input
+    id: relationships
+    attributes:
+      label: Initial sub-issues and dependencies
+      description: Link existing issues. Create native sub-issue and dependency relationships after submission.
+    validations:
+      required: false

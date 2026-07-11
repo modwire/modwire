@@ -1,4 +1,4 @@
-version: 2
+version: 3
 
 packages:
   core:
@@ -75,26 +75,85 @@ workflows:
     download_artifact: actions/download-artifact@v8
     publish_pypi: pypa/gh-action-pypi-publish@release/v1
 
+issue_types:
+  Task:
+    description: A concrete unit of implementation, maintenance, or documentation work.
+    color: yellow
+  Bug:
+    description: Incorrect or unexpected existing behavior.
+    color: red
+  Feature:
+    description: A new user-facing capability or behavior.
+    color: blue
+  Epic:
+    description: A coordinated outcome delivered through multiple sub-issues.
+    color: purple
+  Decision:
+    description: An architecture, compatibility, or governance decision.
+    color: green
+
 fields:
   Status:
+    owner: project
     type: single_select
     options: [Inbox, Ready, In progress, Blocked, Review, Done]
   Horizon:
+    owner: issue
     type: single_select
-    options: [Now, Next, Later]
+    description: Planning horizon; Unscheduled means accepted but not placed on the roadmap.
+    visibility: public
+    options: [Now, Next, Later, Unscheduled]
   Priority:
+    owner: issue
     type: single_select
+    description: Relative delivery priority, from critical P0 to opportunistic P3.
+    visibility: public
     options: [P0, P1, P2, P3]
   Component:
+    owner: issue
     type: single_select
+    description: Modwire package primarily responsible for delivery.
+    visibility: public
     source: packages
   Release train:
+    owner: issue
     type: text
+    description: Coordinated delivery train, or Unscheduled when none applies.
+    visibility: public
   Target date:
+    owner: issue
     type: date
+    description: Expected completion date for committed work.
+    visibility: public
+  Start date:
+    owner: issue
+    type: date
+    description: Date on which active implementation begins.
+    visibility: public
   Risk:
+    owner: issue
     type: single_select
+    description: Delivery, compatibility, or operational risk if the issue changes or slips.
+    visibility: public
     options: [Low, Medium, High]
+  Effort:
+    owner: issue
+    type: single_select
+    description: Relative implementation effort using T-shirt sizing.
+    visibility: public
+    options: [XS, S, M, L, XL]
+
+issue_intake:
+  project: modwire/1
+  required_fields: [Horizon, Priority, Risk, Component, Release train, Effort]
+  ready_requires: [assignee, acceptance_criteria]
+  incomplete_label: needs-metadata
+  agent_must_not_guess: true
+
+relationships:
+  dependencies: native
+  hierarchy: native_sub_issues
+  cross_repository_parent: modwire/modwire
 
 views:
   - name: Roadmap
@@ -122,16 +181,10 @@ views:
     filter: "Status:Inbox"
 
 labels:
-  "type:bug":
-    color: "d73a4a"
-    description: Incorrect existing behavior
-  "type:feature":
-    color: "0e8a16"
-    description: New user-facing capability
-  "type:maintenance":
+  maintenance:
     color: "c5def5"
     description: Internal maintenance
-  "type:docs":
+  documentation:
     color: "0075ca"
     description: Documentation
   ecosystem:
@@ -143,12 +196,12 @@ labels:
   breaking:
     color: "b60205"
     description: Backward-incompatible change
-  blocked:
-    color: "e99695"
-    description: Blocked by another decision or delivery
   release-gate:
     color: "fbca04"
     description: Must complete before a release
+  needs-metadata:
+    color: "b60205"
+    description: Missing required issue intake metadata
 
 automation:
   auto_add_filter: "is:open"

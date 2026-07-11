@@ -14,8 +14,10 @@ and package dependencies. Repository links, the Project readme, and the
 `Component` field options are derived from that registry and must not be
 maintained as separate lists.
 
-The same contract owns Project metadata and fields, saved-view definitions,
-shared labels, automation policy, milestone policy, and operating cadence.
+The same contract owns native organization issue types and issue fields,
+Project metadata and workflow-only fields, saved-view definitions, shared
+labels, relationship policy, issue intake, automation policy, milestone policy,
+and operating cadence.
 GitHub remains the source of truth for issue and pull-request content, status,
 assignees, milestones, and discussion; copying delivery state into YAML would
 create a conflicting tracker.
@@ -58,8 +60,9 @@ to use **Review deployments** before attempting the merge again.
 
 Use three levels of authority:
 
-1. **Modwire Ecosystem Project** — the cross-repository roadmap, status,
-   priority, risk, and release trains.
+1. **Modwire Ecosystem Project** — the cross-repository roadmap and workflow
+   status. Durable planning facts are organization issue fields, so their values
+   stay attached to an issue in every Project.
 2. **`modwire/modwire` issues** — cross-package epics, architecture decisions,
    compatibility contracts, and integration release gates.
 3. **Repository milestones** — delivery commitments owned by one package.
@@ -81,8 +84,9 @@ are derived from it.
 1. Create an organization-level Project owned by `modwire` named **Modwire Ecosystem**.
 2. Set `modwire/modwire` as its default repository.
 3. Link the Project from every repository derived from the package registry.
-4. Create the custom fields and derived options exactly as declared by the
-   artifact.
+4. Create the public organization issue fields and the Project-owned `Status`
+   field exactly as declared by the artifact. Add the organization issue fields
+   to the Project instead of creating duplicate Project-only fields.
 5. Create the six saved views in the declared order.
 6. Bulk-add all open issues and pull requests from every repository.
 7. Enable the built-in added, closed, merged, and archive workflows.
@@ -90,9 +94,9 @@ are derived from it.
    workflow limit permits it. If the limit is lower than the repository count,
    keep bulk addition as the fallback until Project GraphQL automation is
    justified.
-9. Create the shared labels in each repository. Use Project fields for status,
-   priority, horizon, and risk; use labels only for intrinsic issue properties
-   and automation.
+9. Create the shared labels in each repository. Use the Project field only for
+   workflow status, organization issue fields for structured issue facts, and
+   labels only for orthogonal traits and automation.
 10. Publish the first Project status update with the current release train,
     risks, decisions needed, and next review date.
 
@@ -124,6 +128,53 @@ Every coordinator epic should state:
 - release train and target date;
 - integration verification required in `modwire`;
 - rollout and rollback expectations.
+
+## Native issue intake contract
+
+Every agent-created issue must be complete when submitted. Human-created issues
+may enter `Inbox` incomplete, but `needs-metadata` keeps them out of `Ready`
+until the required values are present. Agents must ask for an uncertain value;
+they must never invent priority, risk, horizon, effort, release placement, or a
+relationship merely to satisfy validation.
+
+Use GitHub's native organization issue types:
+
+- `Bug` for incorrect existing behavior;
+- `Feature` for new user-facing capability;
+- `Task` for implementation, maintenance, documentation, and release work;
+- `Epic` for a coordinated outcome delivered through native sub-issues;
+- `Decision` for architecture, compatibility, and governance choices.
+
+Issue forms set the native type and add the issue to `modwire/1`. Before
+submission, populate every pinned required field: `Horizon`, `Priority`, `Risk`,
+`Component`, `Release train`, and `Effort`. Use the explicit `Unscheduled`
+value where planning or release placement has not been committed. `Start date`
+and `Target date` are optional at intake and become meaningful once work is
+scheduled. An assignee and objective acceptance criteria are required before
+moving an issue to `Ready`.
+
+The `Issue metadata` workflow checks the native type and organization field
+values on creation and every relevant edit. It applies `needs-metadata`, leaves
+an actionable checklist, and fails visibly while values are missing. It removes
+the label after the issue is complete.
+
+Use native relationships as the source of truth:
+
+- `blocked by` and `blocking` for delivery dependencies;
+- parent and sub-issues for hierarchy and epic progress;
+- linked pull requests and linked branches for implementation;
+- repository milestones for package release commitments.
+
+Do not substitute `blocked` or `type:*` labels for native features. Labels are
+reserved for independent facets such as `ecosystem`, `contract`, `breaking`,
+`release-gate`, `documentation`, and `maintenance`.
+
+The supported issue-creation operation is atomic: create the issue with its
+native type, organization field values, labels, assignee and milestone, then
+attach native parent/sub-issue and dependency relationships. The GitHub REST
+and GraphQL APIs support this contract. Until the general GitHub connector
+exposes every parameter, `modwire-mcp` is the integration boundary that must
+provide the complete operation rather than falling back to an incomplete issue.
 
 ## Workflow contract
 

@@ -101,31 +101,70 @@ class WorkflowContract(ModwireConfigModel):
 
 class ProjectFieldType(StrEnum):
     SINGLE_SELECT = "single_select"
+    MULTI_SELECT = "multi_select"
     TEXT = "text"
     DATE = "date"
     NUMBER = "number"
 
 
+class FieldOwner(StrEnum):
+    PROJECT = "project"
+    ISSUE = "issue"
+
+
+class FieldVisibility(StrEnum):
+    PUBLIC = "public"
+    ORGANIZATION = "organization"
+
+
 class ProjectField(ModwireConfigModel):
+    owner: FieldOwner
     type: ProjectFieldType
+    description: str | None = None
+    visibility: FieldVisibility | None = None
     options: tuple[str, ...] = ()
     source: Literal["packages"] | None = None
 
     @model_validator(mode="after")
     def validate_options(self) -> Self:
-        if self.source is not None and self.type is not ProjectFieldType.SINGLE_SELECT:
-            raise ValueError("derived options require a single_select field")
+        select_types = {ProjectFieldType.SINGLE_SELECT, ProjectFieldType.MULTI_SELECT}
+        if self.source is not None and self.type not in select_types:
+            raise ValueError("derived options require a select field")
         if self.source is not None and self.options:
             raise ValueError("use either source or options, not both")
-        if self.type is ProjectFieldType.SINGLE_SELECT and not (
-            self.source or self.options
-        ):
-            raise ValueError("single_select fields require options or a source")
-        if self.type is not ProjectFieldType.SINGLE_SELECT and self.options:
-            raise ValueError("only single_select fields accept options")
+        if self.type in select_types and not (self.source or self.options):
+            raise ValueError("select fields require options or a source")
+        if self.type not in select_types and self.options:
+            raise ValueError("only select fields accept options")
         if len(self.options) != len(set(self.options)):
             raise ValueError("field options must be unique")
+        if self.owner is FieldOwner.ISSUE:
+            if not self.description or not self.description.strip():
+                raise ValueError("issue fields require a description")
+            if self.visibility is None:
+                raise ValueError("issue fields require visibility")
+        elif self.visibility is not None:
+            raise ValueError("project fields do not accept visibility")
         return self
+
+
+class IssueTypeDefinition(ModwireConfigModel):
+    description: str
+    color: Literal["gray", "blue", "green", "yellow", "orange", "red", "pink", "purple"]
+
+
+class IssueIntakePolicy(ModwireConfigModel):
+    project: str
+    required_fields: tuple[str, ...]
+    ready_requires: tuple[Literal["assignee", "acceptance_criteria"], ...]
+    incomplete_label: str
+    agent_must_not_guess: bool
+
+
+class IssueRelationshipPolicy(ModwireConfigModel):
+    dependencies: Literal["native"]
+    hierarchy: Literal["native_sub_issues"]
+    cross_repository_parent: Literal["modwire/modwire"]
 
 
 class ProjectView(ModwireConfigModel):
@@ -173,11 +212,14 @@ class GovernanceCadence(ModwireConfigModel):
 
 
 class EcosystemContract(ModwireConfigModel):
-    version: Literal[2]
+    version: Literal[3]
     packages: dict[str, EcosystemPackage]
     project: EcosystemProject
     workflows: WorkflowContract
+    issue_types: dict[str, IssueTypeDefinition]
     fields: dict[str, ProjectField]
+    issue_intake: IssueIntakePolicy
+    relationships: IssueRelationshipPolicy
     views: tuple[ProjectView, ...]
     labels: dict[str, RepositoryLabel]
     automation: ProjectAutomation
@@ -227,6 +269,25 @@ class EcosystemContract(ModwireConfigModel):
         component = self.fields.get("Component")
         if component is None or component.source != "packages":
             raise ValueError("Component must derive its options from packages")
+
+        required_fields = set(self.issue_intake.required_fields)
+        unknown_required = required_fields.difference(self.fields)
+        if unknown_required:
+            raise ValueError(f"issue intake references unknown fields: {unknown_required}")
+        non_issue_fields = {
+            name
+            for name in required_fields
+            if self.fields[name].owner is not FieldOwner.ISSUE
+        }
+        if non_issue_fields:
+            raise ValueError(
+                f"issue intake requires project-owned fields: {non_issue_fields}"
+            )
+        if self.issue_intake.incomplete_label not in self.labels:
+            raise ValueError("issue intake incomplete_label must reference a label")
+        for required_type in ("Task", "Bug", "Feature"):
+            if required_type not in self.issue_types:
+                raise ValueError(f"missing required issue type: {required_type}")
 
         statuses = set(self.field_options("Status"))
         for status in (

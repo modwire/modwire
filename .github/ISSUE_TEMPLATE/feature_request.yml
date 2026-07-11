@@ -1,8 +1,9 @@
 name: Feature request
 description: Suggest a new architecture, graph, shape, callable, export, or integration capability.
 title: "Feature: "
-labels:
-  - enhancement
+type: Feature
+projects:
+  - modwire/1
 body:
   - type: markdown
     attributes:
