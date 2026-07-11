@@ -64,7 +64,7 @@ reviewed.
 
 For each train:
 
-1. Open one coordinator issue in `9orky/modwire` with the YAML issue form.
+1. Open one coordinator issue in `modwire/modwire` with the YAML issue form.
 2. Add repository-owned implementation issues as cross-repository sub-issues.
 3. Assign the same Project release-train option and target date to every item.
 4. Prepare providers and validate consumer candidates before publishing.

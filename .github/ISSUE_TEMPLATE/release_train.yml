@@ -39,8 +39,8 @@ body:
       label: Package releases and sub-issues
       description: List each affected repository, target version, and owning issue.
       placeholder: |
-        - [ ] 9orky/modwire-extraction — vX.Y.Z — #issue
-        - [ ] 9orky/modwire — vX.Y.Z — #issue
+        - [ ] modwire/modwire-extraction — vX.Y.Z — #issue
+        - [ ] modwire/modwire — vX.Y.Z — #issue
     validations:
       required: true
   - type: checkboxes

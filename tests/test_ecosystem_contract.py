@@ -14,12 +14,12 @@ def test_ecosystem_contract_is_the_package_taxonomy_source() -> None:
     contract = EcosystemContract.load_yaml(CONTRACT)
 
     assert contract.repositories() == (
-        "9orky/modwire",
-        "9orky/modwire-cli",
-        "9orky/modwire-extraction",
-        "9orky/modwire-mermaid",
-        "9orky/modwire-siren",
-        "9orky/modwire-mcp",
+        "modwire/modwire",
+        "modwire/modwire-cli",
+        "modwire/modwire-extraction",
+        "modwire/modwire-mermaid",
+        "modwire/modwire-siren",
+        "modwire/modwire-mcp",
     )
     assert contract.field_options("Component") == (
         "Core",
@@ -29,7 +29,7 @@ def test_ecosystem_contract_is_the_package_taxonomy_source() -> None:
         "Siren",
         "MCP",
     )
-    assert contract.default_repository() == "9orky/modwire"
+    assert contract.default_repository() == "modwire/modwire"
     assert contract.field_options("Release train") == (
         "workflows-v1 adoption",
         "2026-Q3 Contracts",
@@ -66,7 +66,7 @@ def test_ecosystem_contract_is_the_package_taxonomy_source() -> None:
             "minimum": "1.0.2",
         },
     )
-    assert "9orky/modwire-cli" in contract.project_readme()
+    assert "modwire/modwire-cli" in contract.project_readme()
     assert re.fullmatch(contract.workflows.release_tag_pattern, "v3.2.1")
     assert not re.fullmatch(contract.workflows.release_tag_pattern, "3.2.1")
     assert not re.fullmatch(contract.workflows.release_tag_pattern, "v3.2")
@@ -113,7 +113,7 @@ def test_github_matrix_is_derived_from_default_package_dependencies() -> None:
                 "consumer": "core",
                 "profile": "minimum",
                 "python-version": "3.12",
-                "repository": "9orky/modwire",
+                "repository": "modwire/modwire",
                 "working-directory": ".",
                 "requirements": (
                     "modwire-extraction==1.0.2 "
@@ -124,7 +124,7 @@ def test_github_matrix_is_derived_from_default_package_dependencies() -> None:
                 "consumer": "core",
                 "profile": "latest",
                 "python-version": "3.14",
-                "repository": "9orky/modwire",
+                "repository": "modwire/modwire",
                 "working-directory": ".",
                 "requirements": (
                     "modwire-extraction>=1.0.2,<2.0.0 "
@@ -136,7 +136,7 @@ def test_github_matrix_is_derived_from_default_package_dependencies() -> None:
                 "consumer": "cli",
                 "profile": "minimum",
                 "python-version": "3.12",
-                "repository": "9orky/modwire-cli",
+                "repository": "modwire/modwire-cli",
                 "working-directory": "consumer",
                 "requirements": "modwire==4.0.2",
             },
@@ -144,7 +144,7 @@ def test_github_matrix_is_derived_from_default_package_dependencies() -> None:
                 "consumer": "cli",
                 "profile": "latest",
                 "python-version": "3.14",
-                "repository": "9orky/modwire-cli",
+                "repository": "modwire/modwire-cli",
                 "working-directory": "consumer",
                 "requirements": "modwire>=4.0.2,<5.0.0",
             },

@@ -42,9 +42,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/9orky/modwire"
-Repository = "https://github.com/9orky/modwire"
-Issues = "https://github.com/9orky/modwire/issues"
+Homepage = "https://github.com/modwire/modwire"
+Repository = "https://github.com/modwire/modwire"
+Issues = "https://github.com/modwire/modwire/issues"
 
 [project.optional-dependencies]
 dev = [

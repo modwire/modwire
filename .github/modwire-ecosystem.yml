@@ -2,7 +2,7 @@ version: 3
 
 packages:
   core:
-    repository: 9orky/modwire
+    repository: modwire/modwire
     distribution: modwire
     component: Core
     role: coordinator
@@ -19,7 +19,7 @@ packages:
         specifier: ">=1.0.0,<2.0.0"
         minimum: 1.0.0
   cli:
-    repository: 9orky/modwire-cli
+    repository: modwire/modwire-cli
     distribution: modwire-cli
     component: CLI
     role: runtime
@@ -30,28 +30,28 @@ packages:
         specifier: ">=4.0.2,<5.0.0"
         minimum: 4.0.2
   extraction:
-    repository: 9orky/modwire-extraction
+    repository: modwire/modwire-extraction
     distribution: modwire-extraction
     component: Extraction
     role: building_block
     lifecycle: active
     summary: Canonical source extraction and normalization.
   mermaid:
-    repository: 9orky/modwire-mermaid
+    repository: modwire/modwire-mermaid
     distribution: modwire-mermaid
     component: Mermaid
     role: building_block
     lifecycle: active
     summary: Typed, deterministic Mermaid source generation.
   siren:
-    repository: 9orky/modwire-siren
+    repository: modwire/modwire-siren
     distribution: modwire-siren
     component: Siren
     role: building_block
     lifecycle: active
     summary: Typed Siren hypermedia and OpenAPI integration.
   mcp:
-    repository: 9orky/modwire-mcp
+    repository: modwire/modwire-mcp
     distribution: modwire-mcp
     component: MCP
     role: integration
@@ -63,13 +63,13 @@ packages:
         minimum: 1.0.2
 
 project:
-  owner: 9orky
+  owner: modwire
   title: Modwire Ecosystem
   number: 4
   visibility: public
   default_package: core
   description: Cross-repository roadmap and release coordination for the Modwire ecosystem.
-  governance_url: https://github.com/9orky/modwire/blob/main/docs/governance/github-ecosystem.md
+  governance_url: https://github.com/modwire/modwire/blob/main/docs/governance/github-ecosystem.md
 
 workflows:
   contract_ref: workflows-v1

@@ -21,4 +21,4 @@ Use the GitHub `Bug report` issue form when Modwire behaves incorrectly.
 
 Open a bug report at:
 
-https://github.com/9orky/modwire/issues/new?template=bug_report.yml
+https://github.com/modwire/modwire/issues/new?template=bug_report.yml

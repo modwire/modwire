@@ -63,7 +63,7 @@ permissions:
 
 jobs:
   verify:
-    uses: 9orky/modwire/.github/workflows/python-package.yml@workflows-v1
+    uses: modwire/modwire/.github/workflows/python-package.yml@workflows-v1
     with:
       python-versions: '["3.12", "3.13", "3.14"]'
 ```
@@ -90,13 +90,13 @@ permissions:
 
 jobs:
   build:
-    uses: 9orky/modwire/.github/workflows/python-release-build.yml@workflows-v1
+    uses: modwire/modwire/.github/workflows/python-release-build.yml@workflows-v1
     with:
       release-tag: ${{ github.event.release.tag_name }}
 
   publish-github-assets:
     needs: build
-    uses: 9orky/modwire/.github/workflows/python-release-assets.yml@workflows-v1
+    uses: modwire/modwire/.github/workflows/python-release-assets.yml@workflows-v1
     with:
       release-tag: ${{ github.event.release.tag_name }}
     permissions:
