@@ -6,11 +6,12 @@ embedding filesystem or command-line orchestration in the library.
 
 ```python
 from modwire import Modwire
-from modwire_extraction.code.query import QueryableCodeMap
+from modwire.architecture import ArchitectureConfig
+from modwire_extraction.code import QueryableCodeMap
 
 
 def analyze(code_map: QueryableCodeMap):
-    return Modwire().architecture().report(code_map)
+    return Modwire().architecture(ArchitectureConfig()).report(code_map)
 ```
 
 Core accepts in-memory configuration and an already extracted code map. Install

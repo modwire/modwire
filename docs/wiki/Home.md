@@ -21,8 +21,8 @@ ecosystem façade.
 
 ## Code Maps
 
-Pass an already extracted `QueryableCodeMap` to
-`Modwire().architecture().report(code_map)` or
-`ArchitectureApplication.standard().report(code_map)`. Install the sibling
+Pass an already extracted `QueryableCodeMap` and an explicit
+`ArchitectureConfig` to `Modwire().architecture(config).report(code_map)` or
+`ArchitectureApplication.standard(config).report(code_map)`. Install the sibling
 `modwire-cli` distribution for path discovery, configuration loading, generated
 files, and terminal commands.

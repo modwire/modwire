@@ -8,7 +8,7 @@ class Modwire:
 
     def architecture(
         self,
-        config: ArchitectureConfig | None = None,
+        config: ArchitectureConfig,
     ) -> ArchitectureApplication:
         return ArchitectureApplication.standard(config)
 

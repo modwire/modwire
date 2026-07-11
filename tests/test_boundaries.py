@@ -1,42 +1,9 @@
-from __future__ import annotations
-
-from modwire_extraction.code.code_map import CodeMap
-from modwire_extraction.code.query import QueryableCodeMap
-from modwire_extraction.dependency.graph import DependencyGraph
-from modwire_extraction.extractors.languages.base import SourceExtraction
-from modwire_extraction.extractors.source import SourceFile
-from modwire_extraction.identity import FileId, ImportSpecifier, ModuleId
-
-from modwire.architecture.boundaries.analyzer import BoundariesFlowAnalyzer
-from modwire.architecture.boundaries.analyzers.backward import BackwardFlowAnalyzer
-from modwire.architecture.boundaries.analyzers.module_boundaries import (
-    ModuleBoundaryAnalyzer,
-)
-from modwire.architecture.boundaries.base import FlowAnalyzerInterface, FlowViolation
-from modwire.architecture.map.loader import ArchitectureMapLoader
-from modwire.architecture.app import ArchitectureApplication
-from modwire.shared.config.architecture import ArchitectureConfig
+from modwire import Modwire
+from modwire.architecture import ArchitectureConfig
+from modwire_extraction.code import CodeMap, QueryableCodeMap
 
 
-class RecordingAnalyzer(FlowAnalyzerInterface):
-    def __init__(self) -> None:
-        self.realms: list[tuple[str, str, tuple[str, ...]]] = []
-
-    @property
-    def name(self) -> str:
-        return "recording"
-
-    @property
-    def title(self) -> str:
-        return "Recording"
-
-    def analyze(self, architecture_map) -> tuple[FlowViolation, ...]:
-        realm = architecture_map.realm
-        self.realms.append((realm.name, realm.module_tag, realm.layers))
-        return ()
-
-
-def test_flow_analyzers_evaluate_each_configured_realm() -> None:
+def test_public_api_evaluates_each_configured_flow_realm() -> None:
     config = ArchitectureConfig(
         boundaries={
             "tags": (
@@ -45,43 +12,55 @@ def test_flow_analyzers_evaluate_each_configured_realm() -> None:
             ),
             "flow": {
                 "realms": (
-                    {
-                        "name": "backend",
-                        "module_tag": "backend_module",
-                        "layers": ("application", "domain"),
-                    },
+                    {"name": "backend", "module_tag": "backend_module"},
                     {"name": "gui", "module_tag": "gui_page"},
                 ),
-                "analyzers": ("recording",),
+                "analyzers": ("no-cycles",),
             },
         }
     )
     code_map = queryable_map(
-        "backend/orders/application.py",
+        "backend/orders/service.py",
+        "backend/billing/service.py",
         "gui/pages/home.py",
+        "gui/pages/settings.py",
+        edges=(
+            (
+                "backend/orders/service.py",
+                "backend/billing/service.py",
+                "resolved",
+                "billing.service",
+            ),
+            (
+                "backend/billing/service.py",
+                "backend/orders/service.py",
+                "resolved",
+                "orders.service",
+            ),
+            (
+                "gui/pages/home.py",
+                "gui/pages/settings.py",
+                "resolved",
+                "pages.settings",
+            ),
+            (
+                "gui/pages/settings.py",
+                "gui/pages/home.py",
+                "resolved",
+                "pages.home",
+            ),
+        ),
     )
-    architecture_map = ArchitectureMapLoader(config).load(code_map)
-    recorder = RecordingAnalyzer()
 
-    assert architecture_map.modules == {
-        "home.py": ("gui/pages/home.py",),
-        "orders": ("backend/orders/application.py",),
-    }
-    BoundariesFlowAnalyzer(config, (recorder,)).analyze(architecture_map)
-    assert recorder.realms == [
-        ("backend", "backend_module", ("application", "domain")),
-        ("gui", "gui_page", ()),
-    ]
-    assert BackwardFlowAnalyzer().analyze(
-        architecture_map.with_realm(
-            BoundariesFlowAnalyzer(config, (recorder,)).realms(
-                config.boundaries.flow
-            )[1]
-        )
-    ) == ()
+    flow = report(code_map, config, "architecture.violations.flow")
+
+    assert tuple(violation.rule_name for violation in flow.violations) == (
+        "analyzer:backend:no-cycles",
+        "analyzer:gui:no-cycles",
+    )
 
 
-def test_closed_module_boundaries_cover_all_resolution_states() -> None:
+def test_public_api_enforces_closed_module_boundaries() -> None:
     config = ArchitectureConfig(
         boundaries={
             "tags": (
@@ -115,10 +94,20 @@ def test_closed_module_boundaries_cover_all_resolution_states() -> None:
             ("src/a/one.py", None, "unresolved", "missing"),
         ),
     )
-    architecture_map = ArchitectureMapLoader(config).load(code_map)
+    application = Modwire().architecture(config)
 
-    violations = ModuleBoundaryAnalyzer(config.boundaries).analyze(architecture_map)
+    first = application.report(code_map)
+    second = application.report(code_map)
+    flow = next(
+        item for item in first if item.metadata.id == "architecture.violations.flow"
+    )
+    violations = tuple(
+        violation
+        for violation in flow.violations
+        if violation.violation_type == "module-boundaries"
+    )
 
+    assert first == second
     assert tuple(violation.rule_name for violation in violations) == (
         "boundary:module",
         "boundary:unclassified",
@@ -133,31 +122,15 @@ def test_closed_module_boundaries_cover_all_resolution_states() -> None:
     assert violations[1].path == ("tools.py",)
 
 
-def test_architecture_application_reports_an_injected_code_map() -> None:
-    code_map = queryable_map(
-        "src/example/model.py",
-        "src/example/service.py",
-        edges=(
-            (
-                "src/example/service.py",
-                "src/example/model.py",
-                "resolved",
-                "example.model",
-            ),
-            ("src/example/service.py", None, "external", "json"),
-            ("src/example/service.py", None, "unresolved", "missing"),
-        ),
-    )
-
-    application = ArchitectureApplication.standard()
-    reports = application.report(code_map)
-
-    assert reports == application.report(code_map)
-    assert tuple(node.metadata.id for node in reports) == (
-        "architecture.map",
-        "architecture.violations.flow",
-        "architecture.violations.shape",
-        "architecture.insights",
+def report(
+    code_map: QueryableCodeMap,
+    config: ArchitectureConfig,
+    report_id: str,
+):
+    return next(
+        item
+        for item in Modwire().architecture(config).report(code_map)
+        if item.metadata.id == report_id
     )
 
 
@@ -165,49 +138,55 @@ def queryable_map(
     *paths: str,
     edges: tuple[tuple[str, str | None, str, str], ...] = (),
 ) -> QueryableCodeMap:
-    files = {
-        FileId(path): source_file(FileId(path))
-        for path in paths
+    files = {path: source_file(path) for path in paths}
+    code_map = CodeMap.from_dict(
+        {
+            "language": "test",
+            "extraction": {
+                "files": files,
+                "modules": {
+                    source["module_id"]: file_id
+                    for file_id, source in files.items()
+                },
+                "files_found": len(files),
+                "files_excluded": 0,
+            },
+            "dependency_graph": {
+                "nodes": {
+                    path: {"id": path, "kind": "file"}
+                    for path in paths
+                },
+                "edges": [
+                    {
+                        "from_id": source,
+                        "to_id": target,
+                        "specifier": specifier,
+                        "resolution": resolution,
+                        "kind": "import",
+                    }
+                    for source, target, resolution, specifier in edges
+                ],
+            },
+        }
+    )
+    return QueryableCodeMap(code_map=code_map)
+
+
+def source_file(file_id: str) -> dict[str, object]:
+    return {
+        "file_id": file_id,
+        "module_id": file_id.rsplit(".", 1)[0],
+        "imports": [],
+        "exports": [],
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "abstract_classes": [],
+        "functions": [],
+        "values": [],
+        "callables": [],
+        "calls": [],
+        "line_count": 1,
+        "code_line_count": 1,
+        "public_symbol_count": 0,
     }
-    graph = DependencyGraph()
-    for file_id in files:
-        graph.add_node(file_id)
-    for source, target, resolution, specifier in edges:
-        graph.add_edge(
-            FileId(source),
-            FileId(target) if target is not None else None,
-            resolution=resolution,
-            specifier=ImportSpecifier(specifier),
-        )
-    return QueryableCodeMap(
-        code_map=CodeMap(
-            language="test",
-            extraction=SourceExtraction(
-                files=files,
-                modules={source.module_id: file_id for file_id, source in files.items()},
-                files_found=len(files),
-                files_excluded=0,
-            ),
-            dependency_graph=graph,
-        )
-    )
-
-
-def source_file(file_id: FileId) -> SourceFile:
-    return SourceFile(
-        file_id=file_id,
-        module_id=ModuleId(file_id.rsplit(".", 1)[0]),
-        imports=[],
-        exports=[],
-        classes=[],
-        interfaces=[],
-        types=[],
-        abstract_classes=[],
-        functions=[],
-        values=[],
-        callables=[],
-        calls=[],
-        line_count=1,
-        code_line_count=1,
-        public_symbol_count=0,
-    )

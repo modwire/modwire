@@ -10,11 +10,12 @@ Pass an already extracted `QueryableCodeMap` to Core:
 
 ```python
 from modwire import Modwire
-from modwire_extraction.code.query import QueryableCodeMap
+from modwire.architecture import ArchitectureConfig
+from modwire_extraction.code import QueryableCodeMap
 
 
 def architecture_reports(code_map: QueryableCodeMap):
-    return Modwire().architecture().report(code_map)
+    return Modwire().architecture(ArchitectureConfig()).report(code_map)
 ```
 
 Replace these Modwire 4 APIs:

@@ -1,8 +1,8 @@
-from modwire.architecture import ArchitectureApplication
+from modwire.architecture import ArchitectureApplication, ArchitectureConfig
 
 
 def test_standard_architecture_application_exposes_stable_report_catalog() -> None:
-    catalog = ArchitectureApplication.standard().reports()
+    catalog = ArchitectureApplication.standard(ArchitectureConfig()).reports()
 
     assert tuple(report.id for report in catalog.reports) == (
         "architecture.map",
