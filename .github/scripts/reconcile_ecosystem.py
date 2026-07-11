@@ -511,6 +511,10 @@ def inspect_live(contract: EcosystemContract) -> EcosystemDrift:
         if actual is None:
             errors.append(f"project is missing field {name}")
             continue
+        if expected.owner is FieldOwner.ISSUE:
+            # The organization field is validated through the issue-field API.
+            # Project GraphQL exposes the column but not its option definitions.
+            continue
         if expected.type is ProjectFieldType.SINGLE_SELECT:
             options = tuple(option["name"] for option in actual.get("options", ()))
             if options != contract.field_options(name):
