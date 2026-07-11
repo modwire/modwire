@@ -56,6 +56,14 @@ def gh_api_json(method: str, path: str, payload: dict[str, Any]) -> Any:
     return json.loads(result.stdout) if result.stdout else None
 
 
+def gh_graphql(query: str, variables: dict[str, Any]) -> Any:
+    return gh_api_json(
+        "POST",
+        "graphql",
+        {"query": query, "variables": variables},
+    )
+
+
 def load_contract(path: Path) -> EcosystemContract:
     return EcosystemContract.load_yaml(path)
 
@@ -143,7 +151,13 @@ def issue_governance_drift(contract: EcosystemContract) -> list[str]:
             ProjectFieldType.SINGLE_SELECT,
             ProjectFieldType.MULTI_SELECT,
         }:
-            actual_options = tuple(option["name"] for option in actual.get("options", ()))
+            actual_options = tuple(
+                option["name"]
+                for option in sorted(
+                    actual.get("options", ()),
+                    key=lambda option: option["priority"],
+                )
+            )
             if actual_options != contract.field_options(name):
                 errors.append(f"organization issue field {name} options differ")
     return errors
@@ -190,7 +204,23 @@ def apply_issue_governance(contract: EcosystemContract) -> None:
         if actual is None:
             gh_api_json("POST", f"orgs/{owner}/issue-types", payload)
         else:
-            gh_api_json("PATCH", f"orgs/{owner}/issue-types/{actual['id']}", payload)
+            query = """
+            mutation($input: UpdateIssueTypeInput!) {
+              updateIssueType(input: $input) { issueType { id } }
+            }
+            """
+            gh_graphql(
+                query,
+                {
+                    "input": {
+                        "issueTypeId": actual["node_id"],
+                        "name": name,
+                        "description": expected.description,
+                        "isEnabled": True,
+                        "color": expected.color.upper(),
+                    }
+                },
+            )
 
     actual_fields = organization_issue_fields(contract)
     for name, expected in contract.fields.items():
