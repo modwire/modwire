@@ -1,11 +1,11 @@
-from .base import ArchitectureMap, ArchitectureRealm
-from .collector import MapReportCollector
-from .loader import ArchitectureMapLoader
+from modwire.shared.config import ArchitectureConfig
 
 
-__all__ = [
-    "ArchitectureMap",
-    "ArchitectureRealm",
-    "MapReportCollector",
-    "ArchitectureMapLoader",
-]
+def standard_map_components(config: ArchitectureConfig):
+    from .collector import MapReportCollector
+    from .loader import ArchitectureMapLoader
+
+    return ArchitectureMapLoader(config), MapReportCollector()
+
+
+__all__ = ["standard_map_components"]
