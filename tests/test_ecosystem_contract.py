@@ -14,12 +14,12 @@ def test_ecosystem_contract_is_the_package_taxonomy_source() -> None:
     contract = EcosystemContract.load_yaml(CONTRACT)
 
     assert contract.repositories() == (
-        "9orky/modwire",
-        "9orky/modwire-cli",
-        "9orky/modwire-extraction",
-        "9orky/modwire-mermaid",
-        "9orky/modwire-siren",
-        "9orky/modwire-mcp",
+        "modwire/modwire",
+        "modwire/modwire-cli",
+        "modwire/modwire-extraction",
+        "modwire/modwire-mermaid",
+        "modwire/modwire-siren",
+        "modwire/modwire-mcp",
     )
     assert contract.field_options("Component") == (
         "Core",
@@ -29,8 +29,8 @@ def test_ecosystem_contract_is_the_package_taxonomy_source() -> None:
         "Siren",
         "MCP",
     )
-    assert contract.default_repository() == "9orky/modwire"
-    assert "9orky/modwire-cli" in contract.project_readme()
+    assert contract.default_repository() == "modwire/modwire"
+    assert "modwire/modwire-cli" in contract.project_readme()
     assert re.fullmatch(contract.workflows.release_tag_pattern, "v3.2.1")
     assert not re.fullmatch(contract.workflows.release_tag_pattern, "3.2.1")
     assert not re.fullmatch(contract.workflows.release_tag_pattern, "v3.2")

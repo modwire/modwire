@@ -14,10 +14,10 @@ ecosystem façade.
 
 ## Useful Project Links
 
-- Repository: https://github.com/9orky/modwire
-- Issues: https://github.com/9orky/modwire/issues
-- Bug report form: https://github.com/9orky/modwire/issues/new?template=bug_report.yml
-- Feature request form: https://github.com/9orky/modwire/issues/new?template=feature_request.yml
+- Repository: https://github.com/modwire/modwire
+- Issues: https://github.com/modwire/modwire/issues
+- Bug report form: https://github.com/modwire/modwire/issues/new?template=bug_report.yml
+- Feature request form: https://github.com/modwire/modwire/issues/new?template=feature_request.yml
 
 ## Code Maps
 

@@ -33,7 +33,7 @@ modwire --config-dir .modwire architecture health src python
 - `modwire.shared.report` — architecture report contracts and metadata.
 
 Scaffolding and glossary functionality are not part of this package. The
-work-in-progress [modwire-mcp](https://github.com/9orky/modwire-mcp) project
+work-in-progress [modwire-mcp](https://github.com/modwire/modwire-mcp) project
 retains the ecosystem's crucial scaffolding surface.
 
 The repeatable GitHub coordination model is frozen in the
@@ -48,20 +48,20 @@ standard reusable CI and release procedures for member packages.
 
 Modwire coordinates three independently released building blocks:
 
-- [modwire-extraction](https://github.com/9orky/modwire-extraction) — canonical
-  code extraction. Follow its [Trustworthy Foundation](https://github.com/9orky/modwire-extraction/milestone/2),
-  [Canonical Symbol Model v2](https://github.com/9orky/modwire-extraction/milestone/1),
-  and [Extensible Production Platform](https://github.com/9orky/modwire-extraction/milestone/3)
+- [modwire-extraction](https://github.com/modwire/modwire-extraction) — canonical
+  code extraction. Follow its [Trustworthy Foundation](https://github.com/modwire/modwire-extraction/milestone/2),
+  [Canonical Symbol Model v2](https://github.com/modwire/modwire-extraction/milestone/1),
+  and [Extensible Production Platform](https://github.com/modwire/modwire-extraction/milestone/3)
   milestones.
-- [modwire-siren](https://github.com/9orky/modwire-siren) — typed Siren and
-  OpenAPI integration. See [Siren integration improvements](https://github.com/9orky/modwire-siren/milestone/1).
-- [modwire-mermaid](https://github.com/9orky/modwire-mermaid) — typed,
-  deterministic Mermaid source. See [Package improvements](https://github.com/9orky/modwire-mermaid/milestone/1).
+- [modwire-siren](https://github.com/modwire/modwire-siren) — typed Siren and
+  OpenAPI integration. See [Siren integration improvements](https://github.com/modwire/modwire-siren/milestone/1).
+- [modwire-mermaid](https://github.com/modwire/modwire-mermaid) — typed,
+  deterministic Mermaid source. See [Package improvements](https://github.com/modwire/modwire-mermaid/milestone/1).
 
-The architecture work here tracks [Architecture Policy Core](https://github.com/9orky/modwire/milestone/1)
-and [Architecture Insights and Integration Ergonomics](https://github.com/9orky/modwire/milestone/2).
-Current integration follow-ups include [multiple flow realms](https://github.com/9orky/modwire/issues/13)
-and [explicit duplicate tag behavior](https://github.com/9orky/modwire/issues/14).
+The architecture work here tracks [Architecture Policy Core](https://github.com/modwire/modwire/milestone/1)
+and [Architecture Insights and Integration Ergonomics](https://github.com/modwire/modwire/milestone/2).
+Current integration follow-ups include [multiple flow realms](https://github.com/modwire/modwire/issues/13)
+and [explicit duplicate tag behavior](https://github.com/modwire/modwire/issues/14).
 
 ## Model contracts
 

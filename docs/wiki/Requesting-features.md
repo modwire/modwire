@@ -23,4 +23,4 @@ changes.
 
 Open a feature request at:
 
-https://github.com/9orky/modwire/issues/new?template=feature_request.yml
+https://github.com/modwire/modwire/issues/new?template=feature_request.yml
