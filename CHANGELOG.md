@@ -12,6 +12,8 @@
 
 ### Added
 
+- Define the versioned canonical repository/module contract and golden library
+  and CLI shapes for the locally hosted Modwire scaffold.
 - Add structured module identities to deterministic boundary violations.
 - Add acceptance coverage for multiple architecture flow realms.
 - Add direct Modwire 4 to 5 migration guidance.
