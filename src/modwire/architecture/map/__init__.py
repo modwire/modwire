@@ -1,11 +1,4 @@
-from modwire.shared.config import ArchitectureConfig
-
-
-def standard_map_components(config: ArchitectureConfig):
-    from .collector import MapReportCollector
-    from .loader import ArchitectureMapLoader
-
-    return ArchitectureMapLoader(config), MapReportCollector()
+from .composition import standard_map_components
 
 
 __all__ = ["standard_map_components"]
