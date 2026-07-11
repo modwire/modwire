@@ -21,6 +21,12 @@ repositories as sub-issues. Versions remain independent; the Project's
 `Release train` field connects compatible package milestones without forcing a
 shared version number.
 
+The Project covers the coordinator (`modwire`), its runtime surface
+(`modwire-cli`), the Extraction, Mermaid, and Siren building blocks, and the
+in-progress MCP surface. The repository inventory and `Component` options in
+the YAML artifact are authoritative; add a repository to both whenever the
+ecosystem gains a separately delivered package.
+
 ## Bootstrap or restore the Project
 
 1. Create a user-level Project owned by `9orky` named **Modwire Ecosystem**.

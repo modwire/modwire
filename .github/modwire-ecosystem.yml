@@ -6,6 +6,7 @@ project:
   default_repository: 9orky/modwire
   repositories:
     - 9orky/modwire
+    - 9orky/modwire-cli
     - 9orky/modwire-extraction
     - 9orky/modwire-mermaid
     - 9orky/modwire-siren
@@ -23,7 +24,7 @@ fields:
     options: [P0, P1, P2, P3]
   Component:
     type: single_select
-    options: [Core, Extraction, Mermaid, Siren, MCP]
+    options: [Core, CLI, Extraction, Mermaid, Siren, MCP]
   Release train:
     type: text
   Target date:
