@@ -116,7 +116,7 @@ Every coordinator epic should state:
 ## Workflow contract
 
 The complete [Python workflow contract](python-workflows.md) defines the
-coordinator's reusable CI, release-build, and GitHub-release workflows plus the
+coordinator's reusable CI, release-build, and release-assets workflows plus the
 small repository-local entrypoints. Action versions, filenames, tag syntax,
 artifact naming, and environment naming are part of the ecosystem SSOT.
 Member repositories call a reviewed workflow-contract tag such as
@@ -132,9 +132,10 @@ The reusable workflow must always:
 
 Package release workflows remain local because publishing environments,
 package names, and PyPI Trusted Publisher identities are repository-specific.
-Only the credential-bearing PyPI job is local; build and GitHub Release logic
-come from the coordinator's reusable workflows. Releases must never require a
-pre-existing `.dev` directory.
+Only the credential-bearing PyPI job is local; build and GitHub Release asset
+logic come from the coordinator's reusable workflows. Publishing a GitHub
+Release is the event that drives PyPI publication. Releases must never require
+a pre-existing `.dev` directory.
 
 ## Ecosystem integration gate
 

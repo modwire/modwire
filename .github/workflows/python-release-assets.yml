@@ -1,10 +1,10 @@
-name: Reusable Python GitHub release
+name: Reusable Python release assets
 
 on:
   workflow_call:
     inputs:
       release-tag:
-        description: Existing release tag used to create the GitHub Release.
+        description: Published GitHub Release tag receiving the distributions.
         required: true
         type: string
       artifact-name:
@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   publish:
-    name: Create GitHub release
+    name: Attach distributions to GitHub release
     runs-on: ubuntu-latest
     steps:
       - name: Download release distributions
@@ -27,8 +27,8 @@ jobs:
           name: ${{ inputs.artifact-name }}
           path: dist/
 
-      - name: Create GitHub release
+      - name: Upload GitHub release assets
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release-tag }}
-        run: gh release create "$RELEASE_TAG" dist/* --verify-tag --generate-notes
+        run: gh release upload "$RELEASE_TAG" dist/* --clobber

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- GitHub Release publication now drives distribution building, asset
+  attachment, and idempotent PyPI Trusted Publishing.
+
 ## 4.0.0 - 2026-07-11
 
 ### Breaking Changes

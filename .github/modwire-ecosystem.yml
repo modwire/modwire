@@ -62,7 +62,9 @@ workflows:
   release_entrypoint: .github/workflows/release.yml
   verify_reusable: .github/workflows/python-package.yml
   release_build_reusable: .github/workflows/python-release-build.yml
-  github_release_reusable: .github/workflows/python-github-release.yml
+  release_assets_reusable: .github/workflows/python-release-assets.yml
+  release_driver: github_release
+  release_event: published
   release_tag_pattern: ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$
   artifact_name: python-package-distributions
   pypi_environment: pypi

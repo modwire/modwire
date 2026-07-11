@@ -84,7 +84,9 @@ class WorkflowContract(ModwireConfigModel):
     release_entrypoint: str
     verify_reusable: str
     release_build_reusable: str
-    github_release_reusable: str
+    release_assets_reusable: str
+    release_driver: Literal["github_release"]
+    release_event: Literal["published"]
     release_tag_pattern: str
     artifact_name: str
     pypi_environment: str

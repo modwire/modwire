@@ -11,29 +11,31 @@ PyPI environment are declared under `workflows` in
 | --- | --- |
 | `ci.yml` | Repository-local triggers and any package-specific supplemental checks. |
 | `python-package.yml` | Reusable Python matrix tests, Ruff, build, Twine check, and optional artifact upload. |
-| `release.yml` | Repository-local stable-tag trigger and PyPI Trusted Publishing job. |
+| `release.yml` | Repository-local GitHub Release trigger and PyPI Trusted Publishing job. |
 | `python-release-build.yml` | Reusable strict tag validation, clean SCM-derived build, Twine check, version check, and artifact upload. |
-| `python-github-release.yml` | Reusable creation of the GitHub Release from the same verified artifacts. |
+| `python-release-assets.yml` | Reusable attachment of verified distributions to the published GitHub Release. |
 
 CI and release entrypoints are consistently named `ci.yml` and `release.yml`.
 Reusable implementations are consistently prefixed with `python-`. Jobs use
-the verbs `verify`, `build`, `publish-pypi`, and `publish-github`.
+the verbs `verify`, `build`, `publish-pypi`, and `publish-github-assets`.
 
 ## Release contract
 
 1. Merge only after `ci.yml` passes.
 2. Create and push a stable `vMAJOR.MINOR.PATCH` tag.
-3. `release.yml` passes that existing tag to the reusable release build.
-4. The build backend derives the version from the tag. Workflows never rewrite
+3. Publish a GitHub Release targeting that existing tag.
+4. The `release.published` event passes the Release tag to the reusable build.
+5. The build backend derives the version from the tag. Workflows never rewrite
    `pyproject.toml`, override setuptools-scm, or inspect wheels with embedded
    Python programs.
-5. The reusable build creates one wheel and one source distribution, runs
+6. The reusable build creates one wheel and one source distribution, runs
    Twine, confirms both filenames contain the tag version, and uploads one
    immutable workflow artifact named `python-package-distributions`.
-6. The repository-local `publish-pypi` job downloads that artifact and uses
-   PyPI Trusted Publishing with only `id-token: write`.
-7. After PyPI succeeds, the reusable GitHub release job creates release notes
-   and attaches the exact same distributions.
+7. The reusable release-assets job attaches those distributions to the GitHub
+   Release.
+8. The repository-local `publish-pypi` job then downloads that artifact and
+   uses PyPI Trusted Publishing with only `id-token: write`. Publication is
+   idempotent so a rerun can recover a partial release without overwriting PyPI.
 
 PyPI currently does not support Trusted Publishing from a reusable workflow.
 Therefore the small `publish-pypi` job must remain directly in each
@@ -79,8 +81,8 @@ and, when necessary, reusable workflow inputs differ.
 name: Release
 
 on:
-  push:
-    tags: ["v*"]
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -89,10 +91,18 @@ jobs:
   build:
     uses: 9orky/modwire/.github/workflows/python-release-build.yml@workflows-v1
     with:
-      release-tag: ${{ github.ref_name }}
+      release-tag: ${{ github.event.release.tag_name }}
+
+  publish-github-assets:
+    needs: build
+    uses: 9orky/modwire/.github/workflows/python-release-assets.yml@workflows-v1
+    with:
+      release-tag: ${{ github.event.release.tag_name }}
+    permissions:
+      contents: write
 
   publish-pypi:
-    needs: build
+    needs: [build, publish-github-assets]
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -105,14 +115,8 @@ jobs:
           name: python-package-distributions
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
-
-  publish-github:
-    needs: [build, publish-pypi]
-    uses: 9orky/modwire/.github/workflows/python-github-release.yml@workflows-v1
-    with:
-      release-tag: ${{ github.ref_name }}
-    permissions:
-      contents: write
+        with:
+          skip-existing: true
 ```
 
 ## Updating the standard

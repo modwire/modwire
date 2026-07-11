@@ -40,7 +40,7 @@ def workflow_drift(contract: EcosystemContract) -> list[str]:
         contract.workflows.release_entrypoint,
         contract.workflows.verify_reusable,
         contract.workflows.release_build_reusable,
-        contract.workflows.github_release_reusable,
+        contract.workflows.release_assets_reusable,
     )
     contents: dict[str, str] = {}
     for relative_path in workflow_paths:
@@ -74,7 +74,7 @@ def workflow_drift(contract: EcosystemContract) -> list[str]:
     required_references = {
         contract.workflows.release_entrypoint: (
             contract.workflows.release_build_reusable,
-            contract.workflows.github_release_reusable,
+            contract.workflows.release_assets_reusable,
             contract.workflows.actions.download_artifact,
             contract.workflows.actions.publish_pypi,
         ),
@@ -88,7 +88,7 @@ def workflow_drift(contract: EcosystemContract) -> list[str]:
             contract.workflows.actions.setup_python,
             contract.workflows.actions.upload_artifact,
         ),
-        contract.workflows.github_release_reusable: (
+        contract.workflows.release_assets_reusable: (
             contract.workflows.actions.download_artifact,
         ),
     }
@@ -102,19 +102,22 @@ def workflow_drift(contract: EcosystemContract) -> list[str]:
         "python - <<",
         "SETUPTOOLS_SCM_PRETEND_VERSION",
         "softprops/",
-        "types: [published]",
     ):
         if forbidden in release or forbidden in release_build:
             errors.append(f"release workflows contain forbidden pattern {forbidden}")
     if contract.workflows.artifact_name not in release or contract.workflows.artifact_name not in release_build:
         errors.append("release artifact name differs from the workflow contract")
-    github_release = contents.get(contract.workflows.github_release_reusable, "")
+    release_assets = contents.get(contract.workflows.release_assets_reusable, "")
     if (
         "workflow_call:" not in verify
         or "workflow_call:" not in release_build
-        or "workflow_call:" not in github_release
+        or "workflow_call:" not in release_assets
     ):
         errors.append("reusable workflows must use workflow_call")
+    if "release:" not in release or "types: [published]" not in release:
+        errors.append("release.yml must be driven by a published GitHub Release")
+    if "skip-existing: true" not in release:
+        errors.append("release.yml must make PyPI publication idempotent")
     return errors
 
 
