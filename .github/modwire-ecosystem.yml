@@ -65,7 +65,7 @@ packages:
 project:
   owner: modwire
   title: Modwire Ecosystem
-  number: 4
+  number: 1
   visibility: public
   default_package: core
   description: Cross-repository roadmap and release coordination for the Modwire ecosystem.
