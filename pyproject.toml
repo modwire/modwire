@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "modwire"
 description = "Map architecture boundaries and analyze extracted code maps."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = "MIT"
 dynamic = ["version"]
 authors = [
@@ -25,20 +25,20 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
     "Topic :: Software Development",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
-    "click>=8.4.2",
-    "copier>=9.16.0",
     "modwire-extraction>=1.0.1",
-    "pydantic>=2.8",
+    "modwire-mermaid>=1.0.0",
+    "modwire-siren>=1.0.0",
+    "pydantic>=2.12",
     "pydantic-yaml>=1.7.0",
-    "wireup",
 ]
 
 [project.urls]
@@ -53,9 +53,6 @@ dev = [
     "ruff>=0.8",
     "twine>=5.1",
 ]
-
-[project.scripts]
-modwire = "modwire.cli:cli"
 
 [dependency-groups]
 dev = [

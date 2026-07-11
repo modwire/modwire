@@ -1,12 +1,10 @@
-from wireup import injectable
-
-from modwire.shared import ModwireBaseModel, report
+from modwire.shared import ModwireModel, report
 
 from ...map.base import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
-class ClustersReportItem(ModwireBaseModel):
+class ClustersReportItem(ModwireModel):
     name: str
     files: tuple[str, ...]
     incoming_count: int
@@ -28,7 +26,6 @@ class ClustersReport(report.ReportItem):
     clusters: tuple[ClustersReportItem, ...] = ()
 
 
-@injectable(qualifier="clusters", as_type=InsightReporterInterface)
 class ClustersReporter(InsightReporterInterface):
     name: str = "clusters"
     report_type: type[ClustersReport] = ClustersReport

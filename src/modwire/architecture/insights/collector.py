@@ -1,9 +1,5 @@
 from collections.abc import Sequence
 
-from pydantic import BaseModel
-
-from wireup import injectable
-
 from modwire.shared import report
 
 from ..map.base import ArchitectureMap
@@ -12,7 +8,6 @@ from .base import InsightReporterInterface
 from .reporters import InsightReport, InsightReportFieldMap
 
 
-@injectable(lifetime="transient")
 class InsightReportCollector(report.ReportCollector[InsightReport]):
     report_type: type[InsightReport] = InsightReport
 
@@ -27,7 +22,7 @@ class InsightReportCollector(report.ReportCollector[InsightReport]):
         return self._field_map.field_for(name)
 
     def collect(self, architecture_map: ArchitectureMap) -> InsightReport:
-        payload: dict[str, BaseModel] = {}
+        payload: dict[str, report.ReportItem] = {}
 
         for name, reporter in self._reporters.items():
             field = self._field_for(name)

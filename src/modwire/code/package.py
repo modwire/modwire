@@ -1,9 +1,9 @@
 from pydantic import field_validator
 
-from modwire.shared import ModwireBaseModel
+from modwire.shared import ModwireModel
 
 
-class CodePackage(ModwireBaseModel):
+class CodePackage(ModwireModel):
     files: dict[str, str]
 
     @field_validator("files")
@@ -12,6 +12,22 @@ class CodePackage(ModwireBaseModel):
         for path in files:
             cls._validate_file_path(path)
         return files
+
+    def paths(self) -> tuple[str, ...]:
+        return tuple(sorted(self.files))
+
+    def contents_for(self, path: str) -> str:
+        self._validate_file_path(path)
+        try:
+            return self.files[path]
+        except KeyError as error:
+            raise KeyError(f"Code package has no file {path!r}") from error
+
+    def merged(self, other: "CodePackage") -> "CodePackage":
+        overlap = sorted(set(self.files).intersection(other.files))
+        if overlap:
+            raise ValueError("Code packages contain duplicate paths: " + ", ".join(overlap))
+        return type(self)(files={**self.files, **other.files})
 
     @staticmethod
     def _validate_file_path(path: str) -> None:

@@ -1,7 +1,5 @@
 from collections.abc import Sized
 
-from wireup import injectable
-
 from ..base import (
     ArchitectureMapQuery,
     BaseShapeResolver,
@@ -12,7 +10,6 @@ from ..base import (
 from modwire.shared.config import ShapeConfig
 
 
-@injectable(qualifier="class", as_type=SymbolShapeResolverInterface)
 class ClassResolver(SymbolShapeResolverInterface, BaseShapeResolver):
     @property
     def name(self) -> str:

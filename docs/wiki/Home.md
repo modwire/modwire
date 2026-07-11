@@ -1,13 +1,13 @@
 # Modwire Wiki
 
-Modwire maps architecture boundaries and evaluates policies from code maps
-produced by `modwire-extraction`.
+Modwire coordinates typed architecture analysis over code maps produced by
+`modwire-extraction`, with Siren and Mermaid integrations available through the
+ecosystem façade.
 
 ## Start Here
 
-- README examples cover the OOP architecture report runner, including boundary
-  maps, flow violations, shape violations, callable insights, hotspots, and
-  unused export checks.
+- README describes the package boundaries, model taxonomy, ecosystem projects,
+  and CLI split.
 - [Reporting bugs](Reporting-bugs.md)
 - [Requesting features](Requesting-features.md)
 - [Development checks](Development-checks.md)
@@ -21,5 +21,7 @@ produced by `modwire-extraction`.
 
 ## Code Maps
 
-Use `modwire-extraction` to produce `CodeMap` objects. Pass those maps into
-`ArchitectureReportRunner` to produce a full architecture report.
+Use `Modwire().extract(...)` to produce a queryable code map and
+`Modwire().architecture(...)` or `ArchitectureApplication.standard(...)` to
+compose architecture reports. Install the sibling `modwire-cli` distribution
+for terminal commands.

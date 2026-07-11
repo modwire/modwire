@@ -92,6 +92,9 @@ jobs:
       - name: Run tests
         run: python -m pytest
 
+      - name: Run static checks
+        run: python -m ruff check src tests
+
       - name: Build distributions
         run: python -m build --outdir dist
 

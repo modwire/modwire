@@ -1,12 +1,10 @@
-from wireup import injectable
-
-from modwire.shared import ModwireBaseModel, report
+from modwire.shared import ModwireModel, report
 
 from ...map.base import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
-class ExportsReportItem(ModwireBaseModel):
+class ExportsReportItem(ModwireModel):
     source_id: str
     name: str
     kind: str
@@ -26,7 +24,6 @@ class ExportsReport(report.ReportItem):
     unused_exports: tuple[ExportsReportItem, ...] = ()
 
 
-@injectable(qualifier="unused-exports", as_type=InsightReporterInterface)
 class ExportsReporter(InsightReporterInterface):
     name: str = "unused-exports"
     report_type: type[ExportsReport] = ExportsReport

@@ -1,5 +1,3 @@
-from wireup import injectable
-
 from modwire.shared import report
 
 from ..map.base import ArchitectureMap
@@ -21,7 +19,6 @@ class FlowReport(report.ReportItem):
     analyzers: tuple[str, ...] = ()
 
 
-@injectable(lifetime="transient")
 class FlowReportCollector(report.ReportCollector[FlowReport]):
     report_type: type[FlowReport] = FlowReport
 

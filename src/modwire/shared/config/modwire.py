@@ -4,31 +4,22 @@ from typing import Any, Self
 from pydantic import Field
 
 from .architecture import ArchitectureConfig, BoundariesConfig
-from .base import ModwireBaseConfig
+from ..base import ModwireConfigModel
 from .layers import LayersConfig
 from .modules import ModulesConfig
 from .projects import ProjectsConfig
 from .shape import ShapeConfig
 
 
-class ModwireConfig(ModwireBaseConfig):
+class ModwireConfig(ModwireConfigModel):
     architecture: ArchitectureConfig = Field(default_factory=ArchitectureConfig)
     projects: ProjectsConfig = Field(default_factory=ProjectsConfig)
     modules: ModulesConfig = Field(default_factory=ModulesConfig)
     layers: LayersConfig = Field(default_factory=LayersConfig)
 
-    def as_wireup_config(self) -> dict[str, Any]:
-        values = {
-            "modwire": self,
-            "architecture": self.architecture,
-            "projects": self.projects,
-            "modules": self.modules,
-            "layers": self.layers,
-        }
-        return {key: value for key, value in values.items()}
-
     @classmethod
-    def load_dir(cls, root: Path) -> Self:
+    def load_dir(cls, root: str | Path) -> Self:
+        root = Path(root)
         if not root.is_dir():
             raise ValueError(f"Config directory does not exist: {root}")
 

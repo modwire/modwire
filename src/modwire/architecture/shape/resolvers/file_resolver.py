@@ -1,5 +1,3 @@
-from wireup import injectable
-
 from ..base import (
     ArchitectureMapQuery,
     BaseShapeResolver,
@@ -9,7 +7,6 @@ from ..base import (
 from modwire.shared.config import ShapeConfig
 
 
-@injectable(qualifier="file", as_type=ShapeResolverInterface)
 class FileResolver(ShapeResolverInterface, BaseShapeResolver):
     @property
     def name(self) -> str:

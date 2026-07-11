@@ -1,8 +1,4 @@
 from collections.abc import Sequence
-from typing import Annotated
-
-from wireup import Inject, injectable
-
 from modwire.shared.config import ArchitectureConfig, FlowRules
 
 from ..map.base import ArchitectureMap, ArchitectureRealm
@@ -10,11 +6,10 @@ from ..map.base import ArchitectureMap, ArchitectureRealm
 from .base import FlowAnalyzerInterface, FlowViolation
 
 
-@injectable(lifetime="transient")
 class BoundariesFlowAnalyzer:
     def __init__(
         self,
-        config: Annotated[ArchitectureConfig, Inject(config="architecture")],
+        config: ArchitectureConfig,
         analyzers: Sequence[FlowAnalyzerInterface],
     ):
         self.config = config.boundaries

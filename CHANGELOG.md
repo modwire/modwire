@@ -1,6 +1,29 @@
 # Changelog
 
-## 3.2.0 - Unreleased
+## 4.0.0 - Unreleased
+
+### Breaking Changes
+
+- Removed glossary and scaffolding from the `modwire` library surface.
+- Moved the executable and Click runtime into the separate `modwire-cli` package.
+- Removed runtime dependency injection; applications now use explicit standard factories.
+- Raised the minimum Python version to 3.12 to align the ecosystem packages.
+
+### Added
+
+- Added `ModwireModel`, `ModwireConfigModel`, and `ModwireReportModel` as the
+  common strict Pydantic taxonomy with JSON, YAML, dictionary, and file helpers.
+- Added `Modwire`, a small façade coordinating extraction, architecture, Siren,
+  and Mermaid packages.
+- Added public layer, module, project, configuration, and report imports.
+
+### Changed
+
+- `modwire` now composes `modwire-extraction`, `modwire-siren`, and
+  `modwire-mermaid` as independently released building blocks.
+- Architecture tag names and flow realm/analyzer names now reject duplicates.
+
+## 3.2.0
 
 ### Added
 

@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from modwire_extraction.code import QueryableCodeMap
-from modwire.shared import ModwireBaseModel
+from modwire.shared import ModwireModel
 from modwire.shared.config import ShapeConfig
 
 
@@ -36,7 +36,7 @@ class SignatureShape(Protocol):
     optional_args: bool
 
 
-class ShapeViolation(ModwireBaseModel):
+class ShapeViolation(ModwireModel):
     source_id: str
     rule_name: str
     actual: int | str | bool

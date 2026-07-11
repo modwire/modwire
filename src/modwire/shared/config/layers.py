@@ -1,32 +1,30 @@
 from typing import Literal
 
-from pydantic import Field
-
-from .base import ModwireBaseConfig
+from ..base import ModwireConfigModel
 
 
-class Argument(ModwireBaseConfig):
+class Argument(ModwireConfigModel):
     name: str
     type: str
 
 
-class Symbol(ModwireBaseConfig):
+class Symbol(ModwireConfigModel):
     name: str
     role: Literal["class", "function", "variable"]
     arguments: tuple[Argument, ...] = ()
 
 
-class Component(ModwireBaseConfig):
+class Component(ModwireConfigModel):
     name: str
     symbols: tuple[Symbol, ...] = ()
 
 
-class Layer(ModwireBaseConfig):
+class Layer(ModwireConfigModel):
     name: str
     layout: Literal["file", "package"]
     language: Literal["python", "php", "typescript"]
     components: tuple[Component, ...] = ()
 
 
-class LayersConfig(ModwireBaseConfig):
-    layers: list[Layer] = Field(default_factory=list)
+class LayersConfig(ModwireConfigModel):
+    layers: tuple[Layer, ...] = ()

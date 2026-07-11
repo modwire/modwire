@@ -1,20 +1,18 @@
 from typing import Literal
 
-from pydantic import Field
-
-from .base import ModwireBaseConfig
+from ..base import ModwireConfigModel
 
 
-class ModuleLayout(ModwireBaseConfig):
+class ModuleLayout(ModwireConfigModel):
     name: str
     context_root: str
     module_root: str
 
 
-class ModuleLayer(ModwireBaseConfig):
+class ModuleLayer(ModwireConfigModel):
     name: str
     form: Literal["file", "package"]
 
 
-class ModulesConfig(ModwireBaseConfig):
-    modules: list[ModuleLayer] = Field(default_factory=list)
+class ModulesConfig(ModwireConfigModel):
+    modules: tuple[ModuleLayer, ...] = ()

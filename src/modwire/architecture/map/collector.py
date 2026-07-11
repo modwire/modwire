@@ -1,11 +1,9 @@
-from wireup import injectable
-
-from modwire.shared import ModwireBaseModel, report
+from modwire.shared import ModwireModel, report
 
 from .base import ArchitectureMap
 
 
-class ArchitectureGroup(ModwireBaseModel):
+class ArchitectureGroup(ModwireModel):
     name: str
     source_ids: tuple[str, ...]
 
@@ -25,7 +23,6 @@ class MapReport(report.ReportItem):
     unknown_files: tuple[str, ...] = ()
 
 
-@injectable(lifetime="transient")
 class MapReportCollector(report.ReportCollector[MapReport]):
     report_type: type[MapReport] = MapReport
 

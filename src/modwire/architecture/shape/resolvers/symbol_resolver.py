@@ -1,7 +1,5 @@
 from collections.abc import Sequence
 
-from wireup import injectable
-
 from ..base import (
     ArchitectureMapQuery,
     BaseShapeResolver,
@@ -12,7 +10,6 @@ from ..base import (
 from modwire.shared.config import ShapeConfig
 
 
-@injectable(qualifier="symbol", as_type=ShapeResolverInterface)
 class SymbolResolver(ShapeResolverInterface, BaseShapeResolver):
     def __init__(self, resolvers: Sequence[SymbolShapeResolverInterface]):
         self.resolvers = tuple(sorted(resolvers, key=lambda resolver: resolver.name))

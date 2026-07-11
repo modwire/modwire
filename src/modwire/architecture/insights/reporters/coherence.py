@@ -1,5 +1,3 @@
-from wireup import injectable
-
 from modwire.shared import report
 
 from ...map.base import ArchitectureMap
@@ -22,7 +20,6 @@ class CoherenceReport(report.ReportItem):
     external_dependencies: tuple[str, ...] = ()
 
 
-@injectable(qualifier="coherence", as_type=InsightReporterInterface)
 class CoherenceReporter(InsightReporterInterface):
     name: str = "coherence"
     report_type: type[CoherenceReport] = CoherenceReport

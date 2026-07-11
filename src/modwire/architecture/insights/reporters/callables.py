@@ -1,12 +1,10 @@
-from wireup import injectable
-
-from modwire.shared import ModwireBaseModel, report
+from modwire.shared import ModwireModel, report
 
 from ...map.base import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
-class CallableReportEntry(ModwireBaseModel):
+class CallableReportEntry(ModwireModel):
     source_callable: str
     calls: tuple[str, ...]
     callers: tuple[str, ...]
@@ -25,7 +23,6 @@ class CallablesReport(report.ReportItem):
     entries: tuple[CallableReportEntry, ...] = ()
 
 
-@injectable(qualifier="callables", as_type=InsightReporterInterface)
 class CallablesReporter(InsightReporterInterface):
     name: str = "callables"
     report_type: type[CallablesReport] = CallablesReport

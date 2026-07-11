@@ -1,38 +1,20 @@
-from dataclasses import dataclass
-
 from modwire_extraction.code import QueryableCodeMap
+from modwire.shared import ModwireModel
 
 
-@dataclass(frozen=True)
-class ArchitectureRealm:
+class ArchitectureRealm(ModwireModel):
     name: str
     module_tag: str
     layers: tuple[str, ...] = ()
 
 
-class ArchitectureMap:
-    def __init__(
-        self,
-        code_map: QueryableCodeMap,
-        tag_map: object,
-        modules: dict[str, tuple[str, ...]],
-        layers: dict[str, tuple[str, ...]],
-        unknown_files: tuple[str, ...],
-        realm: ArchitectureRealm,
-    ):
-        self.realm = realm
-        self.code_map = code_map
-        self.tag_map = tag_map
-        self.modules = modules
-        self.layers = layers
-        self.unknown_files = unknown_files
+class ArchitectureMap(ModwireModel):
+    code_map: QueryableCodeMap
+    tag_map: object
+    modules: dict[str, tuple[str, ...]]
+    layers: dict[str, tuple[str, ...]]
+    unknown_files: tuple[str, ...]
+    realm: ArchitectureRealm
 
     def with_realm(self, realm: ArchitectureRealm) -> "ArchitectureMap":
-        return ArchitectureMap(
-            code_map=self.code_map,
-            tag_map=self.tag_map,
-            modules=self.modules,
-            layers=self.layers,
-            unknown_files=self.unknown_files,
-            realm=realm,
-        )
+        return self.model_copy(update={"realm": realm})

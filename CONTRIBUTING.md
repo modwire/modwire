@@ -1,7 +1,9 @@
 # Contributing to Modwire
 
 Modwire is a Python package for architecture mapping, violation evaluation, and
-code-map reports produced from `modwire-extraction` data.
+code-map reports produced from `modwire-extraction` data. The library also
+coordinates `modwire-siren` and `modwire-mermaid`; terminal behavior belongs in
+the sibling `modwire-cli` project.
 
 ## Requesting Features
 

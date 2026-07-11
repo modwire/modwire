@@ -1,12 +1,10 @@
-from wireup import injectable
-
-from modwire.shared import ModwireBaseModel, report
+from modwire.shared import ModwireModel, report
 
 from ...map.base import ArchitectureMap
 from ..base import InsightReporterInterface
 
 
-class HotspotsReportItem(ModwireBaseModel):
+class HotspotsReportItem(ModwireModel):
     source_id: str
     incoming_count: int
     outgoing_count: int
@@ -26,7 +24,6 @@ class HotspotsReport(report.ReportItem):
     hotspots: tuple[HotspotsReportItem, ...] = ()
 
 
-@injectable(qualifier="hotspots", as_type=InsightReporterInterface)
 class HotspotsReporter(InsightReporterInterface):
     name: str = "hotspots"
     report_type: type[HotspotsReport] = HotspotsReport

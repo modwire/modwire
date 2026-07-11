@@ -1,8 +1,4 @@
 from collections.abc import Sequence
-from typing import Annotated
-
-from wireup import Inject, injectable
-
 from modwire.shared import report
 from modwire.shared.config import ArchitectureConfig
 
@@ -24,13 +20,12 @@ class ShapeReport(report.ReportItem):
     resolvers: tuple[str, ...] = ()
 
 
-@injectable(lifetime="transient")
 class ShapeReportCollector(report.ReportCollector[ShapeReport]):
     report_type: type[ShapeReport] = ShapeReport
 
     def __init__(
         self,
-        config: Annotated[ArchitectureConfig, Inject(config="architecture")],
+        config: ArchitectureConfig,
         resolvers: Sequence[ShapeResolverInterface],
     ):
         self.config = config.shape

@@ -1,5 +1,3 @@
-from wireup import injectable
-
 from ..base import (
     AbstractClassShape,
     ArchitectureMapQuery,
@@ -10,7 +8,6 @@ from ..base import (
 from modwire.shared.config.shape import ShapeConfig
 
 
-@injectable(qualifier="abstract-class", as_type=SymbolShapeResolverInterface)
 class AbstractClassResolver(SymbolShapeResolverInterface, BaseShapeResolver):
     @property
     def name(self) -> str:

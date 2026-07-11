@@ -2,7 +2,7 @@ from typing import Any, Generic, Protocol, TypeVar
 
 from pydantic import Field, model_serializer
 
-from modwire.shared import ModwireBaseModel
+from modwire.shared.base import ModwireReportModel
 
 
 ReportResult = TypeVar("ReportResult", bound="ReportNode", covariant=True)
@@ -15,7 +15,7 @@ class ReportCollector(Protocol, Generic[ReportResult]):
         ...
 
 
-class ReportMetadata(ModwireBaseModel):
+class ReportMetadata(ModwireReportModel):
     id: str
     title: str
     description: str
@@ -25,11 +25,11 @@ class ReportMetadata(ModwireBaseModel):
     children: tuple["ReportMetadata", ...] = ()
 
 
-class ReportCatalog(ModwireBaseModel):
+class ReportCatalog(ModwireReportModel):
     reports: tuple[ReportMetadata, ...]
 
 
-class ReportNode(ModwireBaseModel):
+class ReportNode(ModwireReportModel):
     report_id: str
     report_title: str
     report_description: str = ""

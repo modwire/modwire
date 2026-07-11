@@ -2,16 +2,16 @@ from typing import Literal
 
 from pydantic import Field
 
-from .base import ModwireBaseConfig
+from ..base import ModwireConfigModel
 
 
-class ProjectLayout(ModwireBaseConfig):
+class ProjectLayout(ModwireConfigModel):
     package_root: str = "src"
     template: Literal["CONTEXT.MODULE.LAYER", "MODULE.LAYER"] = "CONTEXT.MODULE.LAYER"
     module_template: Literal["HEXAGONAL", "LAYERED"] = "HEXAGONAL"
 
 
-class ProjectStack(ModwireBaseConfig):
+class ProjectStack(ModwireConfigModel):
     language: str = ""
     language_version: str = ""
     package_manager: str = ""
@@ -21,7 +21,7 @@ class ProjectStack(ModwireBaseConfig):
     scripts: dict[str, str] = Field(default_factory=dict)
 
 
-class ProjectsConfig(ModwireBaseConfig):
+class ProjectsConfig(ModwireConfigModel):
     name: str = ""
     stack: ProjectStack = Field(default_factory=ProjectStack)
     layout: ProjectLayout = Field(default_factory=ProjectLayout)

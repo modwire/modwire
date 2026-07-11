@@ -1,7 +1,4 @@
-from typing import Annotated
-
 from modwire_extraction.code import QueryableCodeMap
-from wireup import Inject, injectable
 
 from modwire.shared.config import ArchitectureConfig
 
@@ -10,11 +7,10 @@ from ..boundaries.tags import TagMatcher
 from .base import ArchitectureMap, ArchitectureRealm
 
 
-@injectable(lifetime="transient")
 class ArchitectureMapLoader:
     def __init__(
         self,
-        config: Annotated[ArchitectureConfig, Inject(config="architecture") ],
+        config: ArchitectureConfig,
     ):
         self.config = config
         self.matcher = TagMatcher(self.config.boundaries)

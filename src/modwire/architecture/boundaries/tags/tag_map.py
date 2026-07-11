@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from modwire.shared import ModwireModel
 
 
-class TagMatch(BaseModel):
+class TagMatch(ModwireModel):
     name: str
     pattern: str
     matched_path: str
@@ -10,7 +10,7 @@ class TagMatch(BaseModel):
     wildcard_values: tuple[str, ...] = ()
 
 
-class TagMap(BaseModel):
+class TagMap(ModwireModel):
     matches_by_node: dict[str, tuple[TagMatch, ...]]
 
     def tags_for(self, node_id: str) -> tuple[TagMatch, ...]:
@@ -22,3 +22,6 @@ class TagMap(BaseModel):
             (match for match in self.tags_for(node_id) if match.name in wanted),
             None,
         )
+
+    def matches(self, node_id: str, name: str) -> tuple[TagMatch, ...]:
+        return tuple(match for match in self.tags_for(node_id) if match.name == name)

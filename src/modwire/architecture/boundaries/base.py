@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from modwire.shared import ModwireBaseModel
+from modwire.shared import ModwireModel
 
 from ..map.base import ArchitectureMap
 
@@ -8,7 +8,7 @@ from ..map.base import ArchitectureMap
 EDGE_RULE_TYPE = "edge-rule"
 
 
-class EdgeRuleViolation(ModwireBaseModel):
+class EdgeRuleViolation(ModwireModel):
     source_id: str
     target_id: str
     source_pattern: str
@@ -16,7 +16,7 @@ class EdgeRuleViolation(ModwireBaseModel):
     rule_name: str
 
 
-class FlowViolation(ModwireBaseModel):
+class FlowViolation(ModwireModel):
     violation_type: str
     path: tuple[str, ...]
     violation_index: int
