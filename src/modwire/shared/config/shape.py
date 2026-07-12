@@ -19,7 +19,7 @@ class ShapeConfig(ModwireConfigModel):
     allow_optional_class_properties: bool = False
     allow_import_aliases: bool = False
     require_joined_imports: bool = True
-    allowed_import_crossing_types: tuple[str, ...] = ("module",)
+    allowed_import_crossing_types: tuple[str, ...] = ("module", "symbol")
 
     @field_validator(
         "max_classes_per_file",

@@ -50,7 +50,11 @@ class ImportResolver(ShapeResolverInterface, BaseShapeResolver):
                         symbol_name=source_import.normalized_path,
                     )
                 )
-            if config.require_joined_imports and not source_import.uses_joined_import:
+            if (
+                config.require_joined_imports
+                and source_import.crossing_type != "module"
+                and not source_import.uses_joined_import
+            ):
                 violations.append(
                     ShapeViolation(
                         source_id=source_id,

@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from modwire.code import CodePackage
-from modwire.shared.config import BoundariesConfig, ModwireConfig, TagRule
+from modwire.shared.config import BoundariesConfig, ModwireConfig, ShapeConfig, TagRule
 
 
 def test_model_json_and_yaml_round_trips() -> None:
@@ -34,6 +34,13 @@ def test_duplicate_architecture_tags_are_rejected() -> None:
                 TagRule(name="module", match="app/*"),
             )
         )
+
+
+def test_shape_defaults_allow_module_and_symbol_imports() -> None:
+    config = ShapeConfig()
+
+    assert config.require_joined_imports is True
+    assert config.allowed_import_crossing_types == ("module", "symbol")
 
 
 def test_code_package_validates_and_merges_paths() -> None:
