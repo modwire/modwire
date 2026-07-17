@@ -3,8 +3,8 @@ requires = ["setuptools>=77", "setuptools-scm[toml]>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "modwire"
-description = "Map architecture boundaries and analyze extracted code maps."
+name = "modwire-architecture"
+description = "Report architecture boundaries, shape violations, and insights from extracted code maps."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
@@ -42,9 +42,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/modwire/modwire"
-Repository = "https://github.com/modwire/modwire"
-Issues = "https://github.com/modwire/modwire/issues"
+Homepage = "https://github.com/modwire/modwire-architecture"
+Repository = "https://github.com/modwire/modwire-architecture"
+Issues = "https://github.com/modwire/modwire-architecture/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -87,4 +87,4 @@ exclude = ["*.__pycache__", "*.__pycache__.*"]
 [tool.setuptools_scm]
 fallback_version = "0.0.0.dev0"
 local_scheme = "no-local-version"
-version_file = "src/modwire/_version.py"
+version_file = "src/modwire_architecture/_version.py"

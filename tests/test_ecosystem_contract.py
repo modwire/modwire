@@ -4,7 +4,7 @@ import re
 import pytest
 from pydantic import ValidationError
 
-from modwire.projects import EcosystemContract, FieldOwner
+from modwire_architecture.projects import EcosystemContract, FieldOwner
 
 
 CONTRACT = Path(__file__).parents[1] / ".github" / "modwire-ecosystem.yml"

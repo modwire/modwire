@@ -2,8 +2,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from modwire.architecture.shape.resolvers.import_resolver import ImportResolver
-from modwire.shared.config import ShapeConfig
+from modwire_architecture.architecture.shape.resolvers.import_resolver import ImportResolver
+from modwire_architecture.shared.config import ShapeConfig
 
 
 class ImportQuery:

@@ -1,16 +1,22 @@
-# Modwire
+# Modwire Architecture
 
-Modwire is the typed coordination library for the Modwire ecosystem. It composes
+Modwire Architecture is the typed architecture library for the Modwire ecosystem. It composes
 in-memory architecture analysis, Siren documents, and Mermaid diagrams without
 embedding filesystem or command-line orchestration in the library.
 
 ```python
-from modwire import ArchitectureConfig, Modwire
+from modwire_architecture import ArchitectureConfig, Modwire
 from modwire_extraction import QueryableCodeMap
 
 
 def analyze(code_map: QueryableCodeMap):
     return Modwire().architecture(ArchitectureConfig()).report(code_map)
+```
+
+Install the library with:
+
+```bash
+python -m pip install 'modwire-architecture>=6,<7'
 ```
 
 Core accepts in-memory configuration and an already extracted code map. Install
@@ -26,15 +32,15 @@ modwire --config-dir .modwire architecture health src python
 
 ## Package shape
 
-- `modwire.architecture` — architecture maps, boundary policies, shape checks,
+- `modwire_architecture.architecture` — architecture maps, boundary policies, shape checks,
   insights, and typed reports.
-- `modwire.code` — validated in-memory code-package values.
-- `modwire.layers` — named layer contracts; orchestration remains to be defined.
-- `modwire.modules` — named module contracts; orchestration remains to be defined.
-- `modwire.projects` — project coordination contracts for modules and layers;
+- `modwire_architecture.code` — validated in-memory code-package values.
+- `modwire_architecture.layers` — named layer contracts; orchestration remains to be defined.
+- `modwire_architecture.modules` — named module contracts; orchestration remains to be defined.
+- `modwire_architecture.projects` — project coordination contracts for modules and layers;
   orchestration remains to be defined.
-- `modwire.shared.config` — immutable, validated configuration contracts.
-- `modwire.shared.report` — architecture report contracts and metadata.
+- `modwire_architecture.shared.config` — immutable, validated configuration contracts.
+- `modwire_architecture.shared.report` — architecture report contracts and metadata.
 
 Scaffolding and glossary functionality are not part of this package. The
 current [modwire-mcp](https://github.com/modwire/modwire-mcp) repository is a
@@ -64,10 +70,13 @@ Modwire coordinates three independently released building blocks:
 - [modwire-mermaid](https://github.com/modwire/modwire-mermaid) — typed,
   deterministic Mermaid source. See [Package improvements](https://github.com/modwire/modwire-mermaid/milestone/1).
 
-The architecture work here tracks [Architecture Policy Core](https://github.com/modwire/modwire/milestone/1)
-and [Architecture Insights and Integration Ergonomics](https://github.com/modwire/modwire/milestone/2).
-Modwire 5 migration guidance is available in
-[Migrating from Modwire 4 to 5](docs/migration-5.md).
+The architecture work here tracks the
+[Standalone Architecture Package](https://github.com/modwire/modwire-architecture/milestone/7)
+milestone.
+Package-identity guidance is available in
+[Migrating from Modwire to Modwire Architecture](docs/migration-6.md).
+The historical [Modwire 4 to 5 migration](docs/migration-5.md) remains available
+for existing `modwire` consumers.
 
 ## Model contracts
 

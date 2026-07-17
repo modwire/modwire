@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from modwire.code import CodePackage
-from modwire.shared.config import BoundariesConfig, ModwireConfig, ShapeConfig, TagRule
+from modwire_architecture.code import CodePackage
+from modwire_architecture.shared.config import BoundariesConfig, ModwireConfig, ShapeConfig, TagRule
 
 
 def test_model_json_and_yaml_round_trips() -> None:

@@ -14,4 +14,4 @@ on:
 
 jobs:
   validate:
-    uses: modwire/modwire/.github/workflows/issue-metadata.yml@main
+    uses: ./.github/workflows/issue-metadata.yml

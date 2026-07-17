@@ -1,9 +1,12 @@
 # Changelog
 
-## 5.0.0 - Unreleased
+## 6.0.0 - Unreleased
 
 ### Breaking Changes
 
+- Rename the distribution to `modwire-architecture` and import namespace to
+  `modwire_architecture`; the historical `modwire` distribution is not wrapped
+  or republished.
 - Require `modwire-extraction>=2,<3` and consume its resolved dependency graph.
 - Remove filesystem extraction and writing from the Core façade.
 - Make architecture reporting accept an injected `QueryableCodeMap`.
