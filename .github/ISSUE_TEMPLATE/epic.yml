@@ -21,8 +21,8 @@ body:
       label: Affected repositories
       description: List every repository expected to own a sub-issue.
       placeholder: |
-        - modwire/modwire
-        - modwire/modwire-cli
+        - modwire/modwire-architecture
+        - modwire/modwire-agent
     validations:
       required: true
 

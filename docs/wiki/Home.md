@@ -6,8 +6,8 @@ sibling packages.
 
 ## Start Here
 
-- README describes the package boundaries, model taxonomy, ecosystem projects,
-  and CLI split.
+- README describes the package boundaries, model taxonomy, and ecosystem
+  projects.
 - [Reporting bugs](Reporting-bugs.md)
 - [Requesting features](Requesting-features.md)
 - [Development checks](Development-checks.md)
@@ -23,6 +23,5 @@ sibling packages.
 
 Pass an already extracted `QueryableCodeMap` and an explicit
 `ArchitectureConfig` to `Modwire().architecture(config).report(code_map)` or
-`ArchitectureApplication.standard(config).report(code_map)`. Install the sibling
-`modwire-cli` distribution for path discovery, configuration loading, generated
-files, and terminal commands.
+`ArchitectureApplication.standard(config).report(code_map)`. Callers own path
+discovery, configuration loading, generated files, and terminal commands.
