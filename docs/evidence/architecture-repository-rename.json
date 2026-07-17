@@ -1,0 +1,45 @@
+{
+  "$schema": "./structural-evidence.schema.json",
+  "schema_version": 1,
+  "operation": "repository_rename",
+  "subject": {
+    "repository_id": "architecture"
+  },
+  "evidence": [
+    {
+      "kind": "identity_mapping",
+      "reference": "docs/decisions/0002-architecture-identity-migration.md",
+      "summary": "Defines the approved repository, distribution, import, and release-lineage mapping from Modwire to Modwire Architecture."
+    },
+    {
+      "kind": "github_redirect",
+      "reference": "https://github.com/modwire/modwire",
+      "summary": "Verified on 2026-07-17: the former repository URL returns an HTTP 301 redirect to https://github.com/modwire/modwire-architecture."
+    },
+    {
+      "kind": "migration_guide",
+      "reference": "docs/migration-6.md",
+      "summary": "Explains the 6.0.0 package and import migration, including the intentional absence of compatibility shims."
+    },
+    {
+      "kind": "compatibility",
+      "reference": "docs/decisions/0002-architecture-identity-migration.md",
+      "summary": "GitHub preserves an old-to-new repository redirect; historic PyPI artifacts and the old modwire import are intentionally not bridged."
+    },
+    {
+      "kind": "documentation",
+      "reference": "README.md",
+      "summary": "The public project documentation identifies Modwire Architecture and directs users to the 6.0.0 migration guide."
+    },
+    {
+      "kind": "rollback_plan",
+      "reference": "docs/decisions/0002-architecture-identity-migration.md#rollback-boundary",
+      "summary": "The decision records a pre-release rollback boundary: revert the unpublished 6.0.0 changes and, if necessary, reverse the GitHub repository rename."
+    },
+    {
+      "kind": "owner_approval",
+      "reference": "https://github.com/modwire/modwire-architecture/pull/40#issuecomment-5005025728",
+      "summary": "The organization owner approved the identity-migration decision before the package migration and repository rename were performed."
+    }
+  ]
+}
