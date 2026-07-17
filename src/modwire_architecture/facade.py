@@ -4,6 +4,8 @@ from .architecture import ArchitectureApplication, ArchitectureConfig
 
 
 class Modwire:
+    """Small composition façade for the independently released Modwire packages."""
+
     def architecture(
         self,
         config: ArchitectureConfig,

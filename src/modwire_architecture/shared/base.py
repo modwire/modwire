@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict
 from pydantic_yaml import parse_yaml_raw_as, to_yaml_str
 
 class ModwireModel(BaseModel):
+    """Strict public value model used across the Modwire ecosystem."""
+
     model_config = ConfigDict(
         extra="forbid",
         frozen=True,
@@ -39,6 +41,8 @@ class ModwireModel(BaseModel):
 
 
 class ModwireConfigModel(ModwireModel):
+    """Base class for declarative Modwire configuration."""
+
     @classmethod
     def from_yaml(cls, value: str) -> Self:
         values = parse_yaml_raw_as(dict[str, Any], value)
@@ -48,7 +52,8 @@ class ModwireConfigModel(ModwireModel):
 
 
 class ModwireReportModel(ModwireModel):
-    pass
+    """Base class for serializable Modwire report contracts."""
+
 
 class ModwireBaseApplication(abc.ABC):
     @abc.abstractmethod
