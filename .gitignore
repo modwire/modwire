@@ -6,6 +6,6 @@
 build/
 dist/
 src/*.egg-info/
-src/modwire/_version.py
+src/modwire_architecture/_version.py
 __pycache__/
 *.py[cod]

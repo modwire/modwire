@@ -1,4 +1,4 @@
-from modwire.architecture import ArchitectureApplication, ArchitectureConfig
+from modwire_architecture.architecture import ArchitectureApplication, ArchitectureConfig
 
 
 def test_standard_architecture_application_exposes_stable_report_catalog() -> None:

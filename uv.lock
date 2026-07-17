@@ -378,7 +378,7 @@ wheels = [
 ]
 
 [[package]]
-name = "modwire"
+name = "modwire-architecture"
 source = { editable = "." }
 dependencies = [
     { name = "modwire-extraction" },
