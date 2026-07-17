@@ -21,7 +21,8 @@ from modwire_architecture import ArchitectureConfig, Modwire
 
 Update any deeper imports by replacing the root namespace
 `modwire` with `modwire_architecture`. The package's behavior remains unchanged
-by this identity migration; later A1 tasks narrow its public contract.
+by this identity migration: callers do not change logic, configuration,
+inputs, outputs, reports, or runtime capabilities.
 
 ## Release history
 
