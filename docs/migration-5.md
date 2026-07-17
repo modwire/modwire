@@ -1,8 +1,7 @@
 # Migrating from Modwire 4 to 5
 
-Modwire 5 makes Core an in-memory architecture engine. Filesystem discovery,
-configuration-directory loading, code extraction, and writing generated files
-belong to `modwire-cli`.
+Modwire 5 makes Core an in-memory architecture engine. Callers own filesystem
+discovery, configuration loading, code extraction, and generated-file output.
 
 ## Architecture reports
 
@@ -21,20 +20,20 @@ Replace these Modwire 4 APIs:
 
 | Modwire 4 | Modwire 5 |
 | --- | --- |
-| `Modwire().extract(root, language)` | Let `modwire-cli` own path discovery and extraction, or inject a `QueryableCodeMap`. |
+| `Modwire().extract(root, language)` | Extract externally and inject a `QueryableCodeMap`. |
 | `ArchitectureApplication.report(root, language)` | `ArchitectureApplication.report(code_map)` |
 | `QueryableCodeMapReader.read(root, language)` | Removed from Core. |
-| `CodePackageWriter.write(package, destination)` | Removed from Core; writing belongs to CLI. |
+| `CodePackageWriter.write(package, destination)` | Removed from Core; callers own output. |
 
 ## Configuration and serialization
 
 Core retains `from_json`, `to_json`, `from_yaml`, `to_yaml`, `from_dict`, and
 `to_dict`. The path-based `load_json`, `save_json`, `load_yaml`, and `save_yaml`
-helpers are removed. Read or write files in the CLI boundary and pass strings or
+helpers are removed. Read or write files outside Core and pass strings or
 dictionaries to Core.
 
-`ModwireConfig.load_dir()` is also removed. The CLI is responsible for reading
-and combining `.modwire` files before constructing the strict in-memory config.
+`ModwireConfig.load_dir()` is also removed. Callers read and combine
+configuration before constructing the strict in-memory config.
 
 ## Dependency graphs and boundaries
 

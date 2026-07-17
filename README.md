@@ -19,16 +19,8 @@ Install the library with:
 python -m pip install 'modwire-architecture>=6,<7'
 ```
 
-Core accepts in-memory configuration and an already extracted code map. Install
-`modwire-cli` when paths, configuration directories, or generated files are
-involved.
-
-Install `modwire-cli` when you need the command line:
-
-```bash
-pip install modwire-cli
-modwire --config-dir .modwire architecture health src python
-```
+Core accepts in-memory configuration and an already extracted code map. Callers
+own source discovery, configuration loading, and output handling.
 
 ## Package shape
 
@@ -42,19 +34,8 @@ modwire --config-dir .modwire architecture health src python
 - `modwire_architecture.shared.config` — immutable, validated configuration contracts.
 - `modwire_architecture.shared.report` — architecture report contracts and metadata.
 
-Scaffolding and glossary functionality are not part of this package. The
-current [modwire-mcp](https://github.com/modwire/modwire-mcp) repository is a
-work-in-progress local scaffolding devserver, not yet an operational ecosystem
-package. The MCP package becomes workable after `modwire-cli` exposes the
-filesystem, project, and execution capabilities that MCP will coordinate.
-
-The repeatable GitHub coordination model is frozen in the
-[ecosystem playbook](docs/governance/github-ecosystem.md) and its
-[executable source-of-truth contract](.github/modwire-ecosystem.yml). The
-contract's package registry derives repository membership and the shared
-Project component taxonomy; CI validates it with strict Pydantic models. The
-[Python workflow contract](docs/governance/python-workflows.md) provides the
-standard reusable CI and release procedures for member packages.
+Scaffolding and glossary functionality are not part of this package. Agent
+composes Architecture, Mermaid, and Siren through their published interfaces.
 
 ## Ecosystem
 
