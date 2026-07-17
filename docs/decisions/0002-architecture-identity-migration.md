@@ -13,11 +13,11 @@ canonical identity is:
 | PyPI distribution | `modwire` | `modwire-architecture` |
 | Python import | `modwire` | `modwire_architecture` |
 | Source root | `src/modwire` | `src/modwire_architecture` |
-| First Architecture release | no release under the new identity | `1.0.0` |
+| First Architecture release | no release under the new identity | `6.0.0` |
 
 This is a deliberate breaking migration. `modwire-architecture` is a new PyPI
-distribution and starts its own semantic-version line at 1.0.0; the unreleased
-`modwire` 5.0.0 line is not published as part of this migration.
+distribution that continues the library's semantic-version lineage at 6.0.0;
+the unreleased `modwire` 5.0.0 line is not published as part of this migration.
 
 GitHub's redirect from `modwire/modwire` is the only compatibility redirect.
 There is no `modwire` PyPI wrapper and no `modwire` import shim. A wrapper
@@ -57,10 +57,17 @@ Modwire Agent is a consumer, not a compatibility layer for the old import.
    same default branch and pull requests.
 4. Update the `modwire-architecture` PyPI Trusted Publisher to the renamed
    repository and its repository-local release workflow. Verify this
-   configuration before creating a release.
+   configuration before creating a release. A Trusted Publisher is already
+   reserved for `modwire/modwire-architecture`, `.github/workflows/release.yml`,
+   and the `pypi` environment; A1.5 verifies that it is active after the rename.
 5. Complete A1.3 and A1.4, then use A1.5 to build, install, and test the
    release candidate. The first published GitHub Release and PyPI artifact are
-   `v1.0.0` / `modwire-architecture==1.0.0`.
+   `v6.0.0` / `modwire-architecture==6.0.0`.
+
+The renamed repository retains the historical `v1.0.0` through `v5.0.0` tags
+and releases. `v6.0.0` is new and unambiguous, so this sequence neither
+rewrites an existing tag nor mixes old `modwire` PyPI artifacts with the new
+distribution.
 
 The `modwire` PyPI project remains a historical package. Its existing releases
 are not deleted, republished, or altered.
@@ -72,7 +79,7 @@ potentially irreversible operation. Before that point, all work is ordinary
 pull-request content and can be reverted without changing GitHub or PyPI.
 
 After the rename, use a forward correction rather than assuming the old
-repository name can be reclaimed. After PyPI publishes 1.0.0, do not attempt
+repository name can be reclaimed. After PyPI publishes 6.0.0, do not attempt
 to replace or delete the artifact; publish a corrective release instead.
 
 ## Affected implementation surfaces
