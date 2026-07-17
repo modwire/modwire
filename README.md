@@ -1,8 +1,8 @@
 # Modwire Architecture
 
-Modwire Architecture is the typed architecture library for the Modwire ecosystem. It composes
-in-memory architecture analysis, Siren documents, and Mermaid diagrams without
-embedding filesystem or command-line orchestration in the library.
+Modwire Architecture is the typed architecture library for the Modwire ecosystem.
+It analyzes extracted code maps in memory without owning extraction, presentation,
+hypermedia, filesystem, or command-line orchestration.
 
 ```python
 from modwire_architecture import ArchitectureConfig, Modwire
@@ -58,7 +58,7 @@ standard reusable CI and release procedures for member packages.
 
 ## Ecosystem
 
-Modwire coordinates three independently released building blocks:
+The ecosystem provides independently released building blocks:
 
 - [modwire-extraction](https://github.com/modwire/modwire-extraction) — canonical
   code extraction. Follow its [Trustworthy Foundation](https://github.com/modwire/modwire-extraction/milestone/2),
@@ -69,6 +69,9 @@ Modwire coordinates three independently released building blocks:
   OpenAPI integration. See [Siren integration improvements](https://github.com/modwire/modwire-siren/milestone/1).
 - [modwire-mermaid](https://github.com/modwire/modwire-mermaid) — typed,
   deterministic Mermaid source. See [Package improvements](https://github.com/modwire/modwire-mermaid/milestone/1).
+
+Architecture depends only on Extraction. Agent composes Architecture, Mermaid,
+and Siren as separate published packages.
 
 The architecture work here tracks the
 [Standalone Architecture Package](https://github.com/modwire/modwire-architecture/milestone/7)

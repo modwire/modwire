@@ -8,6 +8,8 @@
   `modwire_architecture`; the historical `modwire` distribution is not wrapped
   or republished.
 - Require `modwire-extraction>=2,<3` and consume its resolved dependency graph.
+- Remove direct Mermaid and Siren dependencies and façade integrations; those
+  packages are composed by Agent instead of Architecture.
 - Remove filesystem extraction and writing from the Core façade.
 - Make architecture reporting accept an injected `QueryableCodeMap`.
 - Remove configuration-directory and path-based model serialization helpers.
