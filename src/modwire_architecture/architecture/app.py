@@ -29,6 +29,7 @@ class ArchitectureApplication:
         cls,
         config_: config.ArchitectureConfig,
     ) -> "ArchitectureApplication":
+        """Build the supported architecture-reporting composition."""
         return cls(config_)
 
     def reports(self) -> report.ReportCatalog:

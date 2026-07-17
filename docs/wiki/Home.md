@@ -1,8 +1,8 @@
 # Modwire Wiki
 
-Modwire coordinates typed architecture analysis over code maps produced by
-`modwire-extraction`, with Siren and Mermaid integrations available through the
-ecosystem façade.
+Modwire Architecture provides typed architecture analysis over code maps produced
+by `modwire-extraction`. Presentation and hypermedia integrations belong to
+sibling packages.
 
 ## Start Here
 
