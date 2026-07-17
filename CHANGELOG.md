@@ -15,6 +15,8 @@
 
 ### Added
 
+- Add executable import-only migration coverage: callers retain existing
+  Architecture behavior after changing only the import namespace.
 - Define the versioned canonical repository/module contract and golden library
   and CLI shapes for the locally hosted Modwire scaffold.
 - Add structured module identities to deterministic boundary violations.
