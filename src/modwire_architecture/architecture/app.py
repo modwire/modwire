@@ -3,6 +3,8 @@ from typing import Any, Protocol
 from modwire_extraction.code import QueryableCodeMap
 from modwire_architecture.shared import config, report
 
+from .contract import ArchitectureAnalysis
+from .normalization import normalize_analysis
 
 class _ArchitectureMapLoader(Protocol):
     def load(self, code_map: QueryableCodeMap) -> Any: ...
@@ -65,3 +67,7 @@ class ArchitectureApplication:
                 ),
             )
         )
+
+    def analyze(self, code_map: QueryableCodeMap) -> ArchitectureAnalysis:
+        """Analyze extracted facts through the supported public result contract."""
+        return normalize_analysis(self.config, self.report(code_map))

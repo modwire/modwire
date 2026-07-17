@@ -15,6 +15,8 @@
 
 ### Added
 
+- Add the versioned public `ArchitectureAnalysis` contract with explicit
+  outcomes, evidence, severity, and deterministic insight payloads.
 - Define the versioned canonical repository/module contract and golden library
   and CLI shapes for the locally hosted Modwire scaffold.
 - Add structured module identities to deterministic boundary violations.
